@@ -1,0 +1,24 @@
+<!doctype html><meta charset="utf-8"><style>
+@font-face{font-family:D;src:url(dohyeon-korean-400.woff2),url(dohyeon-latin-400.woff2)}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:radial-gradient(120% 70% at 50% 40%,#fff6e8 0%,#f7e2c6 60%,#eecba0 100%)}
+#st{position:absolute;inset:0}
+.card{position:absolute;left:140px;top:430px;width:800px;height:615px;border-radius:40px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(80,50,20,.45),0 0 0 14px #fffdf8}
+.card img{width:100%;height:100%;object-fit:cover}
+.fly{position:absolute;width:300px;height:300px;z-index:6}
+.fly img{width:100%;height:100%;object-fit:contain}
+.tak{position:absolute;z-index:8;font-family:D;font-size:110px;color:#fffaf0;-webkit-text-stroke:12px #6b4f3a;paint-order:stroke fill;text-shadow:0 8px 0 #6b4f3a;opacity:0}
+.tag{position:absolute;left:50%;top:150px;transform:translateX(-50%) rotate(-3deg);background:#2b1d14;color:#ffb35c;font-family:D;font-size:66px;padding:22px 44px;border-radius:24px;white-space:nowrap;box-shadow:0 14px 24px -10px rgba(0,0,0,.4)}
+.tag b{color:#fff;font-weight:400}
+</style>
+<div id="st"><div class="tag">🎄 <b>다음엔</b> 크리스마스!</div><div class="card" id="card"><img src="hwcard.jpg"></div></div>
+<script>
+const A=(el,k,o)=>el.animate(k,Object.assign({fill:'both'},o));const st=document.getElementById('st')
+A(document.getElementById('card'),[{opacity:0,transform:'scale(.7) rotate(-4deg)'},{opacity:1,transform:'scale(1) rotate(0)'}],{duration:380,easing:'cubic-bezier(.2,1.4,.4,1)'})
+A(document.querySelector('.tag'),[{opacity:0,transform:'translateX(-50%) scale(.5) rotate(-3deg)'},{opacity:1,transform:'translateX(-50%) scale(1) rotate(-3deg)'}],{delay:250,duration:300,easing:'cubic-bezier(.2,1.6,.4,1)'})
+const F=[['hw_09',60,350,-14,90,320],['hw_14',740,360,12,770,310],['hw_11',30,870,-8,70,1140],['hw_16',760,850,10,770,1140]]
+F.forEach(([n,x,y,r,tx,ty],i)=>{const d=document.createElement('div');d.className='fly';d.innerHTML='<img src="'+n+'.png">';d.style.left=x+'px';d.style.top=y+'px';st.appendChild(d)
+ const t0=450+i*280;A(d,[{opacity:0,transform:`translate(${x<500?-700:700}px,${600-i*200}px) rotate(${r*4}deg) scale(1.6)`},{opacity:1,transform:`translate(0,0) rotate(${r}deg) scale(.92)`,offset:.8},{opacity:1,transform:`translate(0,0) rotate(${r}deg) scale(1)`}],{delay:t0,duration:320,easing:'cubic-bezier(.4,0,.6,1)'})
+ const tk=document.createElement('div');tk.className='tak';tk.textContent='탁!';tk.style.left=tx+'px';tk.style.top=ty+'px';document.body.appendChild(tk)
+ A(tk,[{opacity:0,transform:'scale(.3)'},{opacity:1,transform:'scale(1.15)'},{opacity:0,transform:'scale(1)'}],{delay:t0+250,duration:420})
+ A(st,[{translate:'0 0'},{translate:'0 10px'},{translate:'0 0'}],{delay:t0+250,duration:90,fill:'none'})})
+</script>

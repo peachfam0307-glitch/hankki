@@ -14,7 +14,9 @@
 // ⛔⛔ **옛 워커는 `earned` 를 안 준다** — 그때는 `null` 이라 **줄을 하나도 안 긋고**
 //    「N개 중 M개」만 적는다. ⚠️개수만큼 «위에서부터» 긋지 않는다 — 그건 거짓말이 된다.
 // ⛔ 유니코드 이모지 금지 — 우리 그림만(절대원칙).
+import { useState } from 'react'
 import { EARN, KEY_NAME, KEY_UNIT } from '../ocr'
+import Icon from './Icon'
 import useKeyLeft from './useKeyLeft'
 import uiKeyOne from '../assets/ui/key_one.png'
 
@@ -26,7 +28,16 @@ const 줄들 = [
   { 값: EARN.냉장고, 말: '냉장고에 재료 넣어보기' },
 ]
 
+// 📮📮 [창업자 확정 2026-09-10] = *"열쇠무료 5개주는거 접기로 접어놔 제목만 보이게 하고"*
+//    🔢 까닭(2026-09-10 첫사람 캡처판 실측) = 이 다섯 줄이 펴져 있으면 가져오기 첫 화면의
+//       위 절반을 먹어서, 정작 «하고 싶은 일»(네 갈래)이 화면 아래로 밀렸다.
+//    ⭐ 접어도 «안 사라진다» — 제목 줄이 그대로 보이고, 누르면 그 자리에서 펴진다.
+//       창업자가 2026-09-01 에 이걸 목록으로 정한 까닭(안 해본 기능이 눈에 보이게)은 제목이 지킨다.
+//    ⛔ 「받았어요」 줄긋기·「5개 다 받으면 사라짐」은 하나도 안 건드렸다.
+//    ⛔ 펴 둔 상태를 저장하지 «않는다» — 앱을 다시 열면 다시 접힌다.
+//       첫 화면을 좁히려고 접은 것이라, 한 번 편 사람에게 영영 펴 두면 접은 뜻이 사라진다.
 export default function EarnList() {
+  const [폄, set폄] = useState(false)
   const left = useKeyLeft()
   const 받은수 = Number.isFinite(left.bonus) ? left.bonus : 0
   // ⭐ 사라지는 판정은 «개수»로 한다 — 옛 워커에서도 맞게 돈다(목록은 없어도 개수는 준다).
@@ -37,10 +48,25 @@ export default function EarnList() {
 
   return (
     <div className="earn-list">
-      <div className="earn-head">
+      {/* ⛔ 제목 줄이 «단추»가 된다 — 눌러서 펴고 접는다. 화살표가 어느 쪽인지로 상태를 말한다. */}
+      <button
+        type="button"
+        className="earn-head press"
+        onClick={() => set폄((v) => !v)}
+        aria-expanded={폄}
+        style={{ width: '100%', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer' }}
+      >
         <img src={uiKeyOne} alt="" aria-hidden="true" draggable={false} />
         <b>{`이거 해보면 ${KEY_NAME} 1${KEY_UNIT}씩 더 드려요`}</b>
-      </div>
+        {/* ⭐ 접어도 «받은 것»이 보이게 — 창업자가 2026-09-01 에 원한 건 「뭘로 받았는지 보이는 것」이다.
+            줄긋기는 펴야 보이지만, «몇 개 받았나»는 접힌 채로도 말해 준다. */}
+        {받은수 > 0 && <span className="earn-got" style={{ marginLeft: 6, whiteSpace: 'nowrap' }}>{`${줄들.length}개 중 ${받은수}개`}</span>}
+        {/* ⛔ 유니코드 화살표를 안 쓴다(절대원칙) — 우리 Icon 으로. 장보기 「더보기·접기」와 같은 모양. */}
+        <span style={{ marginLeft: 'auto', display: 'flex' }}>
+          <Icon name={폄 ? 'chevron-up' : 'chevron-down'} size={16} color="var(--sand)" />
+        </span>
+      </button>
+      {폄 && (<>
       <ul>
         {줄들.map((줄) => {
           const 끝 = 받았나(줄.값)
@@ -55,6 +81,7 @@ export default function EarnList() {
       <div className="earn-foot">
         {받은수 > 0 ? `${줄들.length}개 중 ${받은수}개 받았어요 · ` : ''}각각 처음 한 번만 드려요
       </div>
+      </>)}
     </div>
   )
 }

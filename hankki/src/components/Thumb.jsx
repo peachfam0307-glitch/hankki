@@ -3,7 +3,9 @@ import { useState, useEffect, useRef } from 'react'
 import { 창고에있나, 그릴수있나, 창고표시, 꺼내기 } from '../photoStore'
 import FoodIcon, { guessFoodIcon } from './FoodIcon'
 import DecorLayer from './DecorLayer'
-import { bgStyle, bgIsDark, bgAnim } from './Stickers'
+import { bgStyle, bgIsDark, bgAnim, PHOTO_FAMILY, stickerRatio, 기본그릇키, 기본그릇인가, 열쇠있나, 그릇폭, 그릇줄임, 사진담김 } from './Stickers'
+import { FRAME_WINDOW } from '../data/frameWindows'
+import { dishCatOf } from './FoodIcon'
 import { graphemes } from '../utils'
 import { 기본표지 } from '../store'
 // 🔍 사진 자리·배율 규칙 = 일기 속지 사진과 «같은 곳»에서 온다 (src/photoPan.js)
@@ -85,6 +87,8 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
 
   // ⭐ 잣대는 `store.js` 의 `기본표지()` 하나 — 예전 레시피 호환도 그 안에 있다
   const thumb = 기본표지(recipe)
+  // 📏 그릇 배율 = 이 화면의 아이콘 크기 ÷ 그릇폭(0.58). iconSize 가 '70%' 면 1.207, '56%' 면 0.966. 숫자가 아니면 1.
+  const 그릇배율 = (() => { const n = parseFloat(iconSize); return Number.isFinite(n) && n > 0 ? (n / 100) / 그릇폭 : 1 })()
   // ⭐ 「사진 표지인데 아직 창고에서 안 왔다」면 그리지 않는다 → 그 동안은 아이콘이 뜬다(안 깨진다)
   const showImg = thumb === 'photo' && 그림 && !failed
   // 🎴🎴 **「사진」과 「이미 완성된 표지 한 장(자랑카드)」은 다른 물건이다.** (창업자 2026-08-18)
@@ -130,18 +134,60 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
     //   ⚠️ `transformOrigin` 을 `objectPosition` 과 **같은 값**으로 준다. 다르면 확대할 때 사진이 옆으로 튄다.
     const pos = recipe.imagePos || '50% 50%'
     const z = clampZoom(recipe.imageZoom)
-    inner = (
-      <div style={center}>
-        {/* 🫳 `panProps` = 「끌어서 옮기고 두 손가락으로 확대」를 걸 자리 (창업자 2026-08-17).
-            ⭐ **그림 담은 칸 자체**에 건다 — 손짓이 칸 크기(`getBoundingClientRect`)로 이동량을 계산해서,
-               바깥 상자에 걸면 그 칸보다 큰 상자를 기준으로 재어 손가락보다 사진이 덜 움직인다.
-            ⛔ 안 넘기면 아무 일도 안 한다 — 목록 카드는 «보기만» 하는 자리라 넘기지 않는다. */}
+    // 🍽🍽 [창업자 2026-09-21] **사진은 «그릇에 담긴 채» 보인다.**
+    //   📮 *"내 사진으로 아이콘 바꾸기할때 음식넣는 사진이 너무 커서 그릇에 안들어가"* ＋ *"저 사진도 기본 그릇안에 들어가 있어야 하는데 기본 그릇이 없어"*
+    //      ＋ *"지금 그릇이랑 다 크기같게 맞춰줘 크기가 커지면 꾸미기할 자리가 없어져"*
+    //   ⛔ 그 전 = 사진 동그라미가 아이콘 크기(`iconSize`)라 **그릇 프레임의 «창»보다 커서** 접시 밖으로 삐져나왔다(창업자 캡처).
+    //   ✅ 두 갈래 —
+    //      ㉠ 꾸미기에 그릇 프레임(`pf_*`)이 얹혀 있으면 → 사진을 **그 프레임의 창**(`FRAME_WINDOW` 실측)에 맞춰 넣는다.
+    //         자리·크기·기울기는 그 프레임 것 그대로(DecorLayer 와 같은 좌표계 = 가운데 x·y, 폭 s, 종횡비 stickerRatio).
+    //      ㉡ 없으면 → 갈래별 **기본 그릇**(`기본그릇키`)을 «아이콘과 같은 크기»(`iconSize`)로 깔고, 사진은 그 창에.
+    //         ⭐ 그릇 전체 폭 = iconSize 라 아이콘 표지와 자리가 같다 — 꾸미기할 여백이 그대로다(창업자 조건).
+    //   🔒 창이 실측표에 없는 프레임(창 없는 21개)은 옛 동그라미 그대로 — 사진을 끼울 자리가 없다는 뜻이라 그게 맞다.
+    // ⛔⛔ [창업자 2026-09-22 00:52] **얹은 그릇이 와도 «기본 흰 도자기는 그대로 있다».**
+    //    📮 *"왜 기본 도자기가 사라지냐고... 내가 찍어준 거에는 기본 도자기가 그대로 있잖아"* (원본 앱 녹화 00:40)
+    //    ⭐ 원본 앱에서 AI 음식 아이콘(흰 그릇에 담긴 그림)은 «바닥»이고, 서랍 그릇은 그 «위»에 얹는 꾸미기 스티커였다.
+    //       내 사진 표지도 똑같다 — 흰 도자기＋사진이 바닥이고, 서랍 그릇은 DecorLayer 가 그 위에 그린다.
+    //    ⛔ 그래서 Thumb 은 서랍 그릇을 «표지 틀»로 쓰지 않는다(그 전엔 틀로 써서 흰 도자기가 사라졌다).
+    // 🔓 [창업자 2026-09-22 13:2x] **열쇠를 뗐다 — 모두에게 나간다.**
+    //    📮 *"할로윈 그릇은 안 보이더라도 도자기 위에 사진 들어가는 건 올려야지"* ＋ *"그건 우리 기본 기능이잖아. 내 사진 넣어서 음식 아이콘 만드는 거."*
+    //    ⭐ 맞다 — 「내 사진으로 음식 아이콘」은 이미 나가 있는 기능이고, 흰 도자기는 «그 기능의 고침»이다(새 기능이 아니다).
+    //       절대원칙 「유저에게 보이는 시점을 아이폰과 맞춘다」의 판정 한 줄 = 「유저 눈에 «새로» 보이나?」 → 고침이라 그냥 민다.
+    //    ⛔ 서랍의 할로윈 접시(`pf_hw*`)는 «새로 보이는 것»이라 열쇠 뒤에 그대로 있다(`Stickers.jsx` key열쇠 '할로윈').
+    const 기본키 = !카드표지 ? 기본그릇키(dishCatOf(recipe.icon || guessFoodIcon(recipe.title))) : null
+    const 그릇 = 기본키 && PHOTO_FAMILY[기본키] && PHOTO_FAMILY[기본키].src && FRAME_WINDOW[기본키] ? 기본키 : null
+    const 창 = 그릇 ? FRAME_WINDOW[그릇] : null
+    // 창 안에 놓는 사진 상자 — 부모(프레임/그릇 크기의 틀) 기준 %
+    // 📏 기본 그릇(㉡)은 «창»(회색 바닥)보다 «입»(테 안쪽)이 훨씬 크다 — 창에만 넣으면 바닥에 작은 타원이 떠 보인다(2026-09-21 실물 · 창업자 *"저게 뭐야"* · *"사진이 가운데 들어가야 하는데"*).
+    //    그래서 ㉡는 사진을 그릇 «위»에 얹고 입 크기(창 × 1.3)로 오린다 · 가운데는 창보다 살짝 위(cy − 0.02 · 그릇이 기울어 보여서).
+    //    ㉠(얹은 프레임)은 창 그대로 — 프레임 그림이 위에 오고, 「이 프레임에 사진 넣기」와 같은 규칙이라 그대로 둔다.
+    // 📏 그릇 배율 — 그릇(기본·얹은 것 둘 다)은 «이 화면의 아이콘 크기»(iconSize · 홈 70%·상세 56%)로 보인다.
+    //    창업자 2026-09-21 *"홈에서 비교해봐 내사진 들어간 레시피 그릇이 넘 작아"* — 홈은 아이콘이 70% 인데 그릇이 58% 라 작았다.
+    //    저장된 값(s=그릇폭)은 안 건드리고 «그릴 때만» 곱한다 → 편집 화면(iconSize 없음)은 그대로.
+    // 📏 [2026-09-22 00:28] 얹은 프레임도 흰 그릇과 «같은 식»(창 × 1.15 · 조금 아래) — 그래야 프레임을 씌워도 «사진 크기가 안 변한다»(창업자 *"그릇프레임을 씌우면 갑자기 왜 작아져"*).
+    const 키움 = 사진담김   // 흰 그릇 안에 사진이 얼마나 차나 (1.15 = 테 안쪽까지 꽉 · 작을수록 흰 테가 보인다 · 창업자 2026-09-22 01:09 「테두리가 없어서 그런가보자」)
+    // 🔢 사진 지름(표지 폭 대비) ＝ 아이콘 크기. 흰 그릇은 그 사진에 «입»을 맞춘다 → 그릇 그림 폭 = 사진지름 ÷ (창너비×1.15)
+    const 사진지름 = (() => { const n = parseFloat(iconSize); return Number.isFinite(n) && n > 0 ? n / 100 : 0.56 })()
+    // 🔢 [창업자 2026-09-22 01:00 「좀 크네 그릇크기자체를 좀 줄이자」] 기존 아이콘보다 조금 작게 — 그 배수가 그릇줄임.
+    const 그릇그림폭 = 사진지름 * 그릇줄임
+   // 1.3·1.22 는 뒤쪽 테 안쪽 선을 덮고 아래 바닥이 남았다(확대해서 봄) → 1.15 ＋ 조금 아래
+    // 🍽🍽 [창업자 2026-09-22 00:28 최종] **사진은 «한 크기»다 — 그릇 그림이 «위에 얹힐» 뿐이다.**
+    //    📮 *"흰도자기 기본값하고 프레임만 위에얹으라고 했잖아. 그림이 왜 움직이고, 그릇프레임을 씌우면 갑자기 왜 작아져?"*
+    //    ⛔ 그 전 = 사진을 «그 그릇의 창 크기»로 잘라서, 그릇을 바꿀 때마다 사진이 커졌다 작아졌다 했다(녹화 00:22 실물).
+    //    ✅ 이제 = 사진 동그라미는 늘 같은 크기(그릇 폭의 0.66 · 가운데)이고, **그릇 PNG 가 그 위에 덮인다**.
+    //       우리 그릇 컷은 «창이 뚫려 있어»(그릇-창뚫기.py) 덮어도 가운데로 사진이 그대로 보인다.
+    //       그래서 그릇을 바꿔도 사진은 «한 톨도 안 움직이고 안 커진다» — 테두리 그림만 갈린다.
+    //    ⭐⭐ [창업자 2026-09-22 00:45] **사진은 «늘 아이콘과 같은 크기»다** — *"사진이 왜 갑자기 커져?"* ·
+    //       *"그릇만 커졌다 작아졌다 하면서 도자기속 그림에 맞추고"*. 그래서 흰 그릇일 때도 사진은 그대로 두고,
+    //       **흰 그릇 쪽이 «자기 입이 그 사진에 딱 맞도록» 커진다**(아래 그릇폭계산).
+    const 창상자 = { width: '100%', height: '100%', borderRadius: '50%' }
+    const 사진상자 = (
         <div
           {...panProps}
           style={{
             ...(카드표지
               ? { width: '100%', height: '100%', borderRadius: 0 }        // 카드 = 표지 칸을 통째로
-              : { width: iconSize, aspectRatio: '1 / 1', borderRadius: '50%' }), // 사진 = 아이콘처럼 동그랗게
+              : 창상자 || { width: iconSize, aspectRatio: '1 / 1', borderRadius: '50%' }), // 사진 = 창에 맞춰 · 창이 없으면 아이콘처럼 동그랗게
             overflow: 'hidden',
             flex: '0 0 auto',
             ...(panProps?.style || {}),
@@ -150,12 +196,9 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
           <img
             src={그림}
             alt={recipe.title}
-            // 🖼 캡처용(eager)일 때는 «게으르게» 두면 화면 밖이라 브라우저가 안 불러올 수 있다
             loading={eager ? 'eager' : 'lazy'}
             draggable={false}
             onError={() => setFailed(true)}
-            // 🎴 옛 카드(표시 없던 시절) 알아보기 = 세로 ＋ «비율». 잣대는 `cardCover.js` 와 같은 값이다.
-            //    ⛔ [2026-09-02] 세로만 보면 폰 캡처(1080×2340)가 카드로 잡혀 표지 칸을 통째로 쓴다.
             onLoad={(e) => {
               const el = e.currentTarget
               if (el.naturalHeight >= 카드높이문턱 &&
@@ -163,13 +206,32 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
             }}
             style={{
               ...photoImgStyle(pos, z),
-              // 🎴 카드는 **한 군데도 안 자른다**(`contain`) — 좌우에 여백이 생겨도 다 보이는 게 먼저다.
-              //    ⚠️ 유저가 두 손가락으로 «확대»했으면(zoom>1) 그 뜻이 우선이라 그때는 잘라 채운다.
               ...(카드표지 && clampZoom(recipe.imageZoom) <= 1 ? { objectFit: 'contain' } : null),
               pointerEvents: 'none',
             }}
           />
         </div>
+    )
+    // 🍽🍽 [창업자 원본 녹화 2026-09-22 00:40 = *"우리 원래 앱 이대로 똑같이 만들어"*]
+    //    **음식은 «가운데 고정»이고 그릇만 위에 얹힌다** — 공식 AI 아이콘이 그렇게 군다(FoodIcon 은 늘 가운데·iconSize).
+    //    그래서 얹은 그릇(㉠)일 때 «사진을 그 틀 안에 넣지 않는다» — 사진은 아이콘 자리에 그대로 두고,
+    //    그릇 그림은 DecorLayer 가 «유저가 놓은 자리·크기·각도»로 그 위에 그린다(창이 뚫려 있어 음식이 보인다).
+    //    ⛔ 그 전 = 사진을 틀의 창 크기로 잘라 넣어서, 그릇을 바꾸거나 돌리면 사진까지 작아지고 따라 돌았다.
+    inner = 그릇 ? (
+      // ㉡ 기본 흰 도자기 — **우리 앱 기존 아이콘과 «같은 크기»**(iconSize · 창업자 2026-09-22 00:55 *"기본 도자기가 너무커 기존 도자기 크기값이랑 맞춰"*).
+      //    사진은 그 그릇의 «입»(창 × 1.15 · 조금 아래)에 담긴다 — 그릇이 늘 있으니 사진 크기도 늘 같다.
+      //    ⛔ 서랍 그릇은 여기 안 온다 — 그건 DecorLayer 가 이 «위»에 얹는 꾸미기다(00:52 창업자 「기본 도자기가 사라지냐고」).
+      <div style={center}>
+        <div style={{ position: 'relative', width: `${그릇그림폭 * 100}%`, aspectRatio: `${PHOTO_FAMILY[그릇].ratio}`, flex: '0 0 auto' }}>
+          <div style={{ position: 'absolute', left: `${(창.cx - 창.w * 키움 / 2) * 100}%`, top: `${(창.cy + 0.015 - 창.h * 키움 / 2) * 100}%`, width: `${창.w * 키움 * 100}%`, height: `${창.h * 키움 * 100}%`, borderRadius: '50%', overflow: 'hidden' }}>
+            {사진상자}
+          </div>
+          <img src={PHOTO_FAMILY[그릇].src} alt="" draggable={false} loading={eager ? 'eager' : 'lazy'} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', pointerEvents: 'none', filter: 'drop-shadow(0 2px 4px rgba(70,60,45,.18))' }} />
+        </div>
+      </div>
+    ) : (
+      <div style={center}>
+        {사진상자}
       </div>
     )
   } else if (thumb === 'emoji') {
@@ -225,7 +287,7 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
   return (
     <div ref={상자} className={[anim, className].filter(Boolean).join(' ')} style={base}>
       {inner}
-      {decorated && <DecorLayer items={recipe.decor} />}
+      {decorated && <DecorLayer items={recipe.decor} 그릇배율={그릇배율} />}
     </div>
   )
 }

@@ -35,8 +35,20 @@ await p0.close()
 const 결과=[]
 for (const 제목 of 심은것) {
   const p=await ctx.newPage(); await p.addInitScript(SEED_COACH_SEEN)
+  // ⛔⛔ [2026-09-14] 이 탭엔 온보딩·소식 끄기가 «안» 심겨 있었다(위 p0 에만 있었다) — 소식이 클릭을 막는다.
+  await p.addInitScript(()=>{try{localStorage.setItem('hankki:onboarded','1');localStorage.setItem('hankki:news:off','1')}catch{}})
   await p.goto('http://127.0.0.1:4413/',{waitUntil:'networkidle'}); await p.waitForTimeout(600)
-  await p.click(`text=${제목}`); await p.waitForSelector('.memo-note',{timeout:10000})
+  // ⛔⛔ 「홈」에서 제목을 찾고 있었다 — 홈엔 저장 레시피 목록이 없고, 홈 줄에 «우연히» 걸릴 때만 돌았다.
+  //    오늘 새로 열린 편들이 그 자리를 차지하면 죽는다. ✅ 「레시피」 탭에서 찾아 연다.
+  await p.evaluate(()=>{try{sessionStorage.setItem('hankki:tab','myrecipes')}catch{}})
+  const 탭=p.getByText('레시피',{exact:true}).last()
+  if (await 탭.count()) await 탭.click({timeout:4000}).catch(()=>{})
+  await p.waitForTimeout(600)
+  const 찾기=p.getByPlaceholder(/내 레시피에서 찾기/)
+  if (await 찾기.count()) { await 찾기.first().fill(제목); await p.waitForTimeout(700) }
+  // ⛔ 찾기 위의 「'제목' — 내 레시피 N개」 안내문이 아니라 «카드»(맨 뒤)를 누른다
+  await p.getByText(제목,{exact:false}).last().click()
+  await p.waitForSelector('.memo-note',{timeout:10000})
   const r=await p.evaluate(()=>{const el=[...document.querySelectorAll('.memo-note')].pop()
   const bg=getComputedStyle(el).backgroundImage
   return {종이:(bg.match(/pn\d{3}/)||[null])[0], 머리:el.querySelector('.memo-note-head span')?.textContent||'',

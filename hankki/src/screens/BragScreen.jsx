@@ -10,6 +10,7 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import Icon from '../components/Icon'
 import { matchKo } from '../utils'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
+import { 자랑보냄, 자랑고름, 자랑사진저장, 자랑보내기누름, 자랑창닫음 } from '../stats'   // 🚪 [2026-09-21] brag_pick · brag_saved_fallback — «고르고 돌아선 사람»과 «폰 탓»을 가른다
 // 🗄 「표지 그림이 큰 창고에 있나」 — 찍기 전에 기다릴지 정하는 잣대(2026-09-03)
 import { 창고에있나 } from '../photoStore'
 import { warmFontCSS } from '../fontEmbed'
@@ -26,6 +27,8 @@ import uiGomProud from '../assets/ui/wave/gom_proud.png' // 🐻 꼬르곰(뿌�
 import TabTips from '../components/TabTips'
 import TabTalk from '../components/TabTalk'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
+import SeasonHeadCut from '../components/SeasonHeadCut.jsx'
+import { 정렬값 } from '../data/seed'
 
 // 🎴 카드자랑 탭 — 바이럴 진입점. 내 레시피를 골라 자랑한다.
 // ⭐ 창업자 방향: 주인공은 '내가 꾸민 표지', 랜덤 카드는 옵션(메인 아님).
@@ -78,7 +81,11 @@ export default function BragScreen() {
   //   ⛔ 카드를 우리가 대신 닫지도 않는다 — 「표지로 저장」이 아직 거기 있다. **뺏지 않는다.**
   //   ⭐ `useModalBack(onClose)` 덕에 뒤로가기로 닫아도 `onClose` 를 타므로 새는 길이 없다.
   const [askReview, setAskReview] = useState(null) // 머리글 글자를 담는다(null = 안 뜸)
-  const 자랑보냄 = useRef(false)
+  // 🔴🔴 [2026-09-21 버그] 이 useRef 가 위 13줄의 «계측 함수 자랑보냄»과 «같은 이름»이었다.
+  //    컴포넌트 안에서는 이 줄이 이겨서 190줄 `자랑보냄()` 이 useRef 객체를 불렀고 → TypeError → catch 가 삼켰다.
+  //    ＝ 레꾸자랑을 보내도 brag_shared 가 «한 번도» 안 나갔다. 문서엔 「며칠째 0」이라 적혀 있었고 「인기 없다」로 읽었다.
+  //    ✅ 이름을 갈랐다. 🛡 같은 사고는 scripts/check-계측겹침.mjs 가 막는다.
+  const 보냈나 = useRef(false)
   const [coach, setCoach] = useState(() => needsCoach(BRAG_COACH_KEY))
   const coverRef = useRef(null) // 꾸민 표지 캡처용(화면 밖 숨은 레이어)
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
@@ -91,7 +98,7 @@ export default function BragScreen() {
   const [q, setQ] = useState('')
   const query = q.trim().toLowerCase()
   const sorted = useMemo(
-    () => recipes.filter((r) => r.status === 'sorted').sort((a, b) => b.savedAt - a.savedAt),
+    () => recipes.filter((r) => r.status === 'sorted').sort((a, b) => 정렬값(b) - 정렬값(a)),
     [recipes],
   )
   // 초성으로도 찾는다 — 「ㄱㅂ」으로 「김밥」이 걸린다(`matchKo`, 장보기 탭과 같은 함수)
@@ -161,6 +168,7 @@ export default function BragScreen() {
       nav.showToast('먼저 표지를 예쁘게 꾸며볼까요?')
       return
     }
+    try { 자랑보내기누름() } catch { /* 통계가 죽어도 자랑은 된다 */ }   // 📊 [2026-09-24] 고르고(brag_pick) → «눌렀다»
     const prepared = prepRef.current // ⛔ 시트가 뜰 때 시작한 미리 캡처를 손에 쥔다
     setBusy(true) // 로딩 오버레이(먹통처럼 안 보이게)
     const info = infoOf(r)
@@ -182,8 +190,13 @@ export default function BragScreen() {
       else if (res && res.shared === true && res.다음) 띄울시트 = { ...res.다음, 이어보내기: true }
       // 🎁 레꾸자랑을 «진짜로» 보냈다 — 평생 1회(서버가 판정)
       //   ⛔ 실패·저장 폴백에는 안 준다 — 「보내기」를 해본 게 아니다
+      // 📊 [2026-09-14] «진짜로 보냈을 때만» 센다 — 열쇠 조건과 똑같은 자리다.
+      //   ⛔ 열쇠받기() «안»이 아니라 «밖»이다 — 열쇠는 평생 한 번, 통계는 매번 세야 한다.
+      //   ⛔ 취소(AbortError)·사진 저장 폴백은 `shared: false` 라 여기 안 들어온다(shareCover.js:232·235·244).
+      if (res && res.shared === true) { try { 자랑보냄() } catch { /* 통계가 죽어도 자랑은 된다 */ } }
       if (res && res.shared === true) 열쇠받기(EARN.자랑).then((받음) => { if (받음) nav.showToast(`레꾸자랑을 처음 보냈어요 · ${KEY_NAME} 1${KEY_UNIT}를 더 받았어요`, 5200) })
-      else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
+      else if (res && res.취소) { try { 자랑창닫음() } catch { /* noop */ } }   // 🙅 [2026-09-24] 닫은 것 — ⛔「사진으로 저장했어요」라고 말하지 않는다
+      else if (res && res.ok && res.shared === false) { try { 자랑사진저장() } catch { /* noop */ } nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요') }   // 🚪 brag_saved_fallback — 폰 탓이지 사람 탓이 아니다
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
       // 🗣🗣 **여기가 빠져 있었다** — 창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 «아예» 못봤어"*
       //   ⛔⛔ 리뷰 청하기가 «랜덤 카드» 길에만 붙어 있었다(`ShareDrawCard` 의 `onShared`).
@@ -194,15 +207,15 @@ export default function BragScreen() {
       //      ⭐ 「한 곳만 감쌌다」는 말이 맞으려면 **그 한 곳을 모든 길이 지나가야** 한다.
       //   ✅ 조건 = **`shared === true` 일 때만**(`shareCover.js` 206·210줄).
       //      취소(AbortError)·사진 저장·허가 끊김은 전부 `shared: false` 라 저절로 걸러진다.
-      if (res && res.shared === true) 자랑보냄.current = true
+      if (res && res.shared === true) 보냈나.current = true
     } finally {
       setBusy(false)
       setPick(null)
       // ⛔ 시트를 닫은 «뒤»에 띄운다 — 시트 위에 시트를 겹치지 않는다(2026-08-27 에 지킨 것 ⑴)
       if (띄울시트) setPending(띄울시트) // 📱 리뷰는 이 시트의 `onClose` 가 청한다(아래)
       else {
-        if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-        자랑보냄.current = false
+        if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+        보냈나.current = false
       }
     }
   }
@@ -218,8 +231,8 @@ export default function BragScreen() {
               ⭐ 컷 이름 그대로 «뿌듯한» 꼬르곰 — 자랑 탭에 뜻이 딱 맞는다(별 두 개도 붙어 있다).
               🧍‍♀️ [2026-08-14 확정] 캐릭터는 **글자 «왼쪽»** — 창업자 *"캐릭터는 같은방향에넣자.왼쪽으로"*
                  ⛔ 전엔 여기만 제목 «뒤»였다(레시피·일기·홈은 앞). 의도가 아니라 「글씨옆에」를 뒤로 읽은 것. */}
-          <img src={uiGomProud} alt="" draggable={false} width={29} height={44} className="hk-m-tongtong"
-            style={{ display: 'block', objectFit: 'contain', margin: '-5px 0' }} />
+          {/* 🎑🎃 명절엔 명절 컷으로 바뀐다. */}
+          <SeasonHeadCut 탭="brag" 기본={uiGomProud} 폭={29} 높이={44} 여백={-5} 모션="hk-m-tongtong" />
           <div className="h-title">레꾸자랑</div>
         </div>
         {/* 🎀 [2026-08-18 창업자 제보] *"레꾸자랑은 도움말이 없네?"* — 여섯 탭 중 여기만 없었다. */}
@@ -295,7 +308,7 @@ export default function BragScreen() {
                 ⛔ 이 주석을 `) : (` 바로 뒤로 올리지 말 것 — 표현식 여는 자리라 빌드가 깨진다(실제로 깨뜨렸다). */}
             {list.map((r, i) => (
               <div key={r.id} className="grid-card" {...(i === 0 ? { 'data-coach': 'brag-list' } : {})}>
-                <button className="press" style={{ textAlign: 'left', width: '100%' }} onClick={() => setPick(r)} aria-label={`${r.title} 자랑하기`}>
+                <button className="press" style={{ textAlign: 'left', width: '100%' }} onClick={() => { try { 자랑고름() } catch { /* noop */ } setPick(r) }} aria-label={`${r.title} 자랑하기`}>
                   <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                   <div className="name">{r.title}</div>
                 </button>
@@ -337,14 +350,14 @@ export default function BragScreen() {
              ⭐ 랜덤 카드(`ShareDrawCard`)와 «같은 모양»으로 맞췄다 — 보낼 때 표시하고, 닫을 때 청한다. */}
       <SendNowSheet
         pending={pending}
-        onShared={() => { 자랑보냄.current = true }}
+        onShared={() => { if (!pending?.이어보내기) { try { 자랑보냄('표지') } catch { /* 통계가 죽어도 자랑은 된다 */ } } 보냈나.current = true }}   // ⛔ 이어보내기(레시피 두 번째 장)는 같은 자랑이라 안 센다
         onClose={(다음) => {
           // 📱 [2026-08-28 ⓑ] 「지금 보내기」로 표지가 나갔고 레시피가 남았으면 **한 장 더**를 먼저 청한다.
           //    ⛔ 리뷰는 그다음이다 — 시트 위에 시트를 겹치지 않는다.
           if (다음) { setPending({ ...다음, 이어보내기: true }); return }
           setPending(null)
-          if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-          자랑보냄.current = false
+          if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+          보냈나.current = false
         }}
       />
 
@@ -353,11 +366,12 @@ export default function BragScreen() {
         <Portal>
           <ShareDrawCard
             recipe={share}
-            onShared={() => { 자랑보냄.current = true }}
+            onShared={() => { try { 자랑보냄('랜덤') } catch { /* 통계가 죽어도 자랑은 된다 */ } 보냈나.current = true }}
+            onTap={자랑보내기누름} onCancel={자랑창닫음} onSavedFallback={자랑사진저장}
             onClose={() => {
               setShare(null)
-              if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-              자랑보냄.current = false
+              if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+              보냈나.current = false
             }}
             onSaveCover={(img) => { const 말 = 카드표지토스트(share); updateRecipe(share.id, 카드표지로(img)); nav.showToast(말) }}
           />

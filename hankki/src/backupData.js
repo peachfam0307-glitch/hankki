@@ -68,3 +68,4 @@ export async function 백업만들기(store) {
     coverV: store.coverV, sampleGone: store.sampleGone,
   }
 }
+

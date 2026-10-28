@@ -39,7 +39,8 @@ const ROOT = new URL('..', import.meta.url).pathname
 // 🔑 ⭐ 이름은 «앱에서 읽는다» — 판이 글자로 박으면 이름이 바뀔 때마다 판이 낡는다(절대원칙 30).
 //    2026-08-24 「AI 스캔 N회」→「레시피열쇠 N개」로 갈 때 이 판이 통째로 죽어서 드러났다.
 //    ⭐ 그때 게이트가 «맞게» 걸린 것이다 — 다만 다음엔 안 죽게 여기서 뽑아 쓴다.
-const OCR봉 = readFileSync(join(ROOT, 'src/ocr.js'), 'utf8')
+// ⭐ 이름·단위는 src/열쇠이름.js 한 곳에 있다 — ocr.js 가 그대로 다시 내보낸다 [2026-09-09]
+const OCR봉 = readFileSync(join(ROOT, 'src/열쇠이름.js'), 'utf8')
 const 뽑기 = (이름) => {
   const m = OCR봉.match(new RegExp(`export const ${이름} = '([^']+)'`))
   if (!m) { console.log(`⛔ src/ocr.js 에서 ${이름} 을 못 찾았다 — 판을 못 만든다`); process.exit(1) }
@@ -240,7 +241,10 @@ writeFileSync(join(OUT, '3-냉장고.png'), await page.screenshot({ fullPage: tr
 console.log('\n── ④ 공유받기 · 잔량을 알리나 (소스) ──')
 const app = readFileSync(join(ROOT, 'src/App.jsx'), 'utf8')
 chk('⑰ App.jsx 가 잔량(getOcrLeft)을 읽어 온다', /import\s*\{[^}]*getOcrLeft/.test(app))
-chk('⑱ 사진을 읽은 뒤 토스트에 「남았어요」를 싣는다', /읽어 채웠어요[^\n]*남았어요/.test(app))
+// ⭐ [2026-09-09] 잔량 문장이 «안내말.js 한 곳»에서 온다 — App 은 그걸 실어 나르기만 한다.
+//    ⛔ 그래서 App 글자에서 「남았어요」를 찾으면 «영영» 못 찾는다. 두 가지를 나눠 잰다.
+chk('⑱ 사진을 읽은 뒤 토스트에 「남았어요」를 싣는다',
+  /읽어 채웠어요[^\n]*남은말/.test(app) && /남았어요/.test(readFileSync(join(ROOT, 'src/안내말.js'), 'utf8')))
 // ⛔ 서버가 한 번도 답한 적 없으면(unknown) 숫자를 적으면 안 된다 —
 //    그때 숫자를 적으면 «안 써 봤을 때의 기본값 20»을 사실처럼 말하게 된다(규칙 15).
 chk('⑲ ⛔unknown 이면 숫자를 «안» 적는다', /left\.unknown/.test(app))

@@ -36,7 +36,11 @@ await new Promise((r) => setTimeout(r, 900))
 const { basicRecipes, BASICS_VERSION } = await import('../src/data/basics.js')
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const now = Date.now()
-const state = { recipes: basicRecipes.map((r, i) => ({ ...r, status: 'sorted', savedAt: now - i * 60000 })), seedV: BASICS_VERSION }
+// ⛔⛔ [2026-09-10] 「내」 레시피를 한 편 심는다 — **기본 레시피는 «내 것»으로 안 센다**(`nudges.js` myRecipeCount).
+//    까닭 = 창업자 확정 2026-09-10 으로 **레시피가 0개인 사람에겐 소식 팝업이 안 뜬다.**
+//    이 재현판이 재는 건 «팝업 «안»에 뭐가 있나» 이므로, 팝업이 뜨는 사람을 세워야 한다.
+const 내것 = { id: 'mine-1', title: '내가 담은 레시피', status: 'sorted', savedAt: now + 1000, ingredients: [], steps: [] }
+const state = { recipes: [내것, ...basicRecipes.map((r, i) => ({ ...r, status: 'sorted', savedAt: now - i * 60000 }))], seedV: BASICS_VERSION }
 
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
 const ctx = await b.newContext({ viewport: { width: 411, height: 891 }, timezoneId: 'Asia/Seoul', locale: 'ko-KR' })
@@ -152,6 +156,32 @@ if (왔나) {
     const 옛 = Number(쪽꾸[1]) + Number(선물줄[2])
     적기(!new RegExp(`꾸미기\\s*${옛}\\s*종`).test(쪽글), `꾸미기 종수에 선물 ${선물줄[2]}종이 «안» 섞였다 (섞였으면 ${옛}종이 된다)`)
   }
+}
+
+// ── 🚫 [창업자 확정 2026-09-10] 레시피가 «하나도 없는» 사람에겐 팝업이 «안» 뜬다 ──
+//    🔢 왜 = 2026-09-10 첫사람 캡처판에서, 앱을 깐 첫날 레시피 0개인 사람 앞을
+//       「꾸미기에 가을이 왔어요」 시트가 통째로 덮었다. 꾸밀 게 없는 사람에게 꾸미기 소식은 아직 이르다.
+//    ⛔ 이 칸이 없으면 다음 사람이 «팝업이 안 뜬다»를 고장으로 보고 되돌린다.
+console.log('\n── 첫 사람(레시피 0편) ──')
+{
+  const ctx2 = await b.newContext({ viewport: { width: 411, height: 891 }, timezoneId: 'Asia/Seoul', locale: 'ko-KR' })
+  await ctx2.addInitScript({ content: SEED_COACH_SEEN })
+  await ctx2.addInitScript(`{
+    const 그날 = new Date('${그날}T09:00:00+09:00').getTime()
+    const O = Date
+    class F extends O { constructor(...a){ return a.length ? new O(...a) : new O(그날) } static now(){ return 그날 } }
+    Date = F
+  }`)
+  const p2 = await ctx2.newPage()
+  await p2.goto(`http://127.0.0.1:${PORT}/`)
+  // ⛔ 기본 레시피만 심는다 — 그건 «내 것»으로 안 센다(myRecipeCount)
+  await p2.evaluate((s) => { localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1') },
+    { recipes: basicRecipes.map((r, i) => ({ ...r, status: 'sorted', savedAt: now - i * 60000 })), seedV: BASICS_VERSION })
+  await p2.goto(`http://127.0.0.1:${PORT}/`)
+  await p2.waitForTimeout(1800)
+  const 팝업2 = p2.locator('.sheet-mask')
+  적기(await 팝업2.count() === 0, '레시피 0편이면 소식 팝업이 «안» 뜬다')
+  await ctx2.close()
 }
 
 await b.close(); srv.kill()

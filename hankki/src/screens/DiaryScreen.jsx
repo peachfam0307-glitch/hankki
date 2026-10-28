@@ -16,6 +16,7 @@ import { fitImage } from '../utils'
 import LockSheet from '../components/LockSheet'
 import { isDayOpen, unlockDay, forgetDay, hasPin } from '../diaryLock'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
+import { 일기생김 } from '../stats'
 
 // 📔📔 다이어리 — 「그날」 한 장. (창업자 확정 2026-08-06)
 //
@@ -118,6 +119,9 @@ export default function DiaryScreen({ day }) {
     addDiary({ id: newId(), kind: 'diary', at: date.getTime(), paper: pick, decor: [], note: '', ...patch })
     // 🎁 일기를 처음 썼다 — 평생 1회(서버가 판정)
     열쇠받기(EARN.일기).then((받음) => { if (받음) nav.showToast(`일기를 처음 썼어요 · ${KEY_NAME} 1${KEY_UNIT}를 더 받았어요`, 5200) })
+    // 📊 [2026-09-12] 새 일기가 생겼다 — ⛔열쇠받기 «바깥»이다(열쇠는 평생 1회, 통계는 매번).
+    //    ⚠️ 종이만 골라도 여기로 온다(choose → save) — 이름을 「썼다」가 아니라 「생겼다」로 둔 이유다.
+    일기생김()
   }
   const choose = (next) => { setPick(next); save({ paper: next }) }
 

@@ -82,16 +82,22 @@ for (const [이름, cmd] of 통과해야) {
 
 console.log('\n  ⑶ 이미 뱉은 답을 재는 자리 (PostToolUse)')
 {
-  const 큰답 = { tool_name: 'Bash', tool_response: { stdout: 'ㄱ'.repeat(30000) } } // ≈90,000 B
+  // ⛔⛔ [2026-09-10] 칸마다 «자기 세션 이름»을 준다.
+  //    까닭 = 게이트는 「턴 합계」를 세션 이름별 파일(/tmp/hankki-bigout-turn-<세션>)에 쌓는다.
+  //    이름을 안 주면 셋이 «nosid» 한 통을 같이 쓴다 → 앞 칸의 90,000 B 가 남아
+  //    다음 칸의 «작은 답»이 턴 합계로 걸린다. 실제로 2026-09-10 스모크에서 그렇게 죽었다.
+  //    ⭐ 「합계를 재는 것」은 ⑷ 가 따로 맡는다. 여기 셋은 «답 하나»만 재는 자리다.
+  const 방 = (n) => `repro3-${process.pid}-${n}`
+  const 큰답 = { session_id: 방(1), tool_name: 'Bash', tool_response: { stdout: 'ㄱ'.repeat(30000) } } // ≈90,000 B
   const r = 눌러보기(큰답, 'after')
   적기(r.종료값 === 2, '6만 B 넘는 답 → 멈춘다', r.종료값 === 2 ? '' : `종료값 ${r.종료값}`)
 
-  const 작은답 = { tool_name: 'Bash', tool_response: { stdout: '잘 됐다' } }
+  const 작은답 = { session_id: 방(2), tool_name: 'Bash', tool_response: { stdout: '잘 됐다' } }
   const r2 = 눌러보기(작은답, 'after')
   적기(r2.종료값 === 0, '작은 답 → 조용히 통과', r2.종료값 === 0 ? '' : `종료값 ${r2.종료값}`)
 
   // ⛔ 못 재는 모양이 와도 «막다른 길»이 되면 안 된다 — 0 으로 보고 통과해야 한다
-  const 모를답 = { tool_name: 'Bash' }
+  const 모를답 = { session_id: 방(3), tool_name: 'Bash' }
   const r3 = 눌러보기(모를답, 'after')
   적기(r3.종료값 === 0, '답을 못 찾으면 통과(막다른 길 방지)', r3.종료값 === 0 ? '' : `종료값 ${r3.종료값}`)
 
@@ -100,7 +106,7 @@ console.log('\n  ⑶ 이미 뱉은 답을 재는 자리 (PostToolUse)')
   //    👉 여기서 막아도 되돌릴 수도, 좁혀 다시 부를 수도 없다 — 그건 잔소리다.
   //    ⭐ 이 게이트는 «좁혀서 다시 부를 수 있는» 도구에만 값어치가 있다.
   for (const 도구 of ['Edit', 'Write', 'MultiEdit', 'NotebookEdit']) {
-    const r4 = 눌러보기({ tool_name: 도구, tool_response: { content: 'ㄱ'.repeat(30000) } }, 'after')
+    const r4 = 눌러보기({ session_id: 방(`e-${도구}`), tool_name: 도구, tool_response: { content: 'ㄱ'.repeat(30000) } }, 'after')
     적기(r4.종료값 === 0, `${도구} 큰 답 → 통과(고칠 수 없는 건 안 막는다)`, r4.종료값 === 0 ? '' : `종료값 ${r4.종료값}`)
   }
 }
@@ -121,6 +127,18 @@ console.log('\n  ⑷ «턴 합계» (2026-09-07 창업자 캡처 = Messages 1.3M
   눌러보기({ session_id: sid }, 'reset')
   const r6 = 눌러보기(답(55000 / 3 | 0), 'after')
   적기(r6.종료값 === 0, '창업자가 말하면(reset) 새 턴 → 조용', r6.종료값 === 0 ? '' : `종료값 ${r6.종료값}`)
+}
+
+console.log('\n  ⑸ «그림 오탐» (2026-09-07 · 615KB 비교 그림 한 장이 600KB 답으로 잡혀 턴을 멈췄다)')
+{
+  const sid = 'repro-img-' + process.pid
+  눌러보기({ session_id: sid }, 'reset')
+  const 그림 = { session_id: sid, tool_name: 'Read', tool_response: [{ type: 'image', source: { type: 'base64', media_type: 'image/png', data: 'A'.repeat(700000) } }] }
+  const r1 = 눌러보기(그림, 'after')
+  적기(r1.종료값 === 0, '700KB 그림 한 장 → 글자가 아니라 조용히 통과', r1.종료값 === 0 ? '' : `종료값 ${r1.종료값}`)
+  const 여러장 = [...Array(4)].map(() => 눌러보기(그림, 'after').종료값)
+  적기(여러장.every((v) => v === 0), '그림 다섯 장(3.5MB)도 합계로 안 잡힌다(장당 6,000 B 로 친다)', 여러장.join(','))
+  눌러보기({ session_id: sid }, 'reset')
 }
 
 if (틀림) {

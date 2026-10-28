@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useReducer, useCallback, useRef } from 'react'
-import { seedRecipes } from './data/seed'
-import { basicRecipes, BASICS_VERSION } from './data/basics'
+import { seedRecipes, 열린때 } from './data/seed'
+import { basicRecipes, allBasicRecipes, BASICS_VERSION } from './data/basics'
+import { 거울쓰기 } from './pantryExpiry.js'   // 🔔🧊 알림 «얹기» 거울 — 저장 자리에서 매번(2026-09-19)
+import { 유통기한날짜맞추기 } from './pushSubscribe.js'   // 🔔📅 D-2 «따로» 알림 — 날짜만 워커로(2026-09-20)
+// 🥬 재료 이름 → 파트너스 링크 (2026-09-12 창업자 *"장보기에 들어가는 것도 다 붙이자"*)
+//   ⭐ **담는 길이 여기 하나로 모인다** — 레시피 「재료 담기」·장보기 자유 입력·어디서 담든
+//      이 자리를 지나므로, 링크를 여기서 붙이면 화면마다 따로 손댈 곳이 없다.
+import { ingLink, 담을만한가 } from './data/ingLinks'
+import { todayKST } from './today'
 import { makeSampleDiary, SAMPLE_DIARY_ID, SAMPLE_READY } from './data/sampleDiary'
 // ⛔ `FOOD_ICON_GROUPS` 를 빠뜨리면 v96 패스가 ReferenceError 로 죽고
 //    **그 앞의 v13·v34·v38·v88 마이그레이션까지 통째로 안 돈다**(같은 함수 안이라서).
@@ -11,6 +18,8 @@ import { politeSteps, politeFormalSteps } from './polish'
 import { pickPaper } from './memoPaper'
 // 🗄 사진은 「큰 창고」로 — 서랍(localStorage 5MB)엔 글자만 남긴다
 import { 나누기, 여럿넣기, 지우기 as 창고에서지우기, 쪽지열쇠모으기, 열쇠들 as 창고열쇠들 } from './photoStore'
+// 🪞🍎 아이폰 «앱» 안에서만 — 저장될 때마다 폰 문서 폴더에 거울을 예약한다(앱 밖이면 0 비용 · 2026-09-08 큰 틀 5)
+import { 거울예약 } from './mirror'
 
 const KEY = 'hankki:v1'
 // 💾💾 **「저장이 진짜로 됐나」 — 화면이 물어볼 수 있게 밖으로 낸다** (창업자 확정 2026-09-02)
@@ -50,6 +59,28 @@ const PROFILE_DEFAULT = { name: '한끼러버', bio: '맛있는 한 끼로 행�
 // 장보기 쇼핑몰 바로가기 기본 목록. url = 홈, search = 재료 검색(‘{q}’에 재료명 치환).
 // 나중에 제휴(어필리에이트) 태그를 이 url/search에 붙이면 그대로 수수료 링크가 됨.
 // iconType: 'emoji' | 'label'(글자 타일). 재료 아이콘과 동일한 방식.
+// 🏪🏪 식비 「가서 보고 와서 적기」 기본 목록 (창업자 확정 2026-09-17 = *"쿠팡 컬리 네이버쇼핑, 롯데마트 이마트, 쿠팡츠 배민 요기요 정도면 될까"*)
+//   ⭐ 유저가 «편집으로 더하고 지운다» — 자주 쓰는 곳은 «누른 순서»로 저절로 앞에 온다(손으로 끌어 옮기지 않아도 된다).
+//   🛒 쿠팡은 **파트너스 링크가 아니라 그냥 주소**다 — 누르면 24시간 개인 구매가 실적에 섞이기 때문(절대원칙 2026-09-15).
+//      ⏳ 유저에게 열 때 파트너스 링크로 바꾼다(창업자 *"유저들은 링크로. 그래야 우리도 수익이 나지"*) — 단축코드는 창업자가 만든다.
+//   ⚠️ 주소는 2026-09-17 에 찾아 적었다. 이 환경은 사람이 보는 웹을 못 열어 «눌러보진 못했다» — 틀리면 편집으로 고친다.
+const 기본식비가게 = [
+  // 🛒 [창업자가 준 단축코드 2026-09-18] 쿠팡 홈 파트너스 링크 — 유저가 누르면 «우리 수익»이 된다.
+  //    ⛔ 창업자 폰에서는 `파트너스문()` 이 그냥 쿠팡 주소로 바꿔 보낸다(24시간 규칙에 안 걸리게).
+  //    ⛔ 링크는 코드가 못 만든다 — 규칙 없는 단축코드라 «받아서» 박는다(`ingLinks.js` 와 같다).
+  { id: 'cs_coupang', name: '쿠팡', url: 'https://link.coupang.com/a/g8XUHyeW96', k: 'shop' },
+  { id: 'cs_kurly', name: '마켓컬리', url: 'https://www.kurly.com', k: 'shop' },
+  { id: 'cs_naver', name: '네이버쇼핑', url: 'https://shopping.naver.com', k: 'shop' },
+  { id: 'cs_lottemart', name: '롯데마트', url: 'https://lottemartzetta.com', k: 'shop' },
+  { id: 'cs_emart', name: '이마트몰', url: 'https://emart.ssg.com', k: 'shop' },
+  // 🌱 [창업자 2026-09-18] 자연드림 — ⛔대표(icoop.or.kr)가 아니라 «장보기몰» 주소다.
+  //    📮 창업자 = *"자연드림은 장보기링크를 따로 따야해 지금은 대표로 들어사져"* → 그 자리에서 주소를 받았다.
+  { id: 'cs_icoop', name: '자연드림', url: 'https://icoop.or.kr/coopmall/shopMain.phtm', k: 'shop' },
+  { id: 'cs_eats', name: '쿠팡이츠', url: 'https://www.coupangeats.com', k: 'out' },
+  { id: 'cs_baemin', name: '배달의민족', url: 'https://baemin.com', k: 'out' },
+  { id: 'cs_yogiyo', name: '요기요', url: 'https://www.yogiyo.co.kr/mobile/', k: 'out' },
+]
+
 const DEFAULT_SHOPS = [
   { id: 'coupang', name: '쿠팡', icon: 'box', iconType: 'icon', url: 'https://www.coupang.com', search: 'https://www.coupang.com/np/search?q={q}' },
   { id: 'kurly', name: '마켓컬리', icon: 'bag', iconType: 'icon', url: 'https://www.kurly.com', search: 'https://www.kurly.com/search?sword={q}' },
@@ -161,16 +192,27 @@ function migrateBasics(saved) {
   const opened = basicRecipes.filter((r) => !have.has(r.id) && !dead.has(r.id) && !haveTitles.has(r.title))
   if (v >= BASICS_VERSION) {
     return opened.length
-      ? { recipes: [...saved.recipes, ...opened.map((r, i) => ({ ...r, savedAt: Date.now() - i * 60000 }))], seedV: v }
+      ? { recipes: [...saved.recipes, ...opened.map((r, i) => ({ ...r, savedAt: 열린때(r, i) }))], seedV: v }
       : { recipes: saved.recipes, seedV: v }
   }
   const add = basicRecipes
     // 같은 제목의 레시피가 이미 있으면 넣지 않는다 (예전 예시의 김치볶음밥 등과 중복 방지)
     .filter((r) => !have.has(r.id) && !dead.has(r.id) && !haveTitles.has(r.title))
-    .map((r, i) => ({ ...r, savedAt: Date.now() - i * 60000 }))
+    .map((r, i) => ({ ...r, savedAt: 열린때(r, i) }))
+  // 🕘🕘 [창업자 제보 2026-09-10] 「최신 레시피가 제일 아래야」 — **이미 깔린 폰도 고친다**(규칙 18ⓙ).
+  //   ⛔ 새로 까는 사람만 고치면 «지금 쓰는 사람»은 영영 거꾸로 본다. 옛 savedAt 이 폰에 이미 저장돼 있다.
+  //   ✅ 기본 레시피(basic-*)의 savedAt 만 「열린 날짜」로 다시 찍는다.
+  //   ⛔⛔ 유저가 «직접 저장한» 레시피는 한 개도 안 건드린다 — 그 savedAt 은 진짜 저장 시각이다.
+  //   ⭐ 내용은 한 글자도 안 바뀐다(줄 세우는 값만 고친다) — 유저가 고쳐 둔 기본 레시피도 안전하다.
+  const 자리 = new Map(basicRecipes.map((r, i) => [r.id, i]))
+  const 시각고침 = saved.recipes.map((r) =>
+    r && String(r.id).startsWith('basic-') && 자리.has(r.id)
+      ? { ...r, savedAt: 열린때(r, 자리.get(r.id)) }
+      : r
+  )
   // 기존 기본 레시피에 새 표지 사진 입히기 — 아직 사진이 없는(기본 아이콘) 것만.
   // (사용자가 직접 넣은 사진/커스텀은 건드리지 않는다)
-  const withPhotos = saved.recipes.map((r) =>
+  const withPhotos = 시각고침.map((r) =>
     r && BASIC_PHOTOS[r.id] && r.thumb !== 'photo' && r.thumb !== 'none' && !r.image
       ? { ...r, thumb: 'photo', image: BASIC_PHOTOS[r.id] }
       : r
@@ -216,7 +258,19 @@ function migrateBasics(saved) {
   // v13: 기본 제공 레시피의 '내용'(제목·재료·순서·메모·태그·아이콘·카테고리·표지 등)을
   // 최신 큐레이션으로 다시 맞춘다. 단, 사용자가 직접 편집한 레시피(touched)와
   // 개인 상태(즐겨찾기·요리횟수·꾸미기·직접 넣은 표지사진)는 그대로 보존한다.
-  const seedById = new Map(basicRecipes.map((s) => [s.id, s]))
+  // 🚨🚨 [2026-09-16 · 창업자 폰 캡처가 잡았다] **여기가 `basicRecipes` 였다 — 그게 뿌리다.**
+  //   📮 창업자 = 두부참치찌개를 열었더니 **옛 판**(물 450ml · 올리고당 · 참기름 · 깨)이 떠 있었다.
+  //      오늘 재료도 만드는 법도 통째로 갈아엎고 BASICS_VERSION 을 160까지 올렸는데 **한 글자도 안 바뀌었다.**
+  //   🌲 **`basicRecipes` 는 「`from` 이 지난 편」만 내준다**(99편). 전체는 `allBasicRecipes`(203편)다.
+  //      두부참치찌개는 `from: '2026-10-12'` 라 **아직 씨앗 목록에 없다.**
+  //      → 아래 표들이 전부 `seedById.has(r.id)` 로 걸러내니 **그 편은 아무도 못 고친다. 영영.**
+  //   ⭐⭐ **「폰엔 있는데 씨앗엔 없는 편」이 생긴다** — 한 번 열렸다가 여는 날짜를 뒤로 민 편이 그렇다.
+  //      (두부참치찌개가 정확히 그 경우다 — 예전에 열렸고, 오늘 고치며 10/12 자리로 되돌렸다)
+  //      ⛔ 그런 편은 **유저 폰에 남아 계속 보이는데** 갱신만 안 닿는다. 제일 나쁜 모양이다.
+  //   ✅ 그래서 **고칠 때는 전체를 본다**(`allBasicRecipes`).
+  //      ⛔ **「새로 넣는 것」은 그대로 `basicRecipes` 다**(위 `add`·`opened`) — 안 열린 편을 당겨 열지 않는다.
+  //         📌 **「고치기」와 「열기」는 다른 일이다.** 이 줄은 «고치기»에만 쓴다.
+  const seedById = new Map(allBasicRecipes.map((s) => [s.id, s]))
   fixed = fixed.map((r) => {
     if (!r || r.touched || !seedById.has(r.id)) return r
     const s = seedById.get(r.id)
@@ -247,6 +301,16 @@ function migrateBasics(saved) {
       cooked: r.cooked,
       cookedAt: r.cookedAt,
       savedAt: r.savedAt,
+      // 🗂🗂 [2026-09-14] **유저가 옮겨 둔 폴더는 유저 것이다.**
+      //   ⛔⛔ 그 전엔 이 줄이 없어서 `{ ...s }` 가 씨앗 폴더로 통째로 덮었다 →
+      //      **BASICS_VERSION 을 올릴 때마다 「내가 옮겨 둔 자리」가 날아갔다.**
+      //      📌 재현판(_repro-나라와종류-0914 ⑦)이 잡았다. 처음엔 씨앗과 «같은» 값을 심어 재는 바람에
+      //         덮여도 티가 안 나 «가짜 초록불»이 났었다 — 다른 값을 심으니 그제서야 드러났다.
+      //   ⭐ 갈래(category)는 «우리»가 정한다(검수 확인사항 ④) → 씨앗이 이긴다.
+      //      폴더(folder)는 «유저»가 옮기는 자리 → 유저가 이긴다. **둘은 주인이 다르다.**
+      //   ⛔ 유저가 아무 데도 안 옮겼으면(빈 값) 씨앗 것을 그대로 쓴다 —
+      //      「보존」과 「덮어쓰기」는 다르다, 없는 값으로 덮으면 그건 지우는 것이다(2026-08-04 교훈).
+      folder: r.folder || s.folder,
       // 🐛🐛 2026-08-04 — 여기서 «빈 표지» 사고가 났다 (창업자 폰 캡처).
       //   예전엔 `decor: r.decor` 로 **무조건** 유저 값을 얹었다. 유저가 안 꾸민 레시피는
       //   `r.decor` 가 없으니 시드가 들고 온 꾸미기가 **덮여서 사라지고**,
@@ -287,6 +351,29 @@ function migrateBasics(saved) {
     if (!r || !r.touched || !seedById.has(r.id)) return r
     const s = seedById.get(r.id)
     return { ...r, ingredients: s.ingredients, memo: s.memo }
+  })
+  // 🍲🍲 v161 (2026-09-16) — **v31 이 「재료」만 덮고 «만드는 법»을 안 덮었다.**
+  //   📮 창업자 폰 캡처 = 두부참치찌개가 **옛 판**(물 450ml · 올리고당 · 참기름 · 깨)으로 떠 있었다.
+  //   ⛔⛔ 뿌리 = 위 v31 은 손댄 편(`touched`)에 대해 `ingredients` 와 `memo` «둘만» 갈아끼운다.
+  //      그런데 오늘 고친 넷(두부참치찌개·볶음밥·꼬치전·잡채)은 **만드는 법을 통째로 갈아엎은 편**들이다.
+  //      → 재료만 새것이 되고 걸음은 옛것으로 남으면 **둘이 어긋난 「섞인 판」**이 된다.
+  //         (재료엔 해물가루육수가 있는데 걸음엔 없고, 걸음은 450ml를 끓이라고 한다)
+  //   📌 9/12 가지 사고와 **같은 자리**다 — 「재료만 바꾸면 만드는 법이 거짓말이 된다」.
+  //      그때는 내가 손으로 안 고쳐서 났고, 이번엔 **코드가 절반만 고쳐서** 났다.
+  //   ✅ 그래서 시드가 **만드는 법·시간·인분·난이도**까지 들고 오게 한다.
+  //      ⛔ 개인 것은 하나도 안 건드린다 — 즐겨찾기·요리횟수·꾸미기·표지·폴더·저장시각은 여기 없다.
+  //      ⛔ `touched` 딱지도 그대로 둔다 — 「유저가 손댄 편」이라는 사실은 지워지지 않는다.
+  //      ⛔ 제목은 «일부러» 뺐다 — 유저가 이름을 바꿔 부르는 건 그 사람 것이다(v10 알리오 올리오 자리와 같다).
+  fixed = fixed.map((r) => {
+    if (!r || !r.touched || !seedById.has(r.id)) return r
+    const s = seedById.get(r.id)
+    return {
+      ...r,
+      steps: s.steps,
+      time: s.time,
+      servings: s.servings,
+      difficulty: s.difficulty,
+    }
   })
   // v34: 사용자가 직접 만든 레시피(시드 아님)의 아이콘을 새 완성요리 PNG로 업그레이드.
   //      제목에 딱 맞는 PNG가 생긴 경우에만 교체(없으면 기존 아이콘 유지 → 회귀 없음).
@@ -399,8 +486,31 @@ function migrateBasics(saved) {
     //   📮 창업자 = *"해물오일파스타에 알리오올리오가.. 이름표가 잘못붙은것같은데"*
     //   ⭐ 셋 다 «같은 요리를 그린 새 컷이 이미 있는데» 옛 컷·딴 요리 컷을 붙들고 있었다.
     //      `basics.js` 만 고치면 이미 저장된 폰은 안 바뀐다(규칙 18 ⓙ) → 제목으로도 되돌린다.
-    '해물오일파스타': 'fe_451', '해물 오일 파스타': 'fe_451', '해물오일 파스타': 'fe_451',   // 📮창업자 = *"해물오일파스타는 새우들어간오일파스타"* · ⛔fe_428(조개)은 «봉골레»다
-    '간장 제육볶음': 'fe_418', '간장제육볶음': 'fe_418',                                     // fh_k13 = 고추장 제육이라 색부터 다르다
+    // ⛔ [2026-09-14] 여기 있던 fe_451 은 «알리오 올리오»였다(새우도 조개도 없다 · 눈으로 봤다).
+    //    📮 창업자 = *"해물오일파스타는 새우들어간오일파스타"* — 고친다고 해놓고 새우 없는 컷을 넣었던 자리다.
+    //    ✅ 아래에서 창업자가 뽑아 준 새 컷(n3028)으로 준다. ⛔같은 표에 두 번 적으면 «위엣것»이 이긴다.
+    // ⛔⛔ [2026-09-14 · 창업자 «간장인데 고추장들어가고» → «간장제육안들어감»] fe_418 «도» 빨간 고추장 제육이었다.
+    //   🌲 그림을 바꾸는 자리가 «셋»이다 — ①이름표 규칙(FoodIcon) ②레시피의 icon ③여기(제목으로 강제).
+    //      **셋 중 여기가 제일 세다.** 나는 ①만 고쳤다가(v13.35) 안 됐고, ②까지 고쳤는데도(v13.37)
+    //      여기가 다시 덮어서 화면이 그대로였다. 창업자가 두 번 헛걸음했다.
+    //   📌 **다음에 기본 레시피 그림을 바꿀 땐 이 표부터 본다** — 재현판 _repro-그림갱신-0914 가 이 자리를 잰다.
+    //   ⭐ 창업자가 캡처로 고른 간장색 컷으로 셋을 «같은 값»으로 맞춘다.
+    '간장 제육볶음': 'gr_257', '간장제육볶음': 'gr_257',
+    // 🌶 [2026-09-14] 매운 소갈비찜 — 창업자가 새 컷을 뽑아 줬다(«매운소갈비도 고춧가루가없네»).
+    //   ⛔ 여기까지 적어야 «이미 깔린 폰»이 받는다. 간장 제육에서 이 자리를 빠뜨려 두 번 헛걸음했다.
+    // 🍆 [2026-09-14] 가지무침이 «만두»로 바뀌어 있었다(ICON_SWAP_GR 의 fe_92 → gr_066 짝이 틀렸다).
+    //   ⛔ 그 짝을 빼는 것만으론 **이미 폰에 gr_066 이 저장된 사람**은 영영 만두를 본다(규칙 18 ⓙ).
+    //      그래서 제목으로 콕 집어 되돌린다 — 이 표가 있는 이유가 바로 이것이다.
+    '쫄깃한 가지무침': 'fe_92', '가지무침': 'fe_92',
+    // 🎨 [2026-09-14] 창업자가 뽑아 준 여섯 — 이름과 그림이 어긋난 자리(검수판 1·2·3·4·12·13).
+    //   ⛔ 여기까지 적어야 «이미 깔린 폰»이 받는다. 간장 제육에서 이 자리를 빠뜨려 두 번 헛걸음했다.
+    '계란후라이조림': 'n3024',
+    '버섯전': 'n3025',
+    '새우튀김': 'n3026',
+    '고등어구이': 'n3027',
+    '해물오일파스타': 'n3028', '해물 오일 파스타': 'n3028', '해물오일 파스타': 'n3028',
+    '마늘 간장 닭날개조림': 'n3029', '마늘간장닭날개조림': 'n3029',
+    '매운 소갈비찜': 'n3023', '매운소갈비찜': 'n3023',
     '샤브샤브': 'fe_471', '초간단 샤브샤브': 'fe_471',                                       // fh_k26 = 이름표가 「칼국수」였다
   }
   fixed = fixed.map((r) => {
@@ -424,7 +534,14 @@ function migrateBasics(saved) {
     fe_230: 'gr_042', fe_232: 'gr_043', fe_233: 'gr_044', fe_238: 'gr_045', fe_243: 'gr_047',
     fh_k01: 'gr_048', fe_138: 'gr_051', fe_139: 'gr_052', fe_308: 'gr_053', fe_309: 'gr_054',
     fe_61: 'gr_061', fe_62: 'gr_062', fe_202: 'gr_063', fh_k31: 'gr_064', fh_k37: 'gr_065',
-    fe_92: 'gr_066', fb_b01: 'gr_067', fb_b04: 'gr_068', fb_b07: 'gr_070', fe_311: 'gr_072',
+    // ⛔⛔ [2026-09-14] 여기  이 있었다 — **가지무침을 «만두»로 바꾸고 있었다.**
+    //    📮 창업자 = *«가지무침이 만두로 바뀐거 실화야???????????»* · *«절대 이런일이 있으면 안돼»*
+    //    🌲 2026-08-26 에 그릇 컷 108개를 갈아끼우며 짝을 잘못 맺었다. fe_92 = 가지무침 · gr_066 = 만두다.
+    //       📌 **틀린 줄은 배포 때가 아니라 «그 편이 열리는 날» 드러난다** — 이 편은 2026-09-14 에 처음 열렸다.
+    //    ✅ 그래서 짝을 «뺐다». fe_92(가지무침)에 맞는 그릇 세대 컷이 없으므로 그대로 두는 게 맞다.
+    //    🔒 다시는 못 새게 게이트를 만들었다 = 
+    //       네 자리(레시피 icon · SWAP_GR · SWAP_V88 · FORCE_V88)를 다 거친 «최종 그림»을 이름표와 대조한다.
+    fb_b01: 'gr_067', fb_b04: 'gr_068', fb_b07: 'gr_070', fe_311: 'gr_072',
     fe_199: 'gr_073', fe_206: 'gr_075', fe_209: 'gr_076', fe_247: 'gr_077', fe_249: 'gr_078',
     fe_120: 'gr_079', fe_124: 'gr_080', fh_k32: 'gr_081', fe_23: 'gr_082', fj_c10: 'gr_083',
     fe_312: 'gr_085', fe_269: 'gr_087', fe_244: 'gr_088', fe_245: 'gr_089', fe_186: 'gr_090',
@@ -829,13 +946,18 @@ function initialState() {
       //    ⛔ 유저가 «지운» 폴더까지 되살리는 셈이지만, 기본 폴더는 애초에 지울 수 없다
       //       (`DEFAULT_FOLDERS` = 삭제 불가). 그래서 되살아나는 일이 없다.
       folders: saved.folders
-        ? ['아시안', '중식'].reduce((목록, 새것) => (목록.includes(새것) ? 목록 : [...목록, 새것]), saved.folders)
+        // 🥄 [2026-09-14] 「소스」를 더했다 — 창업자 = "소스는 따로 넣자. 소스만 필요할때도 있거든"
+        //    ⛔ 이 목록에 안 넣으면 «이미 쓰던 사람»은 소스 폴더가 영영 안 생긴다(위 경고 그대로).
+        ? ['아시안', '중식', '소스'].reduce((목록, 새것) => (목록.includes(새것) ? 목록 : [...목록, 새것]), saved.folders)
         : defaultFolders(mig.recipes),
       profile: { ...PROFILE_DEFAULT, ...(saved.profile || {}) },
       shops: migrateShops(saved.shops),
       wishlist: [], // 위시는 장보기로 흡수됨 — 더 이상 별도 목록으로 쓰지 않는다
       shoppingList: foldWishIntoShopping(saved.wishlist, saved.shoppingList || migrateShopping()),
       pantry: saved.pantry || [],
+      foodCost: Array.isArray(saved.foodCost) ? saved.foodCost : [],
+      costShops: Array.isArray(saved.costShops) && saved.costShops.length ? saved.costShops : [...기본식비가게],
+      foodBudget: { w: 0, m: 0, ...(saved.foodBudget || {}) },
       diary,
       sampleGone: saved.sampleGone || false,
     }
@@ -855,6 +977,9 @@ function initialState() {
     wishlist: [],
     shoppingList: [],
     pantry: [],
+    foodCost: [],   // 💰 식비 줄(2026-09-17 시제품 · hold) — {id,d:'YYYY-MM-DD',k:'shop'|'out',won,memo?,items?:[{n,won}]}
+    costShops: [...기본식비가게],   // 🏪 「가서 보고 와서 적기」 목록 — 유저가 더하고 지운다
+    foodBudget: { w: 0, m: 0 },   // 💰 식비 예산 — w=한 주 · m=한 달. 0 이면 «안 세웠다»(막대를 안 그린다)
     // 📔 처음 켠 사람은 일기 탭이 텅 비어 「뭘 하는 곳인지」 안 보인다 → 샘플 한 장 놓아 둔다.
     //    ⏳ 스위치가 꺼져 있으면 빈 채로 둔다(까닭 = `sampleDiary.js` 맨 위)
     diary: SAMPLE_READY ? [makeSampleDiary()] : [],
@@ -874,7 +999,9 @@ function initialState() {
 //    ⭐ 가까운 나라끼리 붙여 눈이 덜 튄다. `theme.js` 의 `CATEGORIES` 와 «같은 순서»다.
 // ⛔ 여기에 폴더를 더할 땐 위 마이그레이션의 목록에도 그 이름을 넣어야
 //    **이미 깔린 폰**이 받는다(규칙 18 ⓙ).
-export const 기본폴더 = ['한식', '중식', '일식', '양식', '아시안', '간식']
+// ⛔ 이 목록은 「유저가 지울 수 없는 폴더」를 정한다 — 레시피 탭 칩은 화면이 따로 정한다
+//    (MyRecipesScreen 의 칩목록 = 나라들 ＋ 종류들 ＋ 유저가 만든 폴더).
+export const 기본폴더 = ['한식', '중식', '일식', '양식', '아시안', '기타', '밥', '국', '면', '반찬', '간식', '샐러드', '소스']
 
 function defaultFolders(recipes) {
   const set = new Set(기본폴더)
@@ -961,8 +1088,12 @@ function reducer(state, action) {
     }
     case 'reset': {
       // 처음 상태로 — 기본 레시피를 다시 채우므로 삭제 기록도 초기화한다.
+      // 👪 `action.전부` = 일기·재료함·장보기·가게까지 «다» 처음으로 (2026-09-10 · 다른 계정 「비우고 시작」 · 로그인-필수로 §10)
+      //    ⛔ 설정의 「초기화」는 그대로(전부 없음) — 그 단추의 뜻(레시피만)을 안 바꾼다.
+      const 전부 = action.전부 ? { diary: [], pantry: [], shoppingList: [], wishlist: [], shops: DEFAULT_SHOPS, sampleGone: false } : null
       return {
         ...state,
+        ...전부,
         recipes: seedRecipes,
         seedV: BASICS_VERSION,
         removedSeedIds: [],
@@ -1014,8 +1145,18 @@ function reducer(state, action) {
       const existing = new Set(state.shoppingList.map((i) => i.name))
       const add = action.names
         .map((n) => n.trim())
-        .filter((n) => n && !existing.has(n))
-        .map((n) => ({ id: newId(), name: n, done: false }))
+        // 🚱 [2026-09-12] 물류는 아예 안 담는다 — 창업자 *"담기 누르면 물500ml이런것도 담겨"*
+        .filter((n) => n && !existing.has(n) && 담을만한가(n))
+        // 🔗 [2026-09-12] 아는 재료면 파트너스 링크를 «담을 때» 붙인다.
+        //   ⛔ 옛 판은 이름만 담아서, 장보기의 `buyUrlFor()` 가 쿠팡 «일반 검색»으로 보냈다 = 수수료 0원.
+        //   ⚠️ `url: undefined` 로 둔다(빈 문자열 아님) — `addShopItem` 과 같은 모양이라야
+        //      장보기 줄을 읽는 쪽이 두 길을 다르게 보지 않는다.
+        // 💰 [2026-09-18] 여기도 「두부 1910」을 가른다 — ⛔단수(addShopItem)만 고쳤다가 «직접 입력»이 안 먹었다.
+        //    직접 입력 칸(ChecklistAdd)은 이 복수 길로 온다. 두 길을 같은 함수로 묶어 또 갈리지 않게 했다.
+        .map((n) => {
+          const { 이름, 값 } = 이름값가르기(n)
+          return { id: newId(), name: 이름 || n, done: false, url: ingLink(이름 || n) || undefined, ...(값 ? { won: 값 } : {}) }
+        })
       return { ...state, shoppingList: [...add, ...state.shoppingList] }
     }
     // 단건 담기 — 사러가기 링크(url)를 함께 저장(주부의 장바구니 '담기' 등). 이름 중복은 무시.
@@ -1024,9 +1165,19 @@ function reducer(state, action) {
     //      **말없이 버려진다.** 실제로 `noBuy` 를 담는 코드를 써 놓고도 리스트엔 사러가기가 그대로 떴다
     //      (2026-08-17 · 게이트 50개가 전부 초록불이었고 «화면을 열어보고» 잡았다 — 규칙 21).
     case 'addShopItem': {
-      const name = (action.item?.name || '').trim()
+      // 💰💰 [2026-09-18 창업자 *"장보기에 두부를 적고 값을 눌러 또 금액을 적고 좀 번거로워"*]
+      //   ⭐ 한 번에 친다 — 「두부 1910」 처럼 **이름 뒤에 숫자**를 붙이면 이름과 값으로 갈라 담는다.
+      //   ⛔ 「돼지고기 600g」·「양파 1망」은 «사는 양»이라 값이 아니다 — 단위가 붙으면 안 센다(글자가 남으면 이름의 일부다).
+      //   ⛔ 「양파 3」도 값이 아니다(3원짜리는 없다) — **세 자리(100원) 이상**만 값으로 본다.
+      //   📌 값을 안 붙여도 그대로 담긴다 — 옛 방식이 그대로 산다.
+      const { 이름: name, 값 } = 이름값가르기(action.item?.name || '')
       if (!name || state.shoppingList.some((i) => i.name === name)) return state
-      const item = { id: newId(), name, done: false, url: action.item.url || undefined, ...(action.item.noBuy ? { noBuy: true } : {}) }
+      if (!담을만한가(name)) return state   // 🚱 물류는 안 담는다 (창업자 2026-09-12)
+      // 🔗 [2026-09-12] 주소를 «안 주고» 담는 자리(냉장고·직접 입력)도 아는 재료면 링크가 붙는다.
+      //   ⛔ `noBuy`(한살림 = 조합원 전용)에는 절대 안 붙인다 — 사러가기를 «안 그리는» 줄이다.
+      //      여기서 url 을 채우면 8/17 에 링크를 뺀 일이 통째로 헛일이 된다.
+      const url = action.item.url || (action.item.noBuy ? '' : ingLink(name)) || undefined
+      const item = { id: newId(), name, done: false, url, ...(값 ? { won: 값 } : {}), ...(action.item.noBuy ? { noBuy: true } : {}) }
       return { ...state, shoppingList: [item, ...state.shoppingList] }
     }
     case 'toggleShopItem': {
@@ -1050,15 +1201,127 @@ function reducer(state, action) {
     //      **담아주는 건 우리가 하고, 양은 유저가 적는다.**
     //   ⛔ 빈 이름으로는 안 바꾼다 — 지우려면 삭제(×)를 쓴다. 빈 줄이 남으면 그게 고장이다.
     case 'updateShopItem': {
-      const name = (action.name || '').trim()
-      if (!name) return state
-      return { ...state, shoppingList: state.shoppingList.map((i) => (i.id === action.id ? { ...i, name } : i)) }
+      // ✏️💰 [2026-09-18] 고칠 때도 「두부 2500」을 가른다 — 담을 때와 «같은 함수»를 쓴다(두 벌이면 갈린다).
+      //   ⛔ 숫자를 빼고 저장하면 값이 «지워진다» — 잘못 적은 값을 되돌리는 길이다(창업자 *"잘못 적었을때"*).
+      const { 이름, 값 } = 이름값가르기(action.name || '')
+      if (!이름) return state
+      return {
+        ...state,
+        shoppingList: state.shoppingList.map((i) => {
+          if (i.id !== action.id) return i
+          const { won: _옛값, ...나머지 } = i
+          return 값 ? { ...나머지, name: 이름, won: 값 } : { ...나머지, name: 이름 }
+        }),
+      }
     }
     case 'removeShopItem': {
       return { ...state, shoppingList: state.shoppingList.filter((i) => i.id !== action.id) }
     }
     case 'clearDoneShopItems': {
+      // 🧹 「완료 지우기」 — 체크한 줄을 목록에서 뺀다. ⛔식비와 상관없다(그건 아래 'shopToFoodCost').
       return { ...state, shoppingList: state.shoppingList.filter((i) => !i.done) }
+    }
+    // 💰💰 [2026-09-17] 「값 적은 것 식비로 적기」
+    //   ⛔⛔ 처음엔 «체크한 줄»만 봤다 — 그래서 창업자가 값만 적고 누르니 **0줄이 적혔는데 「식비에 적었어요」가 떴다**(거짓말).
+    //      📮 창업자 = *"적었는데 장보기에 반영안됐아"* — 맞는 지적이다.
+    //   ✅ 이제 «값이 적힌 줄»이면 체크와 상관없이 산 것으로 본다 — 값을 적었다는 건 이미 샀다는 뜻이다.
+    //      그 줄들은 목록에서 빠지고 냉장고로 들어간다(체크했을 때와 같다).
+    //   ⛔ 값이 하나도 없으면 «아무 일도 안 일어난다» — 화면이 「적었다」고 말하지 않게 0 을 돌려준다.
+    case 'shopToFoodCost': {
+      const 산것 = state.shoppingList.filter((i) => Number(i.won) > 0)
+      if (!산것.length) return state
+      const 이름들 = new Set(state.pantry.map((p) => p.name))
+      const pantry = [
+        ...산것.filter((i) => !이름들.has(i.name)).map((i) => ({ id: newId(), name: i.name, icon: null, expiry: null, addedAt: Date.now() })),
+        ...state.pantry,
+      ]
+      const 줄 = {
+        id: newId(), d: 오늘날짜(), k: 'shop',
+        won: 산것.reduce((s, i) => s + Number(i.won), 0),
+        items: 산것.map((i) => ({ n: i.name, won: Number(i.won) })),
+      }
+      return {
+        ...state,
+        foodCost: [줄, ...(state.foodCost || [])],
+        shoppingList: state.shoppingList.filter((i) => !(Number(i.won) > 0)),
+        pantry,
+      }
+    }
+    // 💰 장보기 줄에 값 적기 — 안 적어도 된다. 0·빈칸이면 지운다. 최대 9,999,999.
+    case 'setShopItemWon': {
+      const won = Math.min(9999999, Math.max(0, Math.floor(Number(action.won) || 0)))
+      return { ...state, shoppingList: state.shoppingList.map((i) => (i.id === action.id ? (won ? { ...i, won } : (({ won: _w, ...rest }) => rest)(i)) : i)) }
+    }
+    // 💰 식비 줄 직접 적기(외식·배달 · 또는 장보기 총액만) / 지우기
+    case 'addFoodCost': {
+      const won = Math.min(9999999, Math.max(0, Math.floor(Number(action.entry?.won) || 0)))
+      if (!won) return state
+      const e = { id: newId(), d: action.entry.d || 오늘날짜(), k: action.entry.k === 'out' ? 'out' : 'shop', won }
+      if (action.entry.memo) e.memo = String(action.entry.memo).slice(0, 40)
+      if (Array.isArray(action.entry.items) && action.entry.items.length) e.items = action.entry.items
+      return { ...state, foodCost: [e, ...(state.foodCost || [])] }
+    }
+    // 🏪 식비 가게 — 더하기 · 지우기 · 「누른 때」 기억(자주 쓰는 곳이 앞으로 온다)
+    case 'addCostShop': {
+      const name = (action.shop?.name || '').trim()
+      let url = (action.shop?.url || '').trim()
+      if (!name || !url) return state
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url
+      const 목록 = state.costShops || []
+      if (목록.some((s) => s.url === url)) return state
+      return { ...state, costShops: [...목록, { id: newId(), name: name.slice(0, 20), url, k: action.shop.k === 'out' ? 'out' : 'shop' }] }
+    }
+    case 'removeCostShop': {
+      return { ...state, costShops: (state.costShops || []).filter((s) => s.id !== action.id) }
+    }
+    // 💰 예산 세우기 — 창업자 2026-09-18 *"이번주 식비를 20만원안에서 살기를 했어. 그럼 남은 돈 보는 것도?"*
+    //   ⛔ 만 원 미만은 안 받는다 — 첫 기록에 바로 빨간 막대가 되어 조르는 꼴이 된다(설계 관문 2차).
+    //   ⛔ 0 을 주면 «지운다» = 안 세운 상태로 돌아간다(막대가 사라진다).
+    case 'setFoodBudget': {
+      const 칸 = action.칸 === 'm' ? 'm' : 'w'
+      const n = Math.min(99999999, Math.floor(Number(action.won) || 0))
+      if (n && n < 10000) return state
+      return { ...state, foodBudget: { ...(state.foodBudget || { w: 0, m: 0 }), [칸]: n } }
+    }
+    // 📅 달 «시작일» — 창업자 2026-09-20 *"나는 보통 9월 13일-10월 12일 이렇게 계산하거든"* (급여일 살림)
+    //   ⭐ 시작일 하나면 끝날짜는 «다음 시작일 하루 전»으로 저절로 — 달 길이(28·30·31)와 무관하다.
+    //   ⛔ 29~31 은 못 고른다 — 2월에 그 날이 없어 구간이 깨진다. 1 = 지금과 같음(1일~말일).
+    case 'setFoodMonthStart': {
+      const n = Math.floor(Number(action.day) || 1)
+      if (n < 1 || n > 28) return state
+      return { ...state, foodBudget: { ...(state.foodBudget || { w: 0, m: 0 }), start: n } }
+    }
+    // 📅 주 «시작 요일» — 창업자 2026-09-20 *"주도 달력에서 날짜 고를수있어??"* → 토요일 장 보는 집은 토~금
+    //   값 = getUTCDay 와 같은 숫자(0=일 · 1=월 … 6=토) · 기본 1(월요일 · 2026-08-03 창업자 확정 그대로)
+    case 'setFoodWeekStart': {
+      const n = Math.floor(Number(action.day))
+      if (!(n >= 0 && n <= 6)) return state
+      return { ...state, foodBudget: { ...(state.foodBudget || { w: 0, m: 0 }), wstart: n } }
+    }
+    case 'usedCostShop': {
+      // ⭐ 누를 때마다 시각을 적어 둔다 — 화면은 이 값으로 «최근 쓴 순»으로 줄을 세운다(손으로 끌어 옮길 필요가 없다)
+      return { ...state, costShops: (state.costShops || []).map((s) => (s.id === action.id ? { ...s, at: Date.now() } : s)) }
+    }
+    // ✏️ 적은 줄 고치기 — 창업자 2026-09-18 «저기도 수정가능하게»
+    //   ⛔ 지우고 새로 넣지 «않는다» — 그러면 목록 맨 위로 튀어올라 「어디 갔지」가 된다. 자리에 둔 채 값만 바꾼다.
+    //   ⭐ 값을 0 으로 고치려 하면 아무 일도 안 한다(지우기는 X 가 맡는다 — 물어보고 지운다).
+    case 'editFoodCost': {
+      const won = Math.min(9999999, Math.max(0, Math.floor(Number(action.patch?.won) || 0)))
+      if (!won) return state
+      return {
+        ...state,
+        foodCost: (state.foodCost || []).map((e) => {
+          if (e.id !== action.id) return e
+          const 새것 = { ...e, won, d: action.patch.d || e.d, k: action.patch.k === 'out' ? 'out' : 'shop' }
+          const memo = (action.patch.memo || '').trim()
+          if (memo) 새것.memo = memo.slice(0, 40)
+          else delete 새것.memo
+          return 새것
+        }),
+      }
+    }
+    case 'removeFoodCost': {
+      return { ...state, foodCost: (state.foodCost || []).filter((e) => e.id !== action.id) }
     }
     case 'clearShopItemsAll': {
       return { ...state, shoppingList: [] }
@@ -1128,8 +1391,21 @@ function reducer(state, action) {
     //   ⭐ 값은 **큰 쪽으로** 고른다 — 옛 백업(도장 없음)을 되살려도 «지금 폰이 이미 한 이사»를 다시 하지 않는다.
     //   📌 규칙 18 ⓙ 의 짝이다 — 「새로 까는 사람」이 아니라 **「되살리는 사람」**을 본 것.
     case 'importAll': {
-      const d = action.data || {}
-      if (!Array.isArray(d.recipes)) return state
+      const d0 = action.data || {}
+      if (!Array.isArray(d0.recipes)) return state
+      // 📉 [2026-09-30] 복사·파일 백업은 «손 안 댄 기본 레시피»를 빼고 번호만 남긴다(`backupData.js` 기본빼기)
+      //   → 여기서 «전체 편»(allBasicRecipes · 여는 날을 미룬 편 포함)에서 찾아 그 자리에서 도로 채운다.
+      //   ⛔ 지운 편(removedSeedIds)·이미 든 편은 안 넣는다. 번호 목록이 없으면(옛 백업·클라우드) 아무 일도 안 한다.
+      const d = (() => {
+        if (!Array.isArray(d0._빠진기본) || !d0._빠진기본.length) return d0
+        const 원본 = new Map(allBasicRecipes.map((r, i) => [r.id, [r, i]]))
+        const 있음 = new Set(d0.recipes.map((r) => r && r.id))
+        const 지운 = new Set(d0.removedSeedIds || [])
+        const 채움 = d0._빠진기본
+          .filter((id) => 원본.has(id) && !있음.has(id) && !지운.has(id))
+          .map((id) => { const [r, i] = 원본.get(id); return { ...r, savedAt: 열린때(r, i) } })
+        return { ...d0, recipes: [...d0.recipes, ...채움] }
+      })()
       return {
         seedV: Math.max(state.seedV || 0, d.seedV || 0, BASICS_VERSION),
         memoCleanV: Math.max(state.memoCleanV || 0, d.memoCleanV || 0),
@@ -1147,6 +1423,9 @@ function reducer(state, action) {
         wishlist: [], // 위시는 장보기로 흡수 — 백업 복원 시에도 합쳐서 불러온다
         shoppingList: foldWishIntoShopping(d.wishlist, d.shoppingList || []),
         pantry: d.pantry || [],
+        foodCost: Array.isArray(d.foodCost) ? d.foodCost : (state.foodCost || []),   // 💰 백업에 식비가 없으면(옛 백업) 지금 폰 것을 지킨다
+        costShops: Array.isArray(d.costShops) && d.costShops.length ? d.costShops : (state.costShops || [...기본식비가게]),
+        foodBudget: { w: 0, m: 0, ...(state.foodBudget || {}), ...(d.foodBudget || {}) },   // 💰 옛 백업이면 지금 폰 예산을 지킨다
         diary: d.diary || [],
       }
     }
@@ -1214,6 +1493,12 @@ export function StoreProvider({ children }) {
   //   🚨 **안전장치 = 「지금 상태가 쓸 열쇠」를 «둘 다» 센다.**
   //      아직 이사 전이라 사진이 `data:` 로 들어 있어도 `나누기()` 가 «쓰게 될 열쇠»를 알려준다.
   //      ⛔ 쪽지만 세면 이사 «직전»에 쓸어담아 **멀쩡한 사진을 통째로 지운다.**
+  // 🔔📅 [2026-09-20] D-2 «따로» 알림 날짜 — 켤 때 한 번(12초 뒤) 워커와 맞춘다. 저장이 없던 날(냉장고 안 만짐)에도 날짜 창(14일)이 하루 밀리며 새 날이 들어오는 걸 이렇게 잡는다.
+  //   ⛔ 같으면 안 보낸다(pushSubscribe.유통기한날짜보내기) — 켤 때마다 요청이 나가는 게 아니다.
+  useEffect(() => {
+    const t = setTimeout(() => { try { 유통기한날짜맞추기(지금state.current?.pantry || []) } catch { /* 덤 */ } }, 12000)
+    return () => clearTimeout(t)
+  }, [])
   //   ⏰ 앱을 켜고 8초 뒤 «한 번만» — 첫 화면을 먼저 그리고, 매 저장마다 훑지 않는다(절대원칙 32).
   useEffect(() => {
     const t = setTimeout(async () => {
@@ -1259,6 +1544,12 @@ export function StoreProvider({ children }) {
       }
       localStorage.setItem(KEY, 글)
       마지막저장성공 = Date.now()
+      // 🔔🧊 [2026-09-19] 유통기한 «얹기» 거울 — 저장 자리 «하나»라 담기·지우기·고치기 어느 길로 와도 지난다(한쪽만 붙이면 반을 놓친다).
+      //    같은 글자면 안 쓴다(pantryExpiry.거울쓰기) · 실패해도 본체 저장은 이미 끝났다.
+      try { 거울쓰기(저장할판.pantry) } catch { /* 거울은 덤 */ }
+      try { 유통기한날짜맞추기(저장할판.pantry) } catch { /* 날짜도 덤 — 다음 저장 때 다시 */ }
+      // 🪞 아이폰 앱이면 10초 뒤 문서 폴더에 한 벌 더(거울) — 웹·안드로이드에선 바로 false 로 끝난다
+      try { 거울예약() } catch { /* 거울은 덤 — 본체 저장은 이미 끝났다 */ }
     } catch {
       // 저장 공간 초과(특히 iOS ~5MB) — 조용히 사라지면 안 된다(핵심 약속: 레시피 보관)
       마지막저장실패 = Date.now()
@@ -1281,7 +1572,7 @@ export function StoreProvider({ children }) {
     removeFolder: useCallback((name) => dispatch({ type: 'removeFolder', name }), []),
     setProfile: useCallback((patch) => dispatch({ type: 'setProfile', patch }), []),
     clearAll: useCallback(() => dispatch({ type: 'clear' }), []),
-    reset: useCallback(() => dispatch({ type: 'reset' }), []),
+    reset: useCallback((전부 = false) => dispatch({ type: 'reset', 전부: 전부 === true }), []),
     addShop: useCallback((shop) => dispatch({ type: 'addShop', shop }), []),
     updateShop: useCallback((id, patch) => dispatch({ type: 'updateShop', id, patch }), []),
     removeShop: useCallback((id) => dispatch({ type: 'removeShop', id }), []),
@@ -1295,6 +1586,17 @@ export function StoreProvider({ children }) {
     updateShopItem: useCallback((id, name) => dispatch({ type: 'updateShopItem', id, name }), []),
     removeShopItem: useCallback((id) => dispatch({ type: 'removeShopItem', id }), []),
     clearDoneShopItems: useCallback(() => dispatch({ type: 'clearDoneShopItems' }), []),
+    setShopItemWon: useCallback((id, won) => dispatch({ type: 'setShopItemWon', id, won }), []),
+    shopToFoodCost: useCallback(() => dispatch({ type: 'shopToFoodCost' }), []),
+    addCostShop: useCallback((shop) => dispatch({ type: 'addCostShop', shop }), []),
+    removeCostShop: useCallback((id) => dispatch({ type: 'removeCostShop', id }), []),
+    usedCostShop: useCallback((id) => dispatch({ type: 'usedCostShop', id }), []),
+    setFoodMonthStart: useCallback((day) => dispatch({ type: 'setFoodMonthStart', day }), []),
+    setFoodWeekStart: useCallback((day) => dispatch({ type: 'setFoodWeekStart', day }), []),
+    setFoodBudget: useCallback((칸, won) => dispatch({ type: 'setFoodBudget', 칸, won }), []),
+    addFoodCost: useCallback((entry) => dispatch({ type: 'addFoodCost', entry }), []),
+    editFoodCost: useCallback((id, patch) => dispatch({ type: 'editFoodCost', id, patch }), []),
+    removeFoodCost: useCallback((id) => dispatch({ type: 'removeFoodCost', id }), []),
     clearShopItemsAll: useCallback(() => dispatch({ type: 'clearShopItemsAll' }), []),
     addPantry: useCallback((item) => dispatch({ type: 'addPantry', item }), []),
     updatePantry: useCallback((id, patch) => dispatch({ type: 'updatePantry', id, patch }), []),
@@ -1315,6 +1617,27 @@ export function useStore() {
 }
 
 // 새 레시피 id 생성 — Date.now 는 브라우저 런타임에서 사용 가능
+// 💰 오늘 날짜 — ⛔여기서 만들지 않는다(절대원칙 27 · check-kst 게이트). src/today.js 한 곳뿐.
+const 오늘날짜 = () => todayKST()
+
+// 💰💰 [2026-09-18 창업자 *"두부를 적고 값을 눌러 또 금액을 적고 좀 번거로워"*]
+//   「두부 1910」 → { 이름: '두부', 값: 1910 }. ⛔담는 길이 둘(단수·복수)이라 «한 함수»로 묶는다 — 따로 두면 반드시 갈린다.
+//   ⛔ 「돼지고기 600g」·「양파 1망」은 «사는 양»이라 값이 아니다(숫자 뒤에 글자가 남는다).
+//   ⛔ 「양파 3」도 값이 아니다 — 세 자리(100원) 이상만 값으로 본다.
+//   ⭐⭐ [2026-09-18 창업자 *"1990뒤에 원이나 ₩ 이런걸 붙이면 좋겠고"*] 「원」·「₩」·쉼표를 «다» 받는다.
+//      ⛔ 안내에 「1,910원」이라 써 놓고 파서가 숫자만 받으면 **안내가 함정이 된다** —
+//         시킨 대로 「두부 1910원」이라 쳤는데 이름이 「두부 1910원」이 되고 금액은 0 이 된다.
+//      ⭐ 그래서 «보여주는 꼴»과 «받는 꼴»을 같이 넓혔다. 받는 꼴 = 두부 1910 · 두부 1,910원 · 두부 ₩1910
+export function 이름값가르기(글) {
+  const t = String(글 || '').trim()
+  const m = t.match(/^(.+?)\s+₩?\s*([0-9][0-9,]{2,})\s*원?$/)
+  if (!m) return { 이름: t, 값: 0 }
+  const n = Number(m[2].replace(/,/g, ''))
+  if (!(n >= 100 && n <= 9999999)) return { 이름: t, 값: 0 }
+  return { 이름: m[1].trim(), 값: n }
+}
+
 export function newId() {
+
   return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
 }

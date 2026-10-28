@@ -23,6 +23,10 @@
 import worker from '../ocr-proxy/worker-tidy.js'
 import { tidyRecipe, tidyTail } from '../src/tidy.js'
 
+// 🔐 [2026-09-08] AI 허락(큰 틀 6-② ⓑ) — 이 판은 «허락한 유저»를 흉내낸다(허락 자체는 _repro-AI동의-0908 이 잰다)
+//    ④ 처럼 localStorage 를 따로 안 세우는 칸을 위해 기본값을 둔다
+globalThis.localStorage = globalThis.localStorage || { getItem: (k) => (k === 'hankki:ai:consent' ? 'yes' : null), setItem() {}, removeItem() {} }
+
 let 통과 = 0
 let 실패 = 0
 const 칸 = (이름, 조건, 실물) => {
@@ -113,7 +117,8 @@ console.log('⑤ 창업자가 «로그를 안 켜고» 화면에서 안다')
   //   워커가 준 「어디서·몇 초」가 운영자 토스트 꼬리에 그대로 붙어야 한다.
   const 옛fetch = globalThis.fetch
   const 옛localStorage = globalThis.localStorage
-  globalThis.localStorage = { getItem: (k) => (k === 'hankki:founder' ? 'x' : null), setItem() {}, removeItem() {} }
+  // 🔐 [2026-09-08] hankki:ai:consent = yes — 이 판은 «허락한 유저»를 흉내낸다(허락 자체는 _repro-AI동의-0908)
+  globalThis.localStorage = { getItem: (k) => (k === 'hankki:founder' ? 'x' : k === 'hankki:ai:consent' ? 'yes' : null), setItem() {}, removeItem() {} }
   globalThis.fetch = async () => ({
     ok: true,
     json: async () => ({ error: 'budget_out', why: '', model: '@cf/google/gemma-4-26b-a4b-it', ms: 41200 }),
@@ -131,7 +136,8 @@ console.log('⑥ ⛔ 옛 워커와 섞여도 안 깨진다')
 {
   const 옛fetch = globalThis.fetch
   const 옛localStorage = globalThis.localStorage
-  globalThis.localStorage = { getItem: (k) => (k === 'hankki:founder' ? 'x' : null), setItem() {}, removeItem() {} }
+  // 🔐 [2026-09-08] hankki:ai:consent = yes — 이 판은 «허락한 유저»를 흉내낸다(허락 자체는 _repro-AI동의-0908)
+  globalThis.localStorage = { getItem: (k) => (k === 'hankki:founder' ? 'x' : k === 'hankki:ai:consent' ? 'yes' : null), setItem() {}, removeItem() {} }
   globalThis.fetch = async () => ({ ok: true, json: async () => ({ error: 'timeout' }) }) // model·ms 를 «안» 주는 옛 워커
   try {
     await tidyRecipe(글)

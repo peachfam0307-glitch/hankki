@@ -79,6 +79,10 @@ if (existsSync(PACK)) {
 담는다('/tmp/node-compile-cache', 'node 컴파일 캐시', '다음 실행이 다시 만든다')
 
 // 🗂 옛 세션 스크래치패드 — «지금 세션 것은 빼고»
+function 살아있는세션(p, s) {
+  const 기록 = join('/root/.claude/projects', p, s + '.jsonl')
+  try { return Date.now() - statSync(기록).mtimeMs < 12 * 3600 * 1000 } catch { return false }
+}
 const 지금세션 = process.env.CLAUDE_SCRATCHPAD_DIR || ''
 for (const 뿌리 of ['/tmp/claude-0']) {
   if (!existsSync(뿌리)) continue
@@ -90,6 +94,10 @@ for (const 뿌리 of ['/tmp/claude-0']) {
     for (const s of 세션들) {
       const 패드 = join(뿌리, p, s, 'scratchpad')
       if (지금세션.includes(s)) continue          // ⛔ 지금 쓰고 있는 것은 안 지운다
+      // ⛔ 2026-09-17 19:16 사고 — CLAUDE_SCRATCHPAD_DIR 가 «비어» 있어서 «지금» 세션 패드(캐러셀 5장·창업자 캡처)를
+      //    「옛 세션」으로 보고 지웠다. 환경변수 하나에 기대지 않는다 — 그 세션의 대화 기록(.jsonl)이
+      //    «12시간 안에» 움직였으면 살아 있는 세션이다. 그건 안 지운다.
+      if (살아있는세션(p, s)) continue
       담는다(패드, `옛 세션 스크래치패드 ${s.slice(0, 8)}…`, '그 세션의 임시 출력물 — 저장소엔 이미 들어갔다')
     }
   }

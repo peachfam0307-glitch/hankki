@@ -107,11 +107,41 @@ const 앱떴나 = async (p) => {
     return true
   } catch { return false }
 }
+// ⛔⛔ [2026-09-14] 이 판이 «홈»에서 저장 레시피를 찾고 있었다 — 홈엔 저장 레시피 목록이 없다.
+//    홈 줄에 «우연히» 걸리던 것에 기대고 있었던 것이다. 그래서 홈 내용이 날마다 바뀌면 죽는다
+//    (2026-08-29 CI 에서 원인 못 찾고 넘어간 그 실패가 이것이다 — 이번엔 로컬에서 재현했다).
+//    ✅ 「레시피」 탭에서 연다 — 저장 레시피가 «반드시» 있는 자리다.
+//    ⭐ 목록엔 오늘 새로 열린 편들이 «앞»을 채운다(9/14 만 10컷). 그래서 목록을 훑지 않고
+//       그 화면의 «찾기»로 바로 좁힌다 — 몇 편이 열리든 흔들리지 않는다.
+const 레시피탭찾기 = async (p, 제목) => {
+  await p.evaluate(() => { try { sessionStorage.setItem('hankki:tab', 'myrecipes') } catch {} })
+  const 탭 = p.getByText('레시피', { exact: true }).last()
+  if (await 탭.count()) await 탭.click({ timeout: 4000 }).catch(() => {})
+  await p.waitForTimeout(600)
+  const 돋보기 = p.locator('button:has(svg)').filter({ hasNotText: /./ })
+  const 칸 = p.getByPlaceholder(/내 레시피에서 찾기/)
+  if (!(await 칸.count())) {
+    // 찾기 칸이 접혀 있으면 돋보기를 눌러 편다
+    for (let i = await 돋보기.count() - 1; i >= 0; i--) {
+      await 돋보기.nth(i).click({ timeout: 2000 }).catch(() => {})
+      await p.waitForTimeout(400)
+      if (await 칸.count()) break
+    }
+  }
+  if (await 칸.count()) { await 칸.first().fill(제목); await p.waitForTimeout(700) }
+}
 const 레시피열기 = async (p, 제목) => {
   await 앱떴나(p)
   await 시트치우기(p)
-  const 칸 = p.getByText(제목, { exact: false }).first()
+  await 레시피탭찾기(p, 제목)
+  await 시트치우기(p)
+  // ⛔ 찾기를 하면 위에 「'제목' — 내 레시피 1개」 안내문이 먼저 나온다 — 그걸 누르면 아무 일도 안 난다.
+  //    ⭐ 카드는 «맨 뒤»다. 그래서 first() 가 아니라 last() 를 누른다.
+  const 칸 = p.getByText(제목, { exact: false }).last()
   try {
+    // ⭐ 목록이 길면 저장 레시피가 «화면 밖»에 있다(오늘 새로 열린 편들이 앞을 차지한다).
+    //    ⛔ 그냥 visible 을 기다리면 「없다」로 죽는다 — 먼저 그 자리로 굴려 준다.
+    await 칸.scrollIntoViewIfNeeded({ timeout: 20000 }).catch(() => {})
     await 칸.waitFor({ state: 'visible', timeout: 20000 })
   } catch {
     // ⛔ 그냥 죽으면 다음에도 원인을 모른다 — 화면·저장값·캡처를 남긴다
@@ -148,8 +178,12 @@ await seed.goto('http://127.0.0.1:4462/hankki/', { waitUntil: 'networkidle' })
 const 심기 = (raw) => {
   const cur = JSON.parse(localStorage.getItem('hankki:v1') || '{}')
   cur.recipes = [
-    { id: 'r-raw', title: '공심채볶음', ingredients: ['공심채 150g'], steps: ['손질해요.'], tags: [], folder: '전체', savedAt: Date.now(), rawText: raw },
-    { id: 'r-noraw', title: '옛날레시피', ingredients: ['두부 1모'], steps: ['부쳐요.'], tags: [], folder: '전체', savedAt: Date.now() },
+    // ⛔⛔ [2026-09-14] status 'sorted' 가 «빠져 있었다» — 「레시피」 탭 목록은 이것만 싣는다
+    //    (MyRecipesScreen 의 sorted = recipes.filter(r => r.status === 'sorted')).
+    //    그래서 심어도 목록·찾기 어디에도 안 떴고, 홈 줄에 «우연히» 걸릴 때만 판이 돌았다.
+    //    오늘 새 편 10컷이 그 홈 자리를 차지하자 판이 죽었다(2026-08-29 CI 실패도 이것이다).
+    { id: 'r-raw', title: '공심채볶음', status: 'sorted', ingredients: ['공심채 150g'], steps: ['손질해요.'], tags: [], folder: '전체', savedAt: Date.now(), rawText: raw },
+    { id: 'r-noraw', title: '옛날레시피', status: 'sorted', ingredients: ['두부 1모'], steps: ['부쳐요.'], tags: [], folder: '전체', savedAt: Date.now() },
     ...(cur.recipes || []).filter((r) => r.id !== 'r-raw' && r.id !== 'r-noraw'),
   ]
   localStorage.setItem('hankki:v1', JSON.stringify(cur))
@@ -178,7 +212,8 @@ page.on('pageerror', (e) => { if (!남의탓(e.message)) { 실패++; 실패목�
 await page.goto('http://127.0.0.1:4462/hankki/', { waitUntil: 'networkidle' })
 const 열렸나 = await 레시피열기(page, '공심채볶음')
 if (열렸나) {
-  await page.locator('[aria-label="편집"]').first().click()
+  await page.screenshot({ path: '/tmp/dbg-after-open.png' }).catch(() => {})
+  await page.locator('[aria-label="편집"]').first().click({ timeout: 8000 }).catch(() => {})
   await page.waitForTimeout(500)
 }
 const 입구 = page.getByRole('button', { name: /사진에서 읽은 원문/ })
@@ -209,7 +244,8 @@ if (복사있나) {
 await page.goto('http://127.0.0.1:4462/hankki/', { waitUntil: 'networkidle' })
 const 열렸나2 = await 레시피열기(page, '옛날레시피')
 if (열렸나2) {
-  await page.locator('[aria-label="편집"]').first().click()
+  await page.screenshot({ path: '/tmp/dbg-after-open.png' }).catch(() => {})
+  await page.locator('[aria-label="편집"]').first().click({ timeout: 8000 }).catch(() => {})
   await page.waitForTimeout(500)
 }
 // ⛔ 도착 못 했으면 「입구가 없다」가 «저절로» 참이 된다 — 그건 «안 잰» 것이라 통과로 세지 않는다

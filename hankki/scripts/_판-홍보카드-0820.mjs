@@ -123,7 +123,7 @@ const 세로 = (f) => `${머리(f)}
 
   <div class="덩">
     <div class="알약" style="font-size:42px;padding:30px 56px">
-      Google Play 에서 <b>한끼</b> 검색
+      App Store · Google Play 에서 <b>한끼</b> 검색
     </div>
     <div class="부제" style="font-size:28px;margin-top:24px">회원가입 없이 바로 시작해요</div>
   </div>
@@ -142,7 +142,7 @@ const 가로 = (f) => `${머리(f)}
     </div>
     <div class="부제" style="font-size:24px;margin-top:14px">레시피를 예쁘게 꾸미는 앱</div>
     <div class="알약" style="font-size:25px;padding:17px 32px;margin-top:26px">
-      Google Play 에서 <b>한끼</b> 검색
+      App Store · Google Play 에서 <b>한끼</b> 검색
     </div>
   </div>
 
@@ -163,7 +163,7 @@ const 피드 = (f) => `${머리(f)}
   </div>
 
   <div class="알약" style="font-size:35px;padding:24px 48px">
-    Google Play 에서 <b>한끼</b> 검색
+    App Store · Google Play 에서 <b>한끼</b> 검색
   </div>
  </div>
 </div>`

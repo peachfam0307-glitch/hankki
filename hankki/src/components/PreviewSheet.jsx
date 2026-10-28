@@ -1,9 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import Portal from './Portal'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
 import { whatsNew, unitOf, foldPacks } from '../data/whatsnew'
 import { StickerArt } from './Stickers'
+import { todayKST } from '../today'
+import { 앱안인가 } from '../nativeAuth'   // 🍎 아이폰 앱에선 「폴드」(갤럭시) 대신 「아이패드」(2026-09-13)
 
 // 📣 한끼 소식 — «방금 열렸어요» · «곧 열려요» · «그다음엔».
 //
@@ -67,7 +69,7 @@ const UPCOMING = [
 // 🧑‍🤝‍🧑 [2026-09-02] `친구들` = 꾸미기에서 갈라 나온 갈래(`whatsnew.js` 의 `BUDDY_KIND`).
 //   ⛔ 없으면 기본값 `sparkle` 로 떨어지는데 **「우리집레시피」가 이미 그 아이콘**이라 한 화면에 둘이 겹친다(실물로 봤다).
 //   ⭐ 이름은 서랍 탭과 «같은 말»을 쓴다 — `DecorEditor.jsx:616` `{ key: 'buddies', label: '친구들' }`.
-const KIND_ICON = { '이번 주 레시피': 'diary', '꾸미기': 'palette', '친구들': 'heart', '레꾸자랑 카드': 'star', '장바구니': 'cart', '배경': 'settings' }
+const KIND_ICON = { '이번 주 레시피': 'diary', '꾸미기': 'palette', '친구들': 'heart', '레꾸자랑 카드': 'star', '장바구니': 'cart', '배경': 'settings', '업데이트': 'sparkle' }
 
 // 🖼 미리보기 한 줄 — ⭐**글자만 있으면 광고가 안 된다** (창업자 2026-08-03 *"가을 이모지팩도 광고해야하지 않아?"*).
 //    ⛔ `StickerArt` 는 우리 그림을 그린다(유니코드 이모지 아님).
@@ -89,12 +91,15 @@ export function Peek({ keys = [], size = 46 }) {
   )
 }
 
-function NewsRow({ it, tone }) {
+// 🆕 [2026-09-24] 「안 본 것」 줄에 색 띠 — 창업자 = 시안 B(살구 바탕 ＋ 왼쪽 주황 띠) · 기준 ①「안 본 것만」
+//   ⭐ 줄 높이가 안 바뀐다(딱지 A 는 긴 제목을 두 줄로 밀었다 — 09-24 시안 실측).
+const 새로띠 = { background: 'color-mix(in srgb, #e0703a 14%, var(--cream))', boxShadow: 'inset 4px 0 0 #e0703a' }
+function NewsRow({ it, tone, 새로 = false }) {
   // 🎁 선물이면 «선물»이라고 말하고 컷을 전부 편다 (창업자 2026-08-30
   //    *"가을의정원접시세트도 특별한 선물로 한 줄적어줘. 안내판에 그달 주는 선물 이미지가 다들어가면 좋겠는데..."*)
   //    ⛔ 아이콘도 갈아 끼운다 — 나머지와 같은 팔레트 아이콘이면 목록에 묻힌다.
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'var(--cream)', borderRadius: 14, padding: '12px 13px' }}>
+    <div data-new={새로 ? '1' : undefined} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'var(--cream)', borderRadius: 14, padding: '12px 13px', ...(새로 ? 새로띠 : {}) }}>
       {/* 🎨 배경(테마) 줄은 «아이콘 자리»가 곧 그 색이다 (창업자 2026-08-31
           *"한끼소식 살구 동그라미 혼자 덩그러니 자리차지하고 있어"*)
           ⛔ 처음엔 색 동그라미를 «본문 아래»에 따로 뒀는데 한 줄을 통째로 먹었다(135px).
@@ -119,6 +124,18 @@ function NewsRow({ it, tone }) {
           </span>
         </div>
         {it.why && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.why}</div>}
+        {/* 📣 [2026-09-17] 업데이트 카드 — 판마다 유저 한 줄(`data/changelog.js`). 최신이 위 · 날짜는 「9/17」로 짧게.
+            ⛔ 문장은 여기서 짓지 않는다 — changelog 의 who:'창업자' 줄만 온다(check-changelog 가 막는다). */}
+        {Array.isArray(it.lines) && it.lines.length > 0 && (
+          <ul style={{ listStyle: 'none', margin: '6px 0 0', padding: 0, display: 'grid', gap: 5 }}>
+            {it.lines.map((l) => (
+              <li key={l.v} style={{ display: 'flex', gap: 8, alignItems: 'baseline', fontSize: 15.5, lineHeight: 1.4 }}>
+                <span className="t-sub" style={{ flex: '0 0 auto', fontSize: 13.5, fontVariantNumeric: 'tabular-nums' }}>{l.when.slice(5).replace(/^0/, '').replace('-0', '/').replace('-', '/')}</span>
+                <span>{l.text}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         {/* 💬 쓰는 법 = 서랍의 `hint` 를 그대로 (창업자 2026-08-30 *"접시 사용법도 아래 적어줘"*) */}
         {it.gift && it.hint && <div className="t-sub" style={{ fontSize: 15.5, marginTop: 3, lineHeight: 1.4 }}>{it.hint}</div>}
         {/* 🎁 「매달 오는 게 아니다」 한 줄 — ⛔팝업과 «같은 값»을 쓴다(`Stickers.jsx` 의 `giftNote`).
@@ -138,6 +155,18 @@ export default function PreviewSheet({ onClose }) {
   //    맨 아래 장바구니가 파묻힌다(창업자 2026-08-31 *"너무 길어서(가을팩안내땜에)"*).
   //    ⛔ 「곧 열려요」도 같이 접는다 — 하루 전엔 그 열 줄이 «거기»에 서 있다(8/31 실측 1113px).
   const opened = useMemo(() => foldPacks(news.opened), [news])
+  // 🆕 「안 본 것」 = 지난번에 이 시트를 연 날 «뒤»에 열린 줄. 여는 순간 한 번만 재고(열어둔 채 안 흔들리게), 오늘을 적는다.
+  //   · 처음 여는 사람 = 기록이 없다 → «가장 최근 날짜»의 줄만(21일치를 전부 칠하면 한눈에가 아니라 도배다)
+  //   · 🔓 열쇠(?소식새로=1)는 2026-09-25 뗐다 — 아이폰 1.0.8 승인 날 갤럭시와 같이 (창업자 「승인됐어 갤럭시 배포해」)
+  const 새로본날 = useMemo(() => {
+    let 지난 = null
+    try { 지난 = localStorage.getItem('hankki:news:봤다') } catch { /* noop */ }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(지난 || '')) return { 뒤: 지난 }
+    const 최근 = opened.reduce((m, o) => (o.when > m ? o.when : m), '')
+    return { 같음: 최근 }
+  }, [opened])
+  useEffect(() => { try { localStorage.setItem('hankki:news:봤다', todayKST()) } catch { /* noop */ } }, [])
+  const 새것인가 = (it) => !!새로본날 && (새로본날.뒤 ? it.when > 새로본날.뒤 : it.when === 새로본날.같음)
   const soon = useMemo(() => (news.upcoming ? foldPacks(news.upcoming.items) : []), [news])
   const hasNews = news.opened.length > 0 || !!news.upcoming
   const dday = news.upcoming
@@ -172,7 +201,7 @@ export default function PreviewSheet({ onClose }) {
                   ⭐ `bulb` 가 오히려 맞다 — 이건 새 기능 광고가 아니라 «알려주는 팁»이다. */}
               <Icon name="bulb" size={18} color="var(--brown)" stroke={1.9} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 16.5, fontWeight: 800, marginBottom: 3 }}>패드·폴드에서도 써요</div>
+                <div style={{ fontSize: 16.5, fontWeight: 800, marginBottom: 3 }}>{앱안인가() ? '아이패드에서도 써요' : '패드·폴드에서도 써요'}</div>
                 <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.55 }}>
                   큰 화면에선 레시피가 좌우 두 칸으로 열리고, 일기 종이도 더 커져요.
                   폰을 눕혀도 돼요 — 안 돌아가면 폰의 <b>자동 회전</b>을 켜 보세요.
@@ -188,7 +217,7 @@ export default function PreviewSheet({ onClose }) {
                   <span style={{ fontSize: 16.5, fontWeight: 900, color: 'var(--brown)' }}>방금 열렸어요</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {opened.map((it, i) => <NewsRow key={`o${i}`} it={it} tone="var(--brown)" />)}
+                  {opened.map((it, i) => <NewsRow key={`o${i}`} it={it} tone="var(--brown)" 새로={새것인가(it)} />)}
                 </div>
               </>
             )}

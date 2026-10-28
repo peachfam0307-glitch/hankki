@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>한끼 고객지원 · 문의</title>
+<!-- 🍎 [2026-09-08] App Store 「지원 URL」용 — 애플 원문(App Store Connect 도움말 · Platform version information · 2026-09-08 열람):
+     "This URL must lead to actual contact information (legal address, email address, telephone number) …
+      so that users can reach you regarding app issues, general feedback, and feature enhancement requests."
+     → 이메일 ＋ 피드백 폼 ＋ 삭제·방침 페이지를 한 장에. 주소·전화는 개인 정보라 적지 않는다(이메일이면 원문 요건을 채운다 — 「or」 가 아니라 예시 나열이라 셋 다 필수는 아니다).
+     ⛔ Play 로 보내는 링크·「안드로이드」 말은 넣지 않는다(심사 지침 2.3.10 — 다른 플랫폼 언급 금지). -->
+<style>
+  :root {
+    --bg: #fdfbf7; --card: #ffffff; --ink: #3d3830; --sub: #6b6a63; --faint: #9a9990;
+    --brown: #6b4f3a; --line: #e8e9e4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16180f; --card: #1e2118; --ink: #ecebdf; --sub: #aab0a0; --faint: #7c8274; --brown: #ca9d70; --line: #2b3026; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+    line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 22px 80px; }
+  .eyebrow { font-size: 13px; letter-spacing: .04em; color: var(--brown); font-weight: 700; margin: 0 0 8px; }
+  h1 { font-size: 26px; font-weight: 800; margin: 0 0 6px; letter-spacing: -.02em; }
+  .updated { font-size: 13px; color: var(--faint); margin: 0 0 26px; }
+  .lead { background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 18px 20px; font-size: 15px; color: var(--ink); margin-bottom: 30px; }
+  .lead b { color: var(--brown); }
+  h2 { font-size: 17px; font-weight: 800; margin: 30px 0 10px; letter-spacing: -.01em; }
+  p { margin: 8px 0; font-size: 14.5px; }
+  ul { margin: 0; padding-left: 18px; }
+  li { margin: 7px 0; font-size: 14.5px; }
+  a { color: var(--brown); }
+  .mail { display: inline-block; margin-top: 8px; padding: 10px 16px; border-radius: 999px; background: var(--brown); color: #fff; text-decoration: none; font-weight: 700; }
+  .note { font-size: 13px; color: var(--sub); margin-top: 10px; }
+  footer { margin-top: 44px; font-size: 12.5px; color: var(--faint); border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">HANKKI · 한끼</p>
+  <h1>고객지원 · 문의</h1>
+  <p class="updated">앱 이용 중 불편한 점, 제안, 오류 제보는 아래로 보내 주세요.</p>
+
+  <div class="lead">
+    한끼는 <b>18년차 주부가 직접 만드는 레시피 앱</b>이에요. 보내 주신 문의는 운영자가 직접 읽고 답합니다.<br />
+    보통 <b>영업일 기준 3일 안</b>에 답장을 드려요.
+  </div>
+
+  <h2>1. 이메일로 문의</h2>
+  <p>어떤 화면에서 무슨 일이 있었는지, 가능하면 화면 캡처와 함께 보내 주시면 빨리 도와드릴 수 있어요.</p>
+  <a class="mail" href="mailto:annyeong.hankki@gmail.com?subject=%5B%ED%95%9C%EB%81%BC%5D%20%EB%AC%B8%EC%9D%98">annyeong.hankki@gmail.com</a>
+  <p class="note">앱 안에서는 설정 → 「한끼연구소」에서도 의견과 오류를 보낼 수 있어요.</p>
+
+  <h2>2. 자주 찾는 페이지</h2>
+  <ul>
+    <li><a href="https://peachfam0307-glitch.github.io/hankki/privacy.html">개인정보처리방침</a> — 무엇을 어디에 저장하는지</li>
+    <li><a href="https://peachfam0307-glitch.github.io/hankki/delete-account.html">계정 · 데이터 삭제 안내</a> — 앱 안에서 바로 지우는 법과 이메일 요청 절차</li>
+    <li><a href="https://peachfam0307-glitch.github.io/hankki/licenses.html">오픈소스 라이선스</a></li>
+  </ul>
+
+  <h2>3. 자주 묻는 것</h2>
+  <ul>
+    <li><b>로그인해야 하나요?</b> — 웹에서는 선택이에요. iPhone 앱은 시작할 때 Apple 또는 구글로 로그인해요(기기를 바꾸거나 다시 깔아도 기록이 그대로 돌아와요).</li>
+    <li><b>iPhone 앱에서 로그인이 안 돼요.</b> — 인터넷 연결을 확인한 뒤 다시 눌러 주세요. 계속 안 되면 잠시 뒤에 다시 해 보시고, 그래도 안 되면 위 이메일로 알려 주세요.</li>
+    <li><b>내 레시피는 어디에 저장되나요?</b> — 기본은 내 기기 안이에요. 로그인해서 클라우드 저장을 켜면 클라우드에도 보관돼요.</li>
+    <li><b>사진이 밖으로 나가나요?</b> — 사진에서 글자를 읽어올 때와, 동의한 경우의 AI 다듬기 때만 잠깐 전송되고 보관하지 않아요. 자세한 건 개인정보처리방침 4번·4-1번.</li>
+  </ul>
+
+  <footer>
+    © 2026 한끼(HANKKI) · 운영자 이메일 <a href="mailto:annyeong.hankki@gmail.com">annyeong.hankki@gmail.com</a>
+  </footer>
+</div>
+</body>
+</html>

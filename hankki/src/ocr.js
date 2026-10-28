@@ -7,21 +7,73 @@ import { normalizeNumerals } from './ocrCorrect'
 // 🏷 「로그인해 둔 적이 있나」 표식만 읽는다 — ⛔파이어베이스를 «안» 받는다.
 //   cloud.js 는 파이어베이스를 `await import` 로 늦게 부르고, 이 함수는 localStorage 한 줄만 본다.
 //   (로그인 안 한 사람에게 167KB 를 지우지 않으려고 cloud.js:102 가 바로 그 목적으로 만든 것)
-import { 로그인해뒀나, 내구글번호 } from './cloud'
+import { 로그인해뒀나, 내구글번호, 내토큰 } from './cloud'
+import { 열쇠받음, 열쇠막힘 } from './stats.js'   // 🚪 [2026-09-21] key_earn · key_block — key_block 이 곧 «결제 수요»다
 // 🔓 운영자 표식 — 「무제한인가」의 잣대를 `getOcrLeft()` 한 곳에 모으려고 여기서 읽는다.
 //    ⛔ 순환 없음(확인) — `tidy.js` 는 `polish`·`parseRecipe` 만 부르고 `ocr.js` 를 안 부른다.
-import { tidyFounder } from './tidy'
+import { tidyFounder, 유저눈인가 } from './tidy'
 
 // ── Google Vision OCR 프록시 ──────────────────────────────────
 // 서버(Cloudflare Worker)가 API 키를 숨기고 Vision을 호출해 '텍스트'만 돌려준다.
 // 프록시엔 6중 방어벽(월 900건 상한 등)이 있어 비용 $0을 물리적으로 보장한다.
 // 실패(오프라인·한도초과·오류)하면 아래 폰내장/tesseract로 '조용히' 폴백 → OCR은 늘 동작.
 const OCR_PROXY_URL = 'https://hankki-ocr.annyeong-hankki.workers.dev'
-const OCR_APP_TOKEN = '0VRNDSjHBhwniTzIDAbnRaJygyfGJ2K2'
+export const OCR_APP_TOKEN = '0VRNDSjHBhwniTzIDAbnRaJygyfGJ2K2'
+
+// 🔓👀 운영자 열쇠를 헤더에 싣는다 — 단, 「유저 눈」이면 «안 싣는다».
+//   📮 창업자 2026-09-10 = "유저 눈 스위치로 갈게" → "a로가"
+//   ⛔⛔ 그 전엔 네 곳이 각자 localStorage 를 «직접» 읽어서 유저 눈을 아예 안 봤다.
+//      그래서 유저 눈을 켜도 ⑴워커가 계속 「창업자」로 세고 ⑵서버가 「무제한」이라 답해
+//      **선택 창이 안 뜨는 그 버그가 그대로 남았다**(창업자가 실제로 겪은 그 자리).
+//   ⭐ 이 한 곳으로 모았다 — 다음에 또 갈리지 않게.
+//   ⚠️ 유저 눈이면 «진짜로» 개인 한도를 받는다. 그게 이 스위치의 목적이다.
+//   ⛔⛔ **[2026-09-10 · 실측으로 잡았다] 헤더 값에 ASCII 밖 글자가 있으면 fetch 가 «통째로» 죽는다.**
+//      HTTP 헤더는 ISO-8859-1 만 실을 수 있어서, 열쇠에 한글이 한 글자라도 있으면
+//      TypeError: String contains non ISO-8859-1 code point 가 나고
+//      **AI 읽기가 조용히 전부 먹통**이 된다.
+//      (주소로 들어가는 운영자 통로에 한글이 섞이면 그대로 그 상태가 된다 — 아무 말도 없다.)
+//      ⭐ 실패의 «모양»을 바꾼다(절대원칙 34) — 못 실을 열쇠면 **안 싣고 그냥 보낸다.**
+//         운영자 대접만 못 받을 뿐, 앱은 유저로서 멀쩡히 돈다.
+// 🔐 [2026-09-30] 로그인했으면 ID 토큰을 싣는다 — 서버가 «몸통 번호»가 아니라 이걸 믿는다(워커 `토큰확인`).
+async function 토큰헤더(headers) {
+  const t = await 내토큰()
+  if (t) headers['x-hankki-idtoken'] = t
+  return headers
+}
+
+function 열쇠헤더(headers) {
+  try {
+    if (유저눈인가()) return headers
+    const f = localStorage.getItem('hankki:founder')
+    if (f && /^[\x20-\x7e]+$/.test(f)) headers['x-hankki-founder'] = f
+  } catch { /* noop */ }
+  return headers
+}
 
 // 마지막 프록시 호출의 안내 신호 — 'user_quota'(내 월 무료 소진)·'global_quota'·'rate_limited'.
 // 앱(EditorScreen)이 읽어 "무료 다 써서 기본 인식이에요" 안내를 띄운다. 읽으면 소비(초기화).
 let _ocrNote = null
+
+// 🔒🔒 **열쇠 셈 — 「서버가 실제로 깎았나」만 기록한다. 앱이 추측하지 않는다.**
+//
+//   📮 창업자 2026-09-09 = *"열쇠는 그대로에요 안내했는데 차감되는게 최악이야"*
+//
+//   ⛔⛔ 그 전엔 화면이 `getOcrNote()`·`noVision` 같은 걸로 **스스로 짐작해** 문구를 만들었다.
+//      서버가 실제로 무엇을 했는지는 안 봤다 — 어긋날 수밖에 없는 구조였다.
+//   ⭐ 이제 서버가 `깎음`(true/false)을 «사실»로 실어 보낸다. 여기서는 그걸 세기만 한다.
+//
+//   📖 세 가지 상태를 «갈라» 둔다 — 셋을 뭉치면 또 어긋난다:
+//      · `깎인장수` = 서버가 진짜로 깎은 장수
+//      · `앎` = 서버 답을 받았나. **못 받았으면 false** → 화면은 그때 «열쇠 얘기를 아예 안 한다»(모르면 침묵)
+//      · `안부름` = 「그냥 읽기」로 와서 서버를 아예 안 불렀다 → 「열쇠 안 쓰고 읽었어요」는 이 경우다
+let _셈 = { 깎인장수: 0, 앎: true, 안부름: false }
+export function 열쇠셈리셋() { _셈 = { 깎인장수: 0, 앎: true, 안부름: false } }
+export function 열쇠셈() { return { ..._셈, 왜: _왜, 빚: _빚 } }
+let _빚 = 0
+export const getOcrDebt = () => _빚
+// 📖 서버가 말한 «원인» — 전에읽음 · 빈손 · 구글실패 · 처리중 · 정상
+//   ⛔ 한도 안내값(_ocrNote)과 «섞지 않는다» — 그건 다른 코드가 읽는 값이라 뜻을 겹치면 어긋난다.
+let _왜 = null
 export function getOcrNote() {
   const n = _ocrNote
   _ocrNote = null
@@ -49,6 +101,7 @@ function deviceId() {
 //   (앱의 편집 화면 한 번 = 레시피 하나 = 한 묶음 · 창업자 확정 2026-08-13)
 async function ocrViaProxy(dataUrl, onProgress, batch) {
   _ocrNote = null
+  _왜 = null
   if (typeof dataUrl !== 'string' || !/^data:image\//.test(dataUrl)) throw new Error('not_dataurl')
   if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new Error('offline')
   if (onProgress) onProgress(8)
@@ -70,13 +123,8 @@ async function ocrViaProxy(dataUrl, onProgress, batch) {
   }
   const 그만기어 = () => { if (기어감) { clearInterval(기어감); 기어감 = null } }
   const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
-  // 운영자 무제한 모드(이 기기가 ?founder=…로 진입해 둔 경우)면 무제한 헤더를 실어 보낸다.
-  try {
-    const f = localStorage.getItem('hankki:founder')
-    if (f) headers['x-hankki-founder'] = f
-  } catch {
-    /* noop */
-  }
+  열쇠헤더(headers)   // 👀 유저 눈이면 안 실린다
+  await 토큰헤더(headers)
   let resp
   try {
     resp = await fetch(OCR_PROXY_URL, {
@@ -92,10 +140,19 @@ async function ocrViaProxy(dataUrl, onProgress, batch) {
   }
   그만기어()
   if (!resp.ok) {
+    // ⛔⛔ [2026-09-09] **몸통의 «왜»를 여기서도 읽는다.**
+    //    옛 판은 429 만 열어 봤다 → 서버가 502 에 실어 보낸 왜(구글실패)가 **앱까지 오지 않았다.**
+    //    그러면 화면은 「잘 안 됐어요」밖에 못 하고, «열쇠는 그대로예요»를 말할 근거를 잃는다.
+    //    📖 표 = docs/열쇠와안내-까닭별-2026-09-09.md
+    const d = await resp.json().catch(() => null)
+    if (d && d.왜) _왜 = d.왜
     // 429(한도 초과) → 어느 한도인지 기록(앱이 "무료 다 썼어요" 안내). 전부 폴백으로 넘긴다 — 앱은 늘 동작해야 하니까.
     if (resp.status === 429) {
-      const d = await resp.json().catch(() => null)
       _ocrNote = (d && d.error) || 'quota'
+      // 💸 환불로 생긴 빚 — 몇 개 남았는지 같이 받아 안내에 쓴다(창업자 10/24 「지금은 AI 읽기를 할 수 없어요」)
+      _빚 = d && d.error === 'debt' ? Math.max(0, Number(d.빚) || 0) : 0
+      // ⭐ 한도도 «까닭»이다 — 한 곳(까닭말)에서 말을 고르게 같은 통에 넣는다.
+      if (!_왜) _왜 = _ocrNote
     }
     throw new Error('proxy_http_' + resp.status)
   }
@@ -103,6 +160,9 @@ async function ocrViaProxy(dataUrl, onProgress, batch) {
   if (onProgress) onProgress(92)
   // 📢 남은 장수 — 서버가 매번 같이 보내준다. ⛔예전엔 이 줄을 «버렸다»(창업자 *"카운트가 안된다고"*).
   if (data && data.left) saveOcrLeft(data.left)
+  // 🔒 **서버가 «실제로» 깎았는지만 센다** — 여기서 추측하지 않는다(위 `_셈` 주석).
+  if (data && data.깎음) _셈.깎인장수 += 1
+  _왜 = (data && data.왜) || null                          // 화면이 원인별 문구를 고르는 근거
   return (data && data.text) || ''
 }
 
@@ -141,9 +201,12 @@ export const LEFT_EVENT = 'hankki:left'
 //
 // ⭐ 넓은 자리엔 `KEY_NAME`, 좁은 자리(칸·꼬리말)엔 `KEY_SHORT` — 창업자 잣대가
 //    *"좁은 자리에선 줄여 쓸 수 있어야 한다(레시피열쇠 → 열쇠)"* 였다.
-export const KEY_NAME = '레시피열쇠'
-export const KEY_SHORT = '열쇠'
-export const KEY_UNIT = '개'
+// ⭐ 값은 src/열쇠이름.js 한 곳에 있다 — 여기서 그대로 다시 내보내 부르는 쪽은 안 바뀐다 [2026-09-09]
+//   ⛔⛔ 「export … from」 만 쓰면 **이 파일 «안»에는 값이 안 생긴다** — 바로 아래 keyCount 가 쓰는데 없어서
+//      앱이 첫 화면에서 죽었다(KEY_UNIT is not defined · 2026-09-09 스모크가 잡았다).
+//      ⭐ 그래서 «들여오고» 다시 내보낸다. 부르는 쪽은 그대로다.
+import { KEY_NAME, KEY_UNIT, KEY_SHORT } from './열쇠이름.js'
+export { KEY_NAME, KEY_UNIT, KEY_SHORT }
 // 「열쇠 3개」처럼 세어 준다. 좁은 자리용.
 export const keyCount = (n) => `${KEY_SHORT} ${n}${KEY_UNIT}`
 
@@ -153,7 +216,12 @@ function saveOcrLeft(left) {
   // 🔢 상한도 같이 담는다 — 서버가 준 값이 언제나 이긴다(앱이 따로 세지 않는다)
   const 수 = (v, 기본) => (Number.isFinite(parseInt(v, 10)) ? Math.max(0, parseInt(v, 10)) : 기본)
   try {
+    // 💳 산 열쇠 — 서버가 «못 읽었다»(paidStale)면 폰에 있던 값을 그대로 둔다.
+    //   ⛔ 「못 읽음」을 0 으로 덮으면 산 사람 화면에서 열쇠가 «사라진» 것처럼 보인다(8/19 구멍 ⑤).
+    let 산것 = 수(left.paid, null)
+    if (left.paidStale) { try { 산것 = (JSON.parse(localStorage.getItem(LEFT_KEY) || '{}').paid) ?? null } catch { 산것 = null } }
     localStorage.setItem(LEFT_KEY, JSON.stringify({
+      paid: 산것,
       welcome: w,
       month: m,
       cap: 수(left.cap, null),
@@ -166,6 +234,12 @@ function saveOcrLeft(left) {
       anon: 수(left.anon, null),
       acct: 수(left.acct, null),
       signed: left.signed === true,
+      // 🔓🔓 **[2026-09-10] 서버가 말한 「무제한」을 «담는다» — 그 전엔 통째로 버렸다.**
+      //   📮 창업자 확정 ⓐ(2026-09-02) = 「서버가 말해준다」 인데,
+      //      정작 이 함수가 이 칸을 안 담아서 getOcrLeft() 의 v.무제한 은 **늘 비어 있었다.**
+      //      ＝ 확정해 둔 길이 한 번도 안 돌고, 폰의 표식(tidyFounder)만 혼자 받치고 있었다.
+      //   ⛔ 적대적 검토가 잡았다(2026-09-10) — 「고쳤다」던 자리가 실은 죽은 코드였다.
+      무제한: left.무제한 === true,
     }))
     // 📢 값이 바뀌었다고 알린다 — 알약·가져오기 목록이 듣고 다시 그린다.
     try { window.dispatchEvent(new Event(LEFT_EVENT)) } catch { /* noop */ }
@@ -188,7 +262,8 @@ const 큐쓰기 = (a) => { try { localStorage.setItem(큐칸, JSON.stringify(a.s
 
 async function 한번보내기(행동) {
   const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
-  try { const f = localStorage.getItem('hankki:founder'); if (f) headers['x-hankki-founder'] = f } catch { /* noop */ }
+  열쇠헤더(headers)   // 👀 유저 눈이면 안 실린다
+  await 토큰헤더(headers)
   const resp = await fetch(OCR_PROXY_URL, {
     method: 'POST',
     headers,
@@ -207,7 +282,9 @@ export async function 열쇠받기(행동) {
   if (!EARN[행동]) return false
   try {
     const d = await 한번보내기(행동)
-    return !!(d && d.준것)
+    const 받았다 = !!(d && d.준것)
+    if (받았다) { try { 열쇠받음() } catch { /* 통계가 죽어도 열쇠는 준다 */ } }   // 🚪 key_earn — 「열쇠를 몇 개 줬나」. 레꾸자랑 옆줄이 이걸 안 세고 있었다.
+    return 받았다
   } catch {
     const q = 큐읽기()
     if (!q.includes(행동)) 큐쓰기([...q, 행동])
@@ -237,7 +314,8 @@ export async function 밀린열쇠보내기() {
 export async function 열쇠새로고침() {
   try {
     const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
-    try { const f = localStorage.getItem('hankki:founder'); if (f) headers['x-hankki-founder'] = f } catch { /* noop */ }
+    열쇠헤더(headers)   // 👀 유저 눈이면 안 실린다
+    await 토큰헤더(headers)
     const resp = await fetch(OCR_PROXY_URL, {
       method: 'POST',
       headers,
@@ -248,6 +326,88 @@ export async function 열쇠새로고침() {
     if (d && d.left) { saveOcrLeft(d.left); return true }
   } catch { /* noop */ }
   return false
+}
+
+// 💳 상점이 «지금 팔 수 있나» — 워커 결제가 켜져 있나(열쇠·창고) · 이 사람이 로그인 확인됐나.
+//   돌려주는 값 = 'on'(살 수 있다) · 'login'(로그인부터) · 'off'(서버 결제가 꺼짐·못 닿음)
+//   ⛔ 'off' 면 상점은 구매 단추를 «숨긴다» — 꺼진 서버에 팔면 확인 못 해서 3일 뒤 자동 환불된다.
+// 🍎 구매자 표(appAccountToken) — `/billing/state` 가 «이 로그인 계정» 것으로 내려준다. 애플 결제에 그대로 붙인다(billing.js buy).
+let _구매자표 = ''
+export const 구매자표 = () => _구매자표
+// 💸 상점을 열 때의 빚 — 사면 빚부터 메워 「20개」보다 적게 보인다 → 완료 화면이 까닭을 말한다(창업자 10/24 C)
+let _산빚 = 0
+export const 상점빚 = () => _산빚
+// ✅ 「환불 요청 때 사용 내역을 Apple에 제공」 동의 적기(아이폰 구매 시트 체크 칸 · 창업자 10/23 Ⓐ·10/24 아이폰만) — 실패하면 false(사지 않는다)
+export async function 결제동의() {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return false
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/consent`, { method: 'POST', headers, body: '{}' })
+    const d = await resp.json().catch(() => null)
+    return !!(d && d.ok)
+  } catch { return false }
+}
+export async function 결제상태() {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return 'login'
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/state`, { method: 'POST', headers, body: '{}' })
+    const d = await resp.json().catch(() => null)
+    if (d && d.ok) {
+      _구매자표 = String(d.account || ''); _산빚 = Math.max(0, Number(d.빚) || 0)
+      // 🚫 환불 3번째부터 — 사기 단추 대신 안내(창업자 10/23 ④)
+      return d.blocked === 'refunds' ? 'blocked' : 'on'
+    }
+    if (d && d.error === 'login_required') return 'login'
+    return 'off'
+  } catch { return 'off' }
+}
+
+// 🍎 아이폰 거래 번호를 워커로 — 워커가 애플 서버에 다시 묻는다(`/billing/apple/sync`). 실패해도 던지지 않는다.
+export async function 애플것보내기(ids) {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return { ok: false, error: 'login_required' }
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/apple/sync`, { method: 'POST', headers, body: JSON.stringify({ transactions: ids.map((id) => ({ id })) }) })
+    const d = await resp.json().catch(() => null)
+    if (d && d.ok) await 열쇠새로고침()
+    return d
+  } catch { return null }
+}
+
+// 🗑 계정 삭제 때 — 워커의 산 열쇠를 지우고 구매 기록에서 «누구»를 떼어 낸다(`/billing/forget`).
+//   ⭐ 로그인 계정을 지우기 «전»에 불러야 한다(토큰이 살아 있어야 워커가 누군지 안다).
+//   ⛔ 실패해도 던지지 않는다 — 결제를 안 켰거나(옛 워커) 망이 끊겨도 계정 삭제는 막지 않는다.
+export async function 산것잊기(미리받은토큰 = '') {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    // ⭐ 계정 삭제는 «지운 뒤»에 부른다 — 그땐 로그인이 이미 사라져 새 토큰을 못 받으니, 지우기 전에 받아 둔 것을 쓴다
+    if (미리받은토큰) headers['x-hankki-idtoken'] = 미리받은토큰
+    else await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return null
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/forget`, { method: 'POST', headers, body: '{}' })
+    return await resp.json().catch(() => null)
+  } catch { return null }
+}
+
+// 💳 산 것을 워커에 보낸다 → 구글에 진짜냐 묻고 · 열쇠를 넣고 · 「받았다」를 알린다(`/billing/sync`).
+//   ⭐ 몇 번을 보내도 결과가 같다(워커가 영수증으로 한 번만 준다) — 그래서 켤 때마다 통째로 보내도 된다.
+//   ⛔ 로그인 «확인»이 필수다(창업자 확정 2026-10-22 ⓐ) — 토큰이 없으면 서버가 401 을 준다.
+//      그때 구매는 구글에 «받았다고 안 한» 채 남아 있다 → 로그인한 뒤 다음 번에 따라 들어온다.
+//   ⛔ 실패해도 던지지 않는다. 돌려주는 값 = 서버 답 그대로(못 받으면 null).
+export async function 산것보내기(목록) {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
+    await 토큰헤더(headers)
+    if (!headers['x-hankki-idtoken']) return { ok: false, error: 'login_required' }
+    const resp = await fetch(`${OCR_PROXY_URL}/billing/sync`, { method: 'POST', headers, body: JSON.stringify({ purchases: 목록 }) })
+    const d = await resp.json().catch(() => null)
+    if (d && d.ok) await 열쇠새로고침()   // 화면의 열쇠 수를 서버 값으로 맞춘다
+    return d
+  } catch { return null }
 }
 
 // ── 📊📊 「기본 인식으로 읽었다」를 서버에 알린다 (창업자 지시 2026-09-01) ────
@@ -270,7 +430,7 @@ const 기본큐쓰기 = (a) => { try { localStorage.setItem(기본큐칸, JSON.s
 
 async function 기본한번(갈래) {
   const headers = { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }
-  try { const f = localStorage.getItem('hankki:founder'); if (f) headers['x-hankki-founder'] = f } catch { /* noop */ }
+  열쇠헤더(headers)   // 👀 유저 눈이면 안 실린다
   const resp = await fetch(OCR_PROXY_URL, { method: 'POST', headers, body: JSON.stringify({ 기본: 갈래 }) })
   if (!resp.ok) throw new Error('base_http_' + resp.status)
 }
@@ -329,7 +489,7 @@ export function getOcrLeft() {
     //      로그인 안 한 사람에게 167KB 를 지우지 않는다(cloud.js:102 가 그 목적으로 만든 것).
     //   ⛔⛔ **표시에만 쓴다. 차감·한도 판정에는 절대 안 쓴다** — 그건 언제나 서버가 정한다.
     const 첫값 = 로그인해뒀나() ? WELCOME_ACCT : WELCOME_ANON
-    return { welcome: 첫값, month: MONTHLY_FREE, total: 첫값, 무제한: tidyFounder(), unknown: true }
+    return { welcome: 첫값, month: MONTHLY_FREE, total: 첫값, 무제한: 유저눈인가() ? false : tidyFounder(), unknown: true }
   }
   // 🔓🔓 **[2026-09-02 · 창업자 제보] 「무제한인가」의 잣대를 «여기 한 곳»으로 모은다.**
   //   📮 창업자 폰 = 토스트 「무료 레시피열쇠 **0개** 남았어요」 ＋ 임시보관함 🔒**0**
@@ -345,8 +505,14 @@ export function getOcrLeft() {
   //         둘 중 하나만 참이어도 무제한이다(운영자 아닌 사람에겐 둘 다 거짓이라 안 바뀐다).
   return {
     ...v,
-    total: v.welcome > 0 ? v.welcome : v.month,
-    무제한: !!v.무제한 || tidyFounder(),
+    // 💳 산 열쇠(paid)도 더한다 — 서버는 무료를 다 쓴 뒤 산 열쇠로 읽으니, 쓸 수 있는 수 = 무료 ＋ 산 것.
+    //   ⭐ 아직 아무도 안 샀으면 paid 는 0·null 이라 화면이 한 글자도 안 바뀐다.
+    total: (v.welcome > 0 ? v.welcome : v.month) + (Number(v.paid) || 0),
+    // 👀 [2026-09-10] 유저 눈이면 «무조건» 거짓이다 — 서버 값도 무시한다.
+    //   ⛔ 스위치를 켠 직후엔 «켜기 전에 받아둔» 서버 답(무제한: true)이 아직 남아 있다.
+    //      그걸 그대로 믿으면 스위치를 켜도 한 박자 동안 ∞ 로 보인다.
+    //   ⭐ tidyFounder() 는 이미 유저 눈이면 false 를 준다 — 서버 값 쪽만 막으면 된다.
+    무제한: 유저눈인가() ? false : (!!v.무제한 || tidyFounder()),
     unknown: false,
   }
 }
@@ -616,17 +782,47 @@ function assembleFromBlocks(data) {
 //   ⛔ 이 옵션을 ①②(공유로 들어오는 사진)에 붙이지 말 것 — 거기선 «물어볼 화면이 없다».
 //      창업자 확정(2026-08-29) = 열쇠 쓰는 길과 공짜 길이 «둘 다» 살아 있어야 한다.
 export async function ocrImage(image, onProgress, opts = {}) {
+  // 🆓 「그냥 읽기」 = 서버를 아예 안 부른다 → 「열쇠 안 쓰고 읽었어요」는 이 경우다(깎음 값이 «없는» 게 맞다)
+  if (opts.noVision) _셈.안부름 = true
   // 0) Google Vision 프록시 우선 — 한국어 인식 최상. 실패하면 폰내장→tesseract로 폴백.
   //    🆓 `opts.noVision` 이면 이 칸을 통째로 건너뛴다 = 열쇠가 안 깎인다.
   if (typeof image === 'string' && !opts.noVision) {
-    try {
-      const t = await ocrViaProxy(image, onProgress, opts.batch)
-      if (t && !looksGibberish(t)) {
-        if (onProgress) onProgress(100)
-        return normalizeNumerals(t)
+    // 🔁🔁 **자동으로 한 번 더 보낸다 — 유저는 아무것도 안 해도 된다.**
+    //
+    //   📮 창업자 2026-09-09 = *"이게 자동으로 돌아가는 시스템이어야지 일일이 우리가 확인해서
+    //      어떻게 열쇠를 돌려주냐고"*
+    //
+    //   ⛔⛔ **왜 필요한가** — 지하철에서 화면이 꺼지면 브라우저가 통신을 «죽인다».
+    //      서버는 다 읽고 깎았는데 유저는 못 받는다. 그 전엔 거기서 끝이었다(열쇠 1장 증발).
+    //      🔢 실측 = 앱에 타임아웃 코드가 «0곳»이다 — 끊는 주체는 브라우저다. 앱은 알아챌 수 있다.
+    //
+    //   ⭐ 서버가 사진 지문을 기억하므로 **같은 바이트를 그대로 다시 보내면 공짜로 글자를 돌려준다**
+    //      (구글도 다시 안 부른다 · 진짜 워커 실측으로 확인).
+    //      ⛔ 그래서 「사진을 다시 고르세요」가 아니다 — **다시 고르면 1픽셀만 달라도 새 사진**이 된다
+    //         (`components/CropSheet.jsx` 가 자를 때 JPEG 로 다시 만든다). 보냈던 그 이미지 그대로여야 한다.
+    //
+    //   📖 두 가지를 다시 보낸다:
+    //      ⑴ **통신이 터졌다** — 브라우저가 끊었다. 바로 한 번 더.
+    //      ⑵ **처리중** — 같은 사진이 «겹쳐» 들어와 남이 먼저 자리를 찜했다(그쪽이 곧 글자를 채운다).
+    //         창업자 확정 = **말없이 잠깐 뒤 다시 묻는다**(A안 · 유저는 조금 더 기다린 걸로 느낀다).
+    //   ⛔ 429(한도 초과)는 다시 안 보낸다 — 정상 답이라 또 해도 똑같다.
+    const 잠깐 = (ms) => new Promise((r) => setTimeout(r, ms))
+    for (let 판 = 0; 판 < 3; 판++) {
+      try {
+        const t = await ocrViaProxy(image, onProgress, opts.batch)
+        if (_왜 === '처리중') { await 잠깐(1200); continue }             // ⑵ 남이 읽는 중 — 조금 뒤 다시
+        if (t && !looksGibberish(t)) {
+          if (onProgress) onProgress(100)
+          return normalizeNumerals(t)
+        }
+        break                                    // 빈손이거나 외계어 → 아래 기본 인식으로
+      } catch {
+        // ⑴ 통신이 터졌다 → 한 번만 더. ⛔한도(429)는 `_ocrNote` 에 남아 있으니 다시 안 한다.
+        if (판 === 0 && !_ocrNote) { await 잠깐(400); continue }
+        // ⛔ **답을 못 받았다 = 깎였는지 «모른다».** 화면은 이때 열쇠 얘기를 아예 안 한다.
+        if (!_ocrNote) _셈.앎 = false
+        break
       }
-    } catch {
-      /* 폴백 계속 (오프라인·한도·오류) */
     }
   }
   // 📊📊 **여기부터는 «열쇠를 안 쓰는» 길이다** — 유료를 켤 때 「무료로 얼마나 읽히나」의 잣대가 된다.
@@ -641,7 +837,14 @@ export async function ocrImage(image, onProgress, opts = {}) {
   //      여기서 세는 이유 = **왜 떨어졌는지 아는 자리가 여기뿐**이다(더 아래로 가면 이유를 잊는다).
   //      ⭐ 값을 정하는 데는 이게 맞다 — 우리가 알고 싶은 건 「열쇠 없이 읽으려 한 일이 얼마나 잦나」다.
   if (typeof image === 'string') {
-    기본인식알림(opts.noVision ? '고름' : (_ocrNote === 'user_quota' ? '막힘' : '실패'))
+    //   🆕 **noVision 을 둘로 가른다** (창업자 2026-09-09) — 화면이 이유를 실어 보낸다.
+    //      고름 = 열쇠가 «있는데» 「그냥 읽기」를 눌렀다(값이 비싸게 느껴진다)
+    //      없음 = 열쇠가 0 이라 **단추가 하나뿐**이었다(장수가 모자라다 · 막힘과 같은 처방)
+    //      ⛔ 그 전엔 둘 다 「고름」이었다 — 처방이 정반대인 둘이 한 칸에 섞여 값을 잘못 정하게 된다.
+    // 🚪 key_block — 열쇠가 모자라 AI 읽기를 «못» 한 사람. «없음»(0개라 단추가 하나뿐) 과 «막힘»(서버 429) 둘 다.
+    //    ⭐ 이 수가 곧 결제 수요다 — 「막힌 사람이 몇 명인가」를 모르면 결제를 켤 때가 언제인지 못 정한다.
+    if ((opts.noVision && opts.noVisionWhy === '없음') || (!opts.noVision && _ocrNote === 'user_quota')) { try { 열쇠막힘() } catch { /* noop */ } }
+    기본인식알림(opts.noVision ? (opts.noVisionWhy === '없음' ? '없음' : '고름') : (_ocrNote === 'user_quota' ? '막힘' : '실패'))
   }
   // 1) 폰 내장 OCR (있으면 정확, 요즘 크롬은 기본 비활성이라 대개 건너뜀)
   if (typeof image === 'string') {

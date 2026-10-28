@@ -204,8 +204,20 @@
       살구     `#fdf1e8` = a* **＋2.5** · b* +5.8  ← a* 를 올려 살구빛이 돈다
       ⛔ 그래서 b* 만 올리면(＝더 노랗게) 오히려 «더» 누리끼리해진다. a* 를 올려야 한다.
 
-   ⛔⛔ **`--brown`(포인트)은 «안» 건드린다** — 창업자 = *"파랑은 그대로 두고"*.
-      전 테마 통일 포인트(더스티 블루)라 여기만 바꾸면 브랜드가 갈린다.
+   ⛔⛔ ~~**`--brown`(포인트)은 «안» 건드린다** — 창업자 = *"파랑은 그대로 두고"*.~~
+   🍠🍠 **[2026-09-09 창업자 확정 · 위 줄을 대체한다] 살구만 포인트를 «군고구마»로 바꾼다.**
+      📮 창업자 = *"우리 배경테마 자체 알약 … 가을인데 추워보여"* → *"살구만 군고구마로 가자.
+         가지는 겨울에 하자 예뻐 색이. 나머지는 파랑알약으로 그대로가고"*
+      ⭐ **전제가 달라졌다** — 8/29 에 「파랑 그대로」를 정할 땐 «살구 배경이 막 생긴 참»이었고,
+         그 위에 명절 장식(단풍·보름달·한복)이 얹힐 줄 몰랐다. 지금은 찬 파랑이 가을 화면에서 겉돈다.
+      🔢 잰 값 = 살구(#fdf1e8) 위 대비 **파랑 4.11 → 군고구마 6.13** · 흰 글씨 **4.56 → 6.80**.
+         («추워 보인다»를 고치면서 읽기도 같이 좋아졌다)
+      ⛔ **살구 «하나만» 바꾼다** — 크림·그레이지·진한은 파랑 그대로다.
+         테마마다 `--brown` 을 따로 갖고 있어서 서로 안 번진다. 살구를 고른 사람만 바뀐다.
+      ⛔ 진한 테마에 이 색을 그대로 넣지 말 것 — 차콜(#17171b) 위에서 대비가 **2.63** 이라 단추가 잠긴다.
+         굳이 넣으려면 밝은 짝(#c07a45 · 대비 5.20)을 써야 한다. ⏳지금은 «안 넣기»로 정했다.
+      ❄️ **가지자주 #6d3550 은 «겨울»에 쓴다** — 창업자 *"가지는 겨울에 하자 예뻐 색이"* (2026-09-09)
+      🛠 다시 볼 때 = `node scripts/_판-살구포인트색-0909.mjs [진한]`
 
    ⚠️ **배경을 손대면 그 위의 것을 «전부» 다시 잰다**(v11.21 톤D 교훈 —
       *"색은 그대로인데 «칙칙해진» 이유가 그것이다"*). 그래서 그레이지가 덮는 자리를 «같은 만큼» 덮었다.
@@ -216,7 +228,7 @@
   --cream: #f8e3d4;
   --cream-deep: #f2d5c0;
   --sand: #d8bda2;
-  --brown: #5878a0; /* ⛔파랑 그대로 — 전 테마 통일 포인트 */
+  --brown: #8a4a26; /* 🍠 군고구마 — 창업자 확정 2026-09-09. ⛔살구에서만. 까닭은 위 머리말에 */
   --text: #3d3830;
   --text-sub: #8f8175;
   --line: #f5e2d3;
@@ -288,6 +300,23 @@ img {
 }
 
 /* 앱을 폰 프레임 안에 담아 데스크톱에서도 자연스럽게 보이도록 */
+/* 🎃 [창업자 2026-09-29 「F2 라벤더로 판 바탕 깔아줘」] 핼러윈 기간 «홈» 배경 = 라벤더 펠트 ＋ 보라 포인트
+   ⭐ 표시는 useSeasonCuts 가 «앱 전체»에 단다(`data-season` · 창업자 20:07 「다른 탭들도 보라로」) — 다른 철엔 안 닿는다.
+   ⛔ 다크 테마는 안 건드린다(어두운 바탕은 창업자가 안 골랐다). */
+:root[data-season='hw']:not([data-theme='dark']) {
+  /* ✏️ 20:16 「보라는 배경색을 조금만 연하게 · 버튼 알약등은 그대로」 → 포인트 #6f5a8e 되돌림 · 바탕 #eae5ee → #efebf3 */
+  --bg: #efebf3; --surface: #ffffff; --cream: #e0d8e8; --brown: #6f5a8e;
+  --nav-bg: rgba(239, 235, 243, 0.95);
+}
+/* 🎃 [창업자 2026-09-29 20:05 「애들 너무 작아 · 꼬르곰은 아래에 공간이 많아 · 펭펭은 조금만 더 크게」] 핼러윈 두 자리만 키운다 */
+:root[data-season='hw'] .news-gom { width: 40px !important; }
+:root[data-season='hw'] .next-peng { width: 36px; }
+:root[data-season='hw']:not([data-theme='dark']) body,
+:root[data-season='hw']:not([data-theme='dark']) .app-frame {
+  background-color: #efebf3;
+  background-image: url('./assets/season/hw-felt-lavender.jpg');
+  background-size: 420px auto;
+}
 .app-frame {
   max-width: 440px;
   margin: 0 auto;
@@ -1755,7 +1784,10 @@ img {
   position: sticky;
   bottom: 0;
   padding: 14px 20px calc(14px + var(--safe-bottom));
-  background: linear-gradient(to top, var(--bg) 92%, transparent);
+  /* ⛔ 그라디언트 금지 — 위쪽 8%가 반투명이라 그 아래 본문 글자가 «비쳐» 보였다.
+     📮 창업자 2026-09-10 = "완성했어요 글자 비치는거 왜 다시 이렇게 됐어?"
+     ⭐ 배경과 «같은 값»으로 꽉 채운다. 비침 0%. */
+  background: var(--bg);
 }
 
 /* 상세 상단 원형 버튼 (이미지 위) */
@@ -1817,6 +1849,20 @@ img {
 .sheet-mask {
   position: fixed;
   inset: 0;
+  /* ⌨️🍎 [2026-09-20 · 창업자 제보 「안눌러진다」 → 「스크롤을 내려야 보여」] 키보드 위로 올린다.
+     🔎 뿌리 = 여기가 «화면 전체 높이»를 잡는데, 갤럭시는 index.html 의 interactive-widget=resizes-content 로
+        키보드가 뜨면 화면이 줄어 시트가 저절로 올라오지만 **아이폰은 그 설정을 안 따른다** → 시트가 키보드 뒤에 깔린다.
+     ✅ 실측(09-20 12:56) = 같은 웹·같은 코드인데 창업자 갤럭시는 바로 보이고 딸 아이폰만 가렸다.
+     ⭐ --kb-inset 은 main.jsx 가 visualViewport 로 이미 재고 있던 값이다(EditorScreen 계량 바가 쓰던 것) —
+        새로 만들지 않고 그대로 쓴다. 갤럭시는 이 값이 0이라 «아무 변화 없다». 옛 폰이면 값이 없어 지금과 같다.
+     ⛔ 이 한 줄이 autoFocus 시트 일곱 곳을 «전부» 고친다(식비 시작일·장보기 직접넣기 2·가져오기·레꾸자랑·내레시피·꾸미기 글자 3). */
+  /* ⌨️🍎 [2026-09-20 다시 고침] bottom 만 올리던 것 → «보이는 네모»를 통째로 씌운다.
+     사파리는 키보드가 뜨면 페이지를 밀어버려서(--vv-top) 「키보드 높이」 계산이 모자란다.
+     top/height 를 visualViewport 그대로 쓰면 밀린 양과 무관하게 항상 맞는다.
+     갤럭시·PC = --vv-top 0 · --vv-h 는 창 높이라 지금과 똑같다(실측함). */
+  top: var(--vv-top, 0px);
+  height: var(--vv-h, 100dvh);
+  bottom: auto;
   background: rgba(63, 50, 39, 0.35);
   /* 모달 시트는 항상 최상단 — 표지 꾸미기(z-index 220) 위에서도 글쓰기 시트가 떠야 한다 */
   z-index: 300;
@@ -1829,7 +1875,9 @@ img {
   background: var(--surface);
   border-radius: 22px 22px 0 0;
   padding: 8px 8px calc(12px + var(--safe-bottom));
-  max-height: calc(100dvh - 52px);
+  /* ⌨️ 키보드가 떴을 때 «보이는» 높이를 넘지 않게 — 안 그러면 긴 시트의 «윗부분»이 화면 밖으로 넘친다
+     (바탕을 올려도 시트가 바탕보다 크면 flex-end 라 위로 삐져나간다). --app-height = visualViewport 높이. */
+  max-height: calc(var(--vv-h, var(--app-height, 100dvh)) - 52px);
   overflow-y: auto;
   overscroll-behavior: contain;
   animation: sheetUp 0.26s cubic-bezier(0.22, 0.61, 0.36, 1) both;
@@ -1934,8 +1982,140 @@ img {
             ⭐ DOM 순서는 «장바구니 먼저»로 두고 `order` 로만 바꾼다 — 그래야 패드에서 그냥 좌우가 된다.
    · 패드 = 좌우 2열(왼쪽 장바구니·오른쪽 리스트) — 위 `@media (min-width: 700px)` 참고. */
 .shop-pair { display: flex; flex-direction: column; }
-.shop-pair.has-items .shop-cur { order: 2; margin-top: 26px; }
-.shop-pair.has-items .shop-list { order: 1; }
+/* 🛒🛒 [2026-09-13 창업자 확정] 「빈손일 때도」 장보기 리스트가 먼저 온다 — `has-items` 조건을 뺐다.
+   🔢 왜 = GA4 28일 실측 `shop` 19번 열림 · 평균 **5초**(모든 화면 중 제일 짧다).
+      재현판으로 재니 빈손일 때 「장보기 리스트」가 위에서 **1,522px** — 첫 화면(891px) «밖»이었다.
+      ＝ 장보기를 연 사람이 첫 화면에서 «자기 목록»을 한 칸도 못 봤다. 보이는 건 추천 상품뿐.
+   📮 창업자 = *"C로 가자"* (시안 셋을 캡처로 보고 고름 · `scripts/_판-장보기시안-0913.mjs`)
+   ⭐ 175px 로 올라오면서 «주부의 장바구니»도 첫 화면에 같이 들어온다 — 수익 자리를 안 잃는다.
+   ⛔ 「5초가 늘어난다」는 아직 증명 못 했다. 바꾼 뒤 GA4 로 다시 재야 안다. */
+.shop-pair .shop-cur { order: 2; margin-top: 26px; }
+.shop-pair .shop-list { order: 1; }
+
+/* 💰 [2026-09-17 시제품] 식비 보는 곳 — 잣대는 «주»(창업자 «주단위로 계획하는거») */
+.fc { padding-bottom: 8px; }
+.fc-empty { padding: 34px 10px; text-align: center; }
+.fc-empty-t { font-size: 17px; font-weight: 700; }
+.fc-empty-s { font-size: 15px; color: var(--text-sub); margin-top: 7px; line-height: 1.7; }
+.fc-big { background: var(--today-grad); border-radius: 18px; padding: 18px; text-align: center; margin-top: 14px; }
+.fc-k { font-size: 13.5px; color: var(--text-sub); }
+.fc-date { font-size: 12px; margin-left: 4px; }
+.fc-v { font-size: 34px; font-weight: 800; color: var(--brown); letter-spacing: -.6px; margin-top: 3px; }
+.fc-v em { font-size: 17px; font-style: normal; font-weight: 700; margin-left: 2px; }
+.fc-ref { display: flex; justify-content: center; gap: 18px; margin-top: 8px; font-size: 13px; color: var(--text-sub); }
+.fc-ref b { color: var(--text); font-weight: 700; }
+.fc-ratio { margin-top: 11px; background: var(--surface); border: 1px solid var(--line); border-radius: 15px; padding: 13px 15px; }
+.fc-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; background: var(--cream); }
+.fc-bar i { display: block; }
+.fc-bar .a { background: var(--brown); }
+.fc-bar .b { background: var(--sand); }
+.fc-ratio-s { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-sub); margin-top: 9px; }
+.fc-ratio-s .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; }
+.fc-ratio-s .dot.a { background: var(--brown); }
+.fc-ratio-s .dot.b { background: var(--sand); }
+.fc-two { display: flex; gap: 10px; margin-top: 11px; }
+.fc-half { flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 15px; padding: 13px; text-align: center; }
+.fc-hk { font-size: 12.5px; color: var(--text-sub); }
+.fc-hv { font-size: 21px; font-weight: 800; margin-top: 3px; }
+.fc-hv em { font-size: 12.5px; font-style: normal; font-weight: 600; margin-left: 2px; }
+.fc-hwait { font-size: 13px; color: var(--sand); margin-top: 9px; line-height: 1.5; }
+.fc-hs { font-size: 11.5px; color: var(--text-sub); margin-top: 4px; }
+.fc-weeks { display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 62px; margin-top: 5px; }
+.fc-weeks button { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 19px; height: 62px; padding: 0; background: none; gap: 2px; }
+.fc-weeks button em { font-style: normal; font-size: 10px; font-weight: 700; color: var(--text-sub); line-height: 1; height: 11px; }
+.fc-weeks button span { font-size: 9.5px; color: var(--sand); line-height: 1; }
+.fc-weeks button.now em, .fc-weeks button.now span { color: var(--brown); }
+.fc-weeks button i { display: block; width: 11px; background: var(--sand); border-radius: 3px 3px 0 0; }
+.fc-weeks button.now i { background: var(--brown); }
+.fc-back { width: 100%; margin-top: 8px; padding: 9px 0; border-radius: 11px; background: var(--cream); color: var(--brown); font-size: 14px; font-weight: 700; }
+.fc-out-btn { width: 100%; margin-top: 13px; padding: 13px 0; border-radius: 13px; background: var(--cream); color: var(--brown); font-weight: 700; font-size: 16px; }
+.fc-wk-head { display: flex; justify-content: space-between; align-items: baseline; margin: 20px 2px 8px; font-size: 13.5px; color: var(--text-sub); }
+.fc-wk-head b { font-size: 15px; color: var(--text); }
+.fc-card { background: var(--surface); border: 1px solid var(--line); border-radius: 15px; overflow: hidden; }
+.fc-row { display: flex; align-items: center; gap: 9px; padding: 12px 13px; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+/* ✏️ 줄 전체가 「고치기」 단추다 — X 만 따로 남는다 (창업자 2026-09-18 «저기도 수정가능하게») */
+.fc-row .fc-hit { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px;
+  background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.fc-row:last-child { border-bottom: 0; }
+.fc-d { width: 58px; color: var(--text-sub); font-size: 13px; flex: none; }
+/* 🏷 [2026-09-18] 메모가 주인공 · 갈래는 «늘 남는다».
+      ⛔ 전엔 한 줄에 흘려서 뒤엣것부터 잘렸고, 그 뒤엣것이 «메모»였다(「외식·배달 쿠팡…」).
+      ✅ 이제 메모 칸만 줄어들고(min-width:0) 갈래는 안 줄어든다(flex:none) — 잘려도 갈래는 보인다. */
+.fc-t { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+.fc-t small { color: var(--text-sub); font-size: 12px; flex: none; }
+.fc-m { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-w { font-weight: 700; white-space: nowrap; }
+.fc-sheet { padding: 12px 18px calc(20px + var(--safe-bottom)); }
+.fc-seg { display: flex; gap: 7px; }
+.fc-seg button { flex: 1; padding: 10px 0; border-radius: 12px; border: 1px solid var(--line); background: var(--cream); color: var(--text-sub); font-size: 15px; font-weight: 700; }
+.fc-seg button.on { background: var(--brown); border-color: var(--brown); color: #fff; }
+.fc-in { margin-top: 11px; background: var(--cream); border-radius: 13px; padding: 15px; text-align: right; font-size: 28px; font-weight: 800; letter-spacing: -.5px; }
+.fc-in b { font-size: 15px; font-weight: 700; color: var(--text-sub); margin-left: 3px; }
+.fc-memo { width: 100%; margin-top: 9px; padding: 11px 13px; border-radius: 11px; border: 1px solid var(--line); background: var(--surface); font-size: 15px; font-family: inherit; color: var(--text); outline: none; }
+/* 💰 예산 막대 — 남은 돈이 제일 크다 */
+.fc-bud { height: 10px; border-radius: 5px; background: var(--cream); margin-top: 12px; overflow: hidden; }
+.fc-bud i { display: block; height: 100%; background: var(--brown); border-radius: 5px; }
+.fc-bud.over i { background: #d98a3d; }
+.fc-bud-s { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--text-sub); }
+.fc-bud-s b { font-size: 15px; color: var(--text); }
+.fc-bud-s button { font-size: 12.5px; color: var(--brown); font-weight: 700; background: none; }
+.fc-bud-new { margin-top: 12px; width: 100%; padding: 10px 0; border-radius: 11px; background: var(--cream); color: var(--brown); font-size: 14.5px; font-weight: 700; }
+.fc-bud-ref { margin-top: 9px; font-size: 13px; color: var(--text-sub); text-align: center; }
+/* 📅 달 시작일 (2026-09-20 창업자 「9월 13일-10월 12일로 계산」) — 달별에서만 뜨는 한 줄 ＋ 1~28 고르는 판 */
+.fc-mstart { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 8px; padding: 8px 12px; border-radius: 11px; background: var(--cream); color: var(--text-sub); font-size: 13.5px; }
+.fc-mstart .fc-date { color: var(--text-sub); }
+.fc-mstart-in { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; }
+.fc-mstart-in input[type=date] { width: auto; min-width: 190px; font-size: 18px; padding: 10px 12px; }
+.fc-mstart-in input { width: 92px; padding: 10px 0; text-align: center; font-size: 26px; font-weight: 700; color: var(--brown); background: var(--cream); border: 2px solid var(--brown); border-radius: 12px; }
+.fc-mstart-in span { font-size: 16px; color: var(--text); }
+.fc-ask-btns button:disabled { opacity: .4; }
+
+/* 📅 잣대 고르기 — 주 · 달 · 기간 */
+.fc-scale { display: flex; gap: 6px; margin-top: 12px; }
+.fc-scale button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 10px 0; border-radius: 12px; font-size: 14.5px; font-weight: 700; color: var(--text-sub); background: var(--cream); border: 1px solid var(--line); }
+.fc-scale button.on { background: var(--surface); color: var(--brown); border-color: var(--brown); box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.fc-range { display: flex; align-items: center; gap: 8px; margin-top: 9px; font-size: 14px; color: var(--text-sub); }
+.fc-range input { flex: 1; min-width: 0; padding: 11px 10px; border-radius: 11px; border: 1.5px solid var(--brown); background: var(--surface); font-size: 14.5px; font-family: inherit; color: var(--text); font-weight: 600; }
+.fc-range-k { font-size: 12.5px; color: var(--text-sub); margin-top: 10px; }
+
+/* 🧮 계산기 — 더한 것들을 위에 줄줄이 */
+.fc-calc { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; align-items: baseline; font-size: 14px; color: var(--text-sub); margin-bottom: 6px; }
+.fc-calc .plus { color: var(--brown); font-weight: 800; }
+.fc-key.plus { background: var(--brown); color: #fff; font-size: 22px; }
+.fc-shop.add { background: transparent; border: 1px dashed var(--sand); color: var(--text-sub); }
+
+/* 🏪 가서 보고 와서 적기
+ — 가로로 밀어 보는 칩 줄 */
+.fc-shops { margin-top: 11px; }
+.fc-shops-k { font-size: 12.5px; color: var(--text-sub); margin-bottom: 7px; }
+.fc-shops-row { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+.fc-shops-row::-webkit-scrollbar { display: none; }
+.fc-shop { flex: 0 0 auto; padding: 8px 13px; border-radius: 11px; background: var(--cream); color: var(--brown); font-size: 14px; font-weight: 700; white-space: nowrap; }
+
+.fc-day { display: flex;
+ align-items: center; justify-content: center; gap: 16px; margin-top: 10px; font-size: 14px; color: var(--text-sub); }
+.fc-day button { font-size: 20px; color: var(--brown); padding: 2px 8px; }
+.fc-day button:disabled { color: var(--line); }
+.fc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 12px; }
+.fc-key { padding: 13px 0; text-align: center; font-size: 20px; font-weight: 600; background: var(--cream); border-radius: 12px; color: var(--text); }
+.fc-key.bk { color: var(--text-sub); font-size: 15px; }
+.fc-key.zz { font-size: 16px; color: var(--brown); }
+.fc-save { width: 100%; margin-top: 12px; padding: 14px 0; border-radius: 13px; background: var(--brown); color: #fff; font-weight: 700; font-size: 16px; }
+.fc-save:disabled { background: var(--line); color: var(--text-sub); }
+.fc-ask { padding: 22px 20px calc(20px + var(--safe-bottom)); text-align: center; }
+.fc-ask-t { font-size: 17px; font-weight: 700; }
+.fc-ask-s { font-size: 14px; color: var(--text-sub); margin-top: 7px; }
+.fc-ask-btns { display: flex; gap: 8px; margin-top: 16px; }
+.fc-ask-btns button { flex: 1; padding: 13px 0; border-radius: 12px; background: var(--cream); color: var(--text); font-weight: 700; font-size: 15.5px; }
+.fc-ask-btns button.danger { background: var(--brown); color: #fff; }
+
+/* 💰 [2026-09-17 시제품] 담은 것 합계 상자
+ — 값을 «적은 줄»만 더한 부분합이다(개수를 같이 적는다) */
+.sum-box { margin-top: 14px; background: var(--cream); border-radius: 15px; padding: 13px 15px 12px; }
+.sum-row { display: flex; align-items: baseline; justify-content: space-between; font-size: 15px; color: var(--text-sub); }
+.sum-n { font-weight: 600; color: var(--sand); font-size: 13px; margin-left: 5px; }
+.sum-v { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -.4px; }
+.sum-btn { width: 100%; margin-top: 11px; padding: 11px 0; border-radius: 12px; background: var(--brown); color: #fff; font-weight: 700; font-size: 15.5px; }
 
 .shop-row {
   display: flex;
@@ -2360,6 +2540,8 @@ img {
   /* ⚠️ `columns` 는 칸 안에서 줄을 «쪼갤» 수 있다 — 체크네모와 글자가 갈라지면 고장으로 읽힌다 */
   .cook-ings.two { columns: 2; column-gap: 54px; }
   .cook-ings.two .cook-ing-row { break-inside: avoid; -webkit-column-break-inside: avoid; }
+  /* 🏷 [2026-09-18] 묶음 소제목은 두 열 위를 «가로질러» 한 줄 — 열 안에 끼면 「양념장」이 오른쪽 열 중간에서 시작해 어느 줄부터인지 안 보인다 */
+  .cook-ings.two .cook-ing-head { column-span: all; }
   /* 🔢 획은 창업자가 고른 비율 그대로 — 0.0304 × 글자크기 (2026-09-01 판정에서 나온 값) */
   .cook-ing { font-size: 30px; -webkit-text-stroke-width: 0.91px; }
   .cook-ing-row { min-height: 54px; gap: 15px; }
@@ -2612,7 +2794,7 @@ img {
 .today-card { display: flex; align-items: stretch; margin-top: 16px; background: var(--today-grad); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow-soft); }
 .today-main { flex: 1; display: flex; align-items: center; gap: 14px; padding: 13px; min-width: 0; }
 .today-label { font-size: 15px; font-weight: 800; color: var(--brown); opacity: 0.85; }
-.today-title { font-size: 18.5px; font-weight: 800; color: var(--text); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -0.02em; }
+.today-title { font-size: 18.5px; font-weight: 800; color: var(--text); margin-top: 2px; white-space: normal; word-break: keep-all; letter-spacing: -0.02em; }  /* ✏️ 창업자 2026-10-04 「A」 — 긴 제목은 두 줄로(패드와 같은 꼴 · 한 줄 잘림 대신) */
 .today-reason { font-size: 15.5px; color: var(--text-sub); margin-top: 3px; }
 .today-refresh { flex: 0 0 auto; padding: 0 15px; font-size: 15px; font-weight: 700; line-height: 1.3; color: var(--brown); border-left: 1px solid rgba(107, 79, 58, 0.12); text-align: center; }
 .today-refresh:active { background: rgba(107, 79, 58, 0.05); }
@@ -2702,6 +2884,11 @@ html, body { overscroll-behavior: none; }
      화면 폭만큼 커져 아래 '꾸미기 서랍(메뉴)'을 화면 밖으로 밀어내던 문제 방지 */
   max-width: 440px; margin: 0 auto;
   background: var(--bg);
+  /* 📱🍎 [2026-09-15 아이패드 세로 실측] 위 440px 은 «이 층»만 칠한다 — 패드 세로(820~1024px)에선
+     440 밖 양옆이 투명이라 밑에 깔린 레시피 상세(표지·「장보기 담기」·재료·「만들었어요」)가 그대로 비쳤다.
+     폰은 화면이 440 안이라 몰랐고, 가로는 아래 2단 규칙(max-width: none)이라 안 났다 — **세로 태블릿만** 구멍.
+     ✅ 그림자를 사방 100vmax 로 «퍼뜨려» 층 바깥을 같은 배경색으로 덮는다 — 폭·격자는 안 건드린다. */
+  box-shadow: 0 0 0 100vmax var(--bg);
   display: flex; flex-direction: column;
   padding-top: var(--safe-top);
   animation: fadeIn 0.18s ease both;
@@ -3919,10 +4106,25 @@ html, body { overscroll-behavior: none; }
   font-size: 15px; font-weight: 800; opacity: 1;
 }
 /* 🔢 대비 8.41 — 기준(4.5)의 **두 배**다. 창업자 걱정 *"너무 안읽히려나 싶고"* 에 숫자로 답한 자리 */
+/* 📏📏 [2026-09-12 창업자 확정 「B」] 제목이 잘려서 **글자를 줄였다** — 17.5px → 14.5px
+   ⛔ 무슨 일이 났나 = 홈 「아직 안 해봤어요」에 「충무김밥 오징어무침」이 와서 «충무김밥 오징어…»로 잘렸다.
+      이 칸은 `white-space: nowrap` 이라 한 줄을 넘으면 무조건 잘린다.
+   🔢 **숫자를 짐작으로 고르지 않았다** — 화면에서 쟀다(`scripts/_probe-카드제목폭-0912.mjs`):
+      · 칸 폭은 **152px 고정**이다(320·360·390 다 같고 412 에서만 156px) — 화면이 넓어져도 안 늘어난다
+      · 들어가는 크기 = 「아보카도 바나나 스무디」(앱에서 제일 긴 12자) **14.5px** ·
+        「충무김밥 오징어무침」 16.5px · 「닭가슴살 피자 브리또」 16px
+      → **제일 긴 제목까지 담는 값이 14.5px** 이라 그걸 골랐다. 「지금 잘린 것」에만 맞추면 다음 편에서 또 터진다.
+   ⚠️ 정직하게 — 유저가 «직접 쓴» 제목이 12자보다 길면 14.5px 로도 잘린다. 칸 폭이 152px 로 묶여 있어서다.
+      그때는 크기를 더 줄일 게 아니라 **칸을 넓히거나 두 줄로 푸는 쪽**을 봐야 한다(⛓절대원칙 34).
+   🛡 게이트 = `_probe-줄바꿈-0822.mjs` 가 이 자리를 본다(주석의 「아보카도 바나나 스…」가 바로 여기다). */
 .next-title {
   flex: 1; min-width: 0; margin: 0;
-  font-size: 17.5px; font-weight: 800; color: var(--text);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -0.02em;
+  font-size: 14.5px; font-weight: 800; color: var(--text);
+  /* 🍱 [2026-09-24 창업자 「보여줘」→①] 긴 제목은 «두 줄»로 푼다 — 위 주석이 말한 그 길이다(글자를 더 줄이지 않는다).
+     🔢 계기 = 「충무김밥 오징어무침」(11자)이 한 줄 152px 에서 잘렸다 · 짧은 제목은 한 줄 그대로다. */
+  overflow: hidden; white-space: normal; word-break: keep-all; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.3;
+  letter-spacing: -0.02em;
 }
 /* ⛔ 「이유」·「보기」는 접는다 — 한 줄로 눕히면 들어갈 자리가 없다.
    ⭐ 글자를 «지우는» 게 아니다 — 이 둘은 갈래가 「한줄」일 때 쓰는 안내라, 그 갈래엔
@@ -4138,8 +4340,21 @@ html, body { overscroll-behavior: none; }
   border: 1px solid var(--tease-line);
   text-align: left;
 }
-.news-title { font-size: 16.5px; font-weight: 800; color: var(--text); }
-.news-sub { font-size: 15px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.news-title { font-size: 16.5px; font-weight: 800; color: var(--text); white-space: nowrap; }
+/* 📣📷 [창업자 2026-09-21] 소식 58 : 인스타 42 — 반 폭이라 소식 한 줄은 «두 줄로 접되 자르지 않는다» */
+.news-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 8px; align-items: stretch; }   /* 창업자(18:29) = 소식 2/3 · 인스타 1/3 */
+.news-row > .news-card { align-items: center; gap: 12px; padding: 12px 12px 12px 15px; min-height: 104px; }   /* 📮 창업자 2026-09-21 *"왼쪽에 너무 바싹"* — 왼쪽 여백 12→15 · 곰↔글 10→12 */
+.news-gom-col { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; flex: 0 0 auto; }
+.news-new { font-size: 10.5px; font-weight: 900; line-height: 1.5; padding: 0 6px; border-radius: 999px; }
+.news-sub { color: var(--text-sub); font-size: 13.5px; margin-top: 2px; line-height: 1.35; word-break: keep-all; white-space: normal; }
+.insta-card {
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 9px;   /* 📮 창업자 2026-09-21 *"아이콘도 조금 띄우고 글자도"* 6→9 */
+  min-width: 0; min-height: 104px; padding: 12px 8px; border-radius: 14px; text-align: center;
+  background: var(--surface); border: 1px solid var(--tease-line);   /* 소식 카드와 «한 벌» */
+}
+.insta-label { font-size: 13.5px; font-weight: 800; color: var(--text); line-height: 1.25; word-break: keep-all; }
+/* 아이콘 크기는 CSS 가 정한다(속성 width 를 CSS 가 이긴다) — 패드에서 키우려고(`--news-gom` 과 같은 처방) */
+.insta-card svg { width: var(--insta-icon, 26px); height: var(--insta-icon, 26px); }
 /* ⚠️ `.today-card` 의 `margin-top: 16px` 을 지운다 — 이제 `.home-pair` 의 gap 이 간격을 만든다.
    안 지우면 두 칸이 세로로 어긋난다(왼쪽만 위로 붙는다). */
 .home-pair > .today-card { margin-top: 0; }
@@ -4223,6 +4438,9 @@ html, body { overscroll-behavior: none; }
      ⭐ 그러면 아래 칸에 [다음에 뭐 할까 | 오늘 뭐 해먹지]가 좌우로 서서
         예전의 *"한끼소식이랑 오징어가 너무 오른쪽이 휑해보인다.."* 가 되돌아오지 않는다. */
   .home-pair > .news-card { grid-column: 1 / -1; }
+  .home-pair > .news-row { grid-column: 1 / -1; }   /* 2026-09-21 소식·인스타 묶음도 전폭 */
+  .insta-card { --insta-icon: 48px; flex-direction: row; gap: 16px; padding: 12px 20px; }  .insta-label { font-size: 22px; }   /* 📮 창업자 *"패드는 왼쪽에 아이콘 오른쪽에 글자"* — 가로로 */
+  .news-row .news-title { font-size: 24px; }  .news-row .news-sub { font-size: 18.5px; }   /* 📮 창업자 19:29 *"글씨 좀 더 키워줘"* 21/16.5 → 24/18.5 */  .news-row .news-card { --news-gom: 40px; gap: 18px; padding-left: 24px; }   /* 📮 창업자 *"한끼소식도 글씨 더 키우고"* — 패드만 */   /* 📮 창업자 2026-09-21 *"패드는 크기를 더 키우자 아이콘도 글자도"* */
 
   /* 📐📐 **패드에선 「다음에 뭐 할까」가 «2줄»** — 창업자 2026-08-20
      📮 창업자 = *"**패드는 2줄로 가야겠는데? 콩국수랑 맞춰서**"*
@@ -4758,3 +4976,32 @@ html, body { overscroll-behavior: none; }
       실제로 `_repro-완성사진-0821` 이 그렇게 죽어서 잡혔다.
    ⭐ 자리·색·크기는 마크업 쪽 style 이 정한다(격자 크기에 따라 갈려서). 여기선 «글자»만 넣는다. */
 .sample-tag::after { content: '샘플'; }
+
+/* 🌕 특집 줄 — 「가로로 쭉 미는」 판 (2026-09-13)
+   📮 창업자 = *"추석특집을 띄우면 좋지 스크롤로 쭉 볼수있게"*
+   ⭐ `WeekBox` 를 그대로 쓰고 «이 클래스만» 더 붙인다 — 마크업을 두 벌로 만들지 않는다.
+   ⛔ 격자(`weekly-row`)는 「한 화면에 딱 맞게」가 목적이라 7편이면 세 줄이 된다.
+      특집은 편 수가 들쭉날쭉해서 «미는» 쪽이 맞다. */
+.weekly-row.rail {
+  display: flex;
+  gap: 11px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  /* 📌 상자 «안쪽 여백»만큼 좌우로 넘겨서, 미는 칸이 상자 가장자리까지 닿게 한다 */
+  margin-inline: -14px;
+  padding-inline: 14px;
+  padding-bottom: 2px;
+  scrollbar-width: none;                       /* 막대는 안 보이게 — 창업자가 회색 막대를 싫어한다 */
+}
+.weekly-row.rail::-webkit-scrollbar { display: none; }
+.weekly-row.rail > .mini-card {
+  /* 📐 [2026-09-13 넓혔다] 122px 이면 「초간단 순살 갈비찜」이 두 줄로 접혀 카드 높이가 들쭉날쭉했다.
+     ⭐ 138px = 그 이름이 한 줄에 들어가고, 폰(411px)에서 여전히 «두 칸 반»이 보여 「더 있다」가 읽힌다. */
+  flex: 0 0 138px;
+  scroll-snap-align: start;
+}
+@media (min-width: 700px) {                    /* 패드 */
+  .weekly-row.rail > .mini-card { flex-basis: 150px; }
+}
+.gate-preview::-webkit-scrollbar { display: none; }

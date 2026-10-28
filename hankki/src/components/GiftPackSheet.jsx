@@ -1,6 +1,8 @@
 import Portal from './Portal'
 import { useModalBack } from '../useBackHandler'
 import { markGiftPackSeen } from '../nudges'
+import { 선물시트봄, 선물보러감 } from '../stats'
+import { useEffect } from 'react'
 import { StickerArt, bgStyle, bgAnim, giftGroups } from './Stickers'
 import { seasonRank } from '../season'
 
@@ -57,15 +59,18 @@ export function giftRows(now = new Date()) {
     where: `${TAB_NAME[g.tab] || ''} 탭 맨 위`,
     art: g.items[0],
   }))
+  // 🍂 [창업자 2026-10-16 「예전거 남아있는거 있는지」] 철 지난 선물(여름)은 안내에서 뺀다 — 스티커는 서랍에 그대로 있다(숨기지 않는다).
   return [...묶음, ...EXTRA_GIFTS]
+    .filter(제철)
     .sort((a, b) => ((제철(b) ? 1 : 0) - (제철(a) ? 1 : 0))
       || String(b.from || '').localeCompare(String(a.from || '')))
 }
 
 export default function GiftPackSheet({ onClose, onGo }) {
   useModalBack(onClose)
+  useEffect(() => { try { 선물시트봄() } catch { /* noop */ } }, []) // 겹 화면이라 화면봄() 이 안 돈다 — 직접 센다
   const close = () => { markGiftPackSeen(); onClose() } // 뜬 순간부터 '봤음' — 어떻게 닫아도 다시 안 뜬다
-  const go = (cat) => { markGiftPackSeen(); onGo?.(cat); onClose() }
+  const go = (cat) => { try { 선물보러감() } catch { /* noop */ } markGiftPackSeen(); onGo?.(cat); onClose() }
   const rows = giftRows()
 
   return (

@@ -16,6 +16,7 @@
 // 🏷 이름표 = 반영됨
 import assert from 'node:assert'
 import { readFileSync } from 'node:fs'
+import { 남은열쇠말 } from '../src/안내말.js'   // ⭐ 말이 만들어지는 그 한 곳을 «직접» 부른다
 
 const 뿌리 = new URL('..', import.meta.url)
 const 읽기 = (p) => readFileSync(new URL(p, 뿌리), 'utf8')
@@ -28,11 +29,18 @@ const 칸 = (이름, 조건, 실물) => {
 
 console.log('① 워커 — 「무제한」을 «말하나»')
 const w = 읽기('ocr-proxy/worker.js')
-// ⭐ `left` 를 만드는 자리가 «셋»이다(조회·행동열쇠·OCR). 하나만 고치면 그 길로 들어온 사람은 옛 답을 본다.
-const left칸수 = (w.match(/left: \{/g) || []).length
-const 무제한칸수 = (w.match(/무제한: founder/g) || []).length
-칸(`left 를 만드는 자리 ${left칸수} 곳에 «전부» 무제한이 있다`,
-  left칸수 > 0 && 무제한칸수 === left칸수, `left ${left칸수}곳 · 무제한 ${무제한칸수}곳`)
+// ⭐⭐ **[2026-09-09 잣대를 더 세게 바꿨다] `left` 를 만드는 곳이 «한 곳»뿐이어야 한다.**
+//   🕘 그 전 잣대 = 「세 곳(조회·행동열쇠·OCR)이 «전부» 무제한을 갖고 있나」.
+//      그건 «손으로 맞춘 것»을 검사하는 잣대라, 넷째 길이 생기면 또 빠뜨린다.
+//   ⭐ 이제 셋을 `남은알림` 한 곳으로 모았다 — 빠뜨릴 자리가 «구조적으로» 없다.
+//      (2026-09-02 「운영자에게 0개 남았어요」 사고의 뿌리가 «자리가 여럿»이었다)
+const 손으로만든left = (w.match(/left: \{/g) || []).length
+const 한곳 = (w.match(/const 남은알림 = async/g) || []).length
+const 부른곳 = (w.match(/left: await 남은알림\(/g) || []).length
+칸('left 를 «손으로» 만드는 자리가 0 이다', 손으로만든left === 0, `${손으로만든left}곳`)
+칸(`left 를 만드는 곳이 «한 곳»뿐이고 모든 길이 그걸 부른다`,
+  한곳 === 1 && 부른곳 >= 3, `만드는 곳 ${한곳} · 부르는 곳 ${부른곳}`)
+칸('그 한 곳이 무제한을 말한다', /무제한: founder/.test(w))
 // ⛔ 심장 — 「막을 때」와 「알려줄 때」가 «같은» founder 를 본다
 칸('막는 자리는 그대로 founder 를 본다(우회는 안 건드렸다)',
   /!founder && ipC >=/.test(w) && /!founder && welcomeLeft <= 0/.test(w))
@@ -42,8 +50,14 @@ const 무제한칸수 = (w.match(/무제한: founder/g) || []).length
 
 console.log('② 앱 — 표시 자리 셋이 «한 곳»만 보나')
 const ocr = 읽기('src/ocr.js')
-칸('getOcrLeft 가 무제한을 내준다', /무제한: !!v\.무제한 \|\| tidyFounder\(\)/.test(ocr))
-칸('서버 답이 «아직 없을 때»도 무제한을 내준다(첫 화면)', /무제한: tidyFounder\(\)/.test(ocr))
+// ⭐⭐ [2026-09-10] 잣대를 «일부러» 넓혔다 — 유저 눈 스위치가 앞에 붙었다.
+//    지금 모양 = 무제한: 유저눈인가() ? false : (!!v.무제한 || tidyFounder())
+//    ⛔ 지키려는 것은 그대로다 — ①서버 값을 본다 ②폰 표식이 받친다. 유저 눈은 그 «앞»에 선다.
+칸('getOcrLeft 가 무제한을 내준다', /!!v\.무제한 \|\| tidyFounder\(\)/.test(ocr))
+칸('서버 답이 «아직 없을 때»도 무제한을 내준다(첫 화면)', /무제한: 유저눈인가\(\) \? false : tidyFounder\(\)/.test(ocr))
+// ⭐ [2026-09-10 신설] 서버가 준 「무제한」을 «담는가» — 이걸 안 담으면 위 v.무제한 이 늘 비어
+//    「서버가 말해준다」(창업자 확정 ⓐ)가 죽은 코드가 된다. 실제로 그랬다(적대적 검토가 잡았다).
+칸('saveOcrLeft 가 서버의 무제한을 담는다', /무제한: left\.무제한 === true/.test(ocr))
 
 // ⭐⭐ 심장 = **표시 자리가 저마다 운영자를 판정하지 않는다.**
 //    ⛔ 각자 `tidyFounder()` 를 부르기 시작하면 오늘 사고가 그대로 되돌아온다.
@@ -65,7 +79,10 @@ for (const [이름, 길, 숫자잣대] of [
     '(tidyFounder 를 직접 import 하면 잣대가 또 갈린다)')
 }
 const app = 읽기('src/App.jsx')
-칸('사진 읽기 토스트가 운영자에겐 숫자를 안 붙인다', /left\.unknown \|\| left\.무제한/.test(app))
+// ⭐ [2026-09-09] 무제한 판정이 «남은열쇠말» 안으로 들어갔다 — 화면은 그 한 곳만 부른다.
+//    ⛔ 그래서 「App 이 무제한을 보나」가 아니라 «그 한 곳이 운영자에게 침묵하나»를 본다.
+칸('사진 읽기 토스트가 운영자에겐 숫자를 안 붙인다',
+  /남은열쇠말\(left\)/.test(app) && 남은열쇠말({ 무제한: true }) === '')
 
 console.log('③ 잣대가 «진짜로» 도나 — getOcrLeft 를 불러서')
 // ⛔ 소스만 보면 「부르기만 하고 안 도는」 것을 못 잡는다(오늘 ⑥-c 가 그 병이었다).

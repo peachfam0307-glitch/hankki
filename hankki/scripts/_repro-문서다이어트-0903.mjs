@@ -274,7 +274,9 @@ console.log('\n⑧ 좁은 판 — 짧아졌지만 개수·이름은 다 보이�
   const rc = 크기(['scripts/release-calendar.mjs'])
   재기('release-calendar 기본이 1KB 아래', rc < 1000, true)
   재기('release-calendar --전부 는 다 나온다', 크기(['scripts/release-calendar.mjs', '--전부']) > 10000, true)
-  재기('release-calendar --tomorrow 게이트는 그대로', 돌림('node', ['scripts/release-calendar.mjs', '--tomorrow']).code, 0)
+  // 📆 [2026-09-29] 이 칸은 «접기가 게이트를 안 망가뜨렸나»를 본다 — 0(통과)·1(검수할 것 있음) 둘 다 «살아 있는» 게이트다.
+  //    ⛔ 전엔 0 만 받았다 → 3일 전 관문이 «진짜로» 막는 날(검수 전인 것이 있는 날) 이 칸이 거꾸로 죽었다.
+  재기('release-calendar --tomorrow 게이트는 살아 있다(0 또는 1 · 죽지 않음)', [0, 1].includes(돌림('node', ['scripts/release-calendar.mjs', '--tomorrow']).code), true)
 
   const t = 돌림('node', ['scripts/tools.mjs', '카드']).out
   재기('tools 는 접어도 «전체 개수»를 먼저 말한다', /🗺 \d+개/.test(t), true)

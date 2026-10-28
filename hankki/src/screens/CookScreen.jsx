@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -9,11 +9,15 @@ import MemoNote from '../components/MemoNote'
 import CropSheet from '../components/CropSheet'
 import { downscale } from '../components/DiaryEntrySheet'
 import Portal from '../components/Portal'
-import { scaleIngredient } from '../scale'
+import { scaleIngredient, isIngHeader, ingHeadBefore, stripIngGroup } from '../scale'
+import { Fragment } from 'react'
 import { useWakeLock } from '../useWakeLock'
+import { 오래켜둠재기 } from '../use오래켜둠'
+import { 요리시작 } from '../stats'
 import { useLayerBack } from '../useBackHandler'
 import { 항목묶어 } from '../stepBreak'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
+import { 요리끝냄 } from '../stats'
 
 // 요리 모드 — 풀스크린. 큰 글씨 · 화면 안 꺼짐 · 단계 타이머.
 // 흐름: 0단계 = 재료 준비(요리의 시작) → 1~N단계 = 조리 단계.
@@ -36,6 +40,12 @@ export default function CookScreen({ id }) {
   // 재료 시트 — 뒤로가기로 닫기(요리모드는 유지). 타이머 시트는 자체 처리.
   useLayerBack(showIng, () => setShowIng(false))
   useWakeLock() // 화면이 꺼지지 않게 (요리 모드)
+  // 📊 [2026-09-14] 🍳 요리모드를 «시작»했다 — 한 번만.
+  //   ⛔ 화면 기록(`cook`)과 뜻이 다르다: 그건 「들어왔다 나갔다」를 다 세지만 이건 «첫 걸음»이다.
+  //   ⛔ 열쇠(EARN.요리)는 «끝냈을 때» 주는 자리라 여기가 아니다 — 시작과 끝은 다른 값이다.
+  useEffect(() => { try { 요리시작() } catch { /* 통계가 죽어도 요리는 된다 */ } }, [])
+  // ⏱ 📊 [2026-09-14] 5분 넘게 «앞에 두고» 있었나 — 「진짜로 요리했나」
+  오래켜둠재기('cook')
   const prep = i === 0 // 재료 준비 화면인지
   // 📖 요리 가이드(계량·손질) — 🧪**테스터 의견**(창업자 전달 2026-08-14)
   //    원문 = *"재료손질 화면에서도 요리가이드 있었으면 좋겠데"* ＋ 창업자 풀이
@@ -91,6 +101,11 @@ export default function CookScreen({ id }) {
   }
 
   const finish = () => {
+    // 📊 [2026-09-12] 요리모드를 «끝냈다» — ⛔조건 «밖»이다.
+    //    ⛔⛔ 처음엔 아래 `if (!오늘것)` 안에 넣었다가 잡았다(창업자 = "다 확인해 하나하나").
+    //       그러면 상세에서 「만들었어요」를 먼저 누른 사람은 요리모드를 끝내도 0건이 된다.
+    //       이름이 「요리모드를 끝냈다」인데 잣대가 「오늘 그 레시피 첫 기록」이면 뜻이 어긋난다.
+    요리끝냄()
     // 오늘 이미 이 레시피 기록이 있으면(상세의 '만들었어요' 등) 중복으로 쌓지 않는다
     const today = new Date().toDateString()
     const 오늘것 = diary.find((d) => d.recipeId === r.id && new Date(d.at).toDateString() === today)
@@ -167,9 +182,15 @@ export default function CookScreen({ id }) {
                 ⭐ 재료를 «꺼내면서» 하나씩 지워가는 자리다. 그래서 저장도 계산도 안 한다 — 표시만.
                 ⭐ 줄 전체가 버튼이라 손가락이 작은 네모를 겨냥할 필요가 없다(최소 높이 44).
                 ⛔ 유니코드 ✓ 대신 우리 아이콘(`check`)을 쓴다 — CLAUDE.md 핀. */}
+            {/* 🏷 [2026-09-18 · 창업자 실물] 「[양념장] …」이 줄마다 되풀이되던 것 — 상세 화면과 «같은 잣대»(scale.js)로
+                묶음이 시작하는 줄 위에 소제목 한 번, 줄에선 뗀다. 헤더만 있는 줄('[양념]')은 체크 없이 소제목으로. */}
             {ings.length ? ings.map((ing, k) => (
+              isIngHeader(ing)
+                ? <div key={k} className="ing-head cook-ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
+                : <Fragment key={k}>
+              {ingHeadBefore(ings, k) && <div className="ing-head cook-ing-head">{ingHeadBefore(ings, k)}</div>}
               <button
-                key={k} type="button" className="press cook-ing-row" aria-pressed={!!checked[k]}
+                type="button" className="press cook-ing-row" aria-pressed={!!checked[k]}
                 onClick={() => toggle(k)}>
                 <span className={`cook-ing-box${checked[k] ? ' on' : ''}`}>
                   {checked[k] && <Icon name="check" size={15} color="#fff" stroke={2.6} />}
@@ -178,8 +199,9 @@ export default function CookScreen({ id }) {
                     ✍️ [창업자 2026-09-01] *"요리모드 첨에 재료나오는 화면도 글씨체 귀염체?로 바꿔야함."*
                        → `cook-ing` 이 귀염체를 준다. ⛔`.ing` 자체는 «안» 건드린다 —
                           레시피 «상세»의 재료 줄이 같은 클래스라 거기까지 손글씨가 된다(창업자가 말한 화면이 아니다). */}
-                <span className={`ing cook-ing${checked[k] ? ' done' : ''}`}>{scaleIngredient(ing, 1)}</span>
+                <span className={`ing cook-ing${checked[k] ? ' done' : ''}`}>{stripIngGroup(scaleIngredient(ing, 1))}</span>
               </button>
+              </Fragment>
             )) : <div className="empty">재료 정보가 없어요.</div>}
           </div>
           {/* 안내 — 화면 안 꺼짐 · 타이머는 필요할 때
@@ -303,7 +325,12 @@ export default function CookScreen({ id }) {
             </div>
             <div style={{ padding: '0 16px', maxHeight: '50vh', overflowY: 'auto' }}>
               {(r.ingredients || []).map((ing, k) => (
-                <div key={k} className="ing">{scaleIngredient(ing, 1)}</div>
+                isIngHeader(ing)
+                  ? <div key={k} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
+                  : <Fragment key={k}>
+                      {ingHeadBefore(r.ingredients, k) && <div className="ing-head">{ingHeadBefore(r.ingredients, k)}</div>}
+                      <div className="ing">{stripIngGroup(scaleIngredient(ing, 1))}</div>
+                    </Fragment>
               ))}
             </div>
           </div>

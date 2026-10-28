@@ -6,6 +6,8 @@ import { StoreProvider } from './store'
 import { TimerProvider } from './timer'
 import { applyTheme, getTheme } from './theme'
 import './styles.css'
+// 🪞🍎 아이폰 «앱» 안에서만 — 본체가 «키째» 없으면 문서 폴더의 거울로 되살린다(첫 그리기 «전» · 2026-09-08 큰 틀 5)
+import { 거울되살리기, 거울귀기울이기 } from './mirror'
 
 // 저장된 테마 적용(인라인 부팅 스크립트와 동일 결과 — 상태바 색까지 확실히 동기화)
 applyTheme(getTheme())
@@ -13,15 +15,84 @@ applyTheme(getTheme())
 // 실제 '보이는' 화면 높이를 재서 앱 높이(--app-height)로 쓴다.
 // 모바일 주소창·제스처바 때문에 100dvh와 실제 보이는 높이가 어긋나
 // 하단 버튼(하단바·요리시작·가져오기 등)이 화면 밖으로 잘리던 문제의 근본 해결.
+// ⌨️🍎 앱(웹뷰)이 알려준 키보드 높이 — 웹·갤럭시에선 늘 0 이라 아래 계산이 예전과 똑같다.
+//   ⛔ 이 값이 필요한 까닭 = 앱 웹뷰는 키보드가 떠도 visualViewport 를 «안 줄인다».
+//      그래서 아래 setAppHeight 가 「키보드 없다」로 덮어써 버리면 부품이 알려준 값이 지워진다(실제로 그렇게 된다).
+let 앱키보드 = 0
+
 function setAppHeight() {
   const vv = window.visualViewport
-  const h = vv ? vv.height : window.innerHeight
+  // ⛔⛔ [2026-09-20 22:32 사고] 여기서 «빼기»를 했다가 화면이 반토막 났다 — 창업자 딸 폰에서 장보기가 통째로 비고
+  //    아래 메뉴가 위로 올라왔다. 🔎 뿌리 = 앱 웹뷰는 키보드가 뜨면 «스스로 줄어든다»(vv.height 가 이미 작다).
+  //    거기서 부품이 준 높이를 또 빼니 두 번 빠졌다(844 → 508 → 172).
+  //    ⭐ 그래서 «웹뷰가 이미 줄였나»를 먼저 본다 — 줄였으면 그 값을 그대로 쓰고, 안 줄였을 때만 내가 뺀다.
+  //       판정 = 창 높이와 보이는 높이의 차이가 키보드의 절반을 넘으면 «이미 줄였다».
+  //    ⚠️ 어느 쪽인지 나는 실물을 못 본다 — 그래서 아래 ?kb=1 창과 설정 화면에 «숫자를 찍는다»(짐작 금지).
+  //    ⛔⛔ [22:14 두 번째 사고] 「이미 줄었나」 판정도 «안 먹었다» — 앱에서는 창(innerHeight)과 보임(vv.height)이
+  //       «같이» 줄어서 (창−보임)=0 이 된다. 그래서 판정이 통과했고 또 두 번 뺐다. 화면이 또 반토막.
+  //    ⭐⭐ 32판 캡처를 다시 보고 알았다 — **앱 웹뷰는 이미 스스로 줄이고 있었다.**
+  //       그때 가린 건 키보드 «전체»가 아니라 위 도구줄(^ ˅ ✓) 한 줄뿐이었다.
+  //       ＝ **내가 안 건드렸으면 될 일이었다.** 그래서 높이 계산에서 부품 값을 «아예 뺀다».
+  //    ✅ 부품 값은 아래 --kb-inset «하나»에만 쓴다(그 자리는 값이 없으면 0 이라 손해가 없다).
+  const 창 = window.innerHeight
+  const h = vv ? vv.height : 창
   document.documentElement.style.setProperty('--app-height', Math.round(h) + 'px')
   // 키보드가 차지한 높이 — 입력칸 위 '계량 버튼 바'를 키보드 바로 위에 띄우는 데 쓴다.
-  const kb = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0
+  //   🍎 앱이면 부품이 알려준 값을 그대로 쓴다 — 웹뷰는 visualViewport 를 안 줄여서 아래 계산이 늘 0 이 된다.
+  const kb = Math.max(0, 창 - h)
   document.documentElement.style.setProperty('--kb-inset', Math.round(kb) + 'px')
+  // 🔬 실물에서 무슨 값이 오는지 적어 둔다 — 설정 → 내부 기기 칸이 이걸 보여준다(창업자 캡처 한 장이면 끝난다)
+  //   ⛔ [23:17 고침] 키보드를 «닫은 뒤» 값이 덮어써서 기본값만 보였다(창844 보임844 부품0) — 정작 필요한 건 «떴을 때»다.
+  //      그래서 키보드가 올라온 순간의 값을 «따로» 남긴다(닫아도 안 지워진다 → 설정 화면까지 들고 갈 수 있다).
+  try {
+    const 줄 = `창${Math.round(창)} 보임${Math.round(h)} 부품${Math.round(앱키보드)} kb${Math.round(kb)}`
+    localStorage.setItem('hankki:kb:재본값', 줄)
+    if (kb > 40) localStorage.setItem('hankki:kb:떴을때', 줄)
+  } catch { /* noop */ }
+  // ⌨️🍎 [2026-09-20 · 창업자 제보 「달력 보이는 부분이 키보드 속에 가려」]
+  //   ⛔ 위 --kb-inset 은 아이폰에서 못 믿는다 — 사파리는 키보드가 뜨면 페이지를 통째로 민다(offsetTop).
+  //      그러면 「창높이 − 보이는높이 − 밀린양」이 키보드를 «작게» 재고, 시트가 그만큼만 올라온다.
+  //      📌 창업자 캡처(09-20 18:57) = 주소창이 화면 한가운데까지 내려와 있었다 = 밀렸다는 눈에 보이는 증거.
+  //   ⭐ 그래서 «키보드 높이»를 계산하지 않고 «지금 보이는 네모»를 그대로 쓴다.
+  //      재는 값이 하나(보이는 네모)라 밀든 안 밀든 같다 — 실패의 «모양»이 바뀐다(규칙 34).
+  //   ⚠️ 사파리가 미는 방법이 둘이다 — ⓐ visualViewport.offsetTop ⓑ 문서 스크롤(scrollY).
+  //      어느 쪽인지 이 환경에선 못 잰다(아이폰이 없다) → 둘을 «더해서» 덮는다.
+  //      우리 앱 틀은 overflow:hidden 이라 평소 scrollY = 0 이다 → 갤럭시·PC 는 0 + 0 = 변화 없음.
+  const 밀린양 = vv ? (vv.offsetTop || 0) + (window.scrollY || 0) : 0
+  document.documentElement.style.setProperty('--vv-top', Math.round(밀린양) + 'px')
+  document.documentElement.style.setProperty('--vv-h', Math.round(h) + 'px')
+  // 🔬 ?kb=1 일 때만 — 실제 아이폰에서 어느 값이 움직이는지 눈으로 확인하는 창(유저에겐 안 보인다)
+  if (typeof location !== 'undefined' && location.search.includes('kb=1')) {
+    let 창 = document.getElementById('kb-probe')
+    if (!창) {
+      창 = document.createElement('div')
+      창.id = 'kb-probe'
+      창.style.cssText = 'position:fixed;left:0;top:0;z-index:3400;background:#111;color:#0f0;font:700 12px/1.5 monospace;padding:4px 6px;pointer-events:none'
+      document.body.appendChild(창)
+    }
+    창.textContent = `창${window.innerHeight} 보임${Math.round(h)} offTop${vv ? Math.round(vv.offsetTop || 0) : -1} scrollY${Math.round(window.scrollY || 0)} kb${Math.round(kb)}`
+  }
 }
 setAppHeight()
+
+// ⌨️🍎 [2026-09-20 밤 · 창업자 딸 폰 실물] **앱 안에서는 위 계산이 통째로 안 먹는다.**
+//   🔎 왜 = 사파리는 키보드가 뜨면 visualViewport 높이를 줄여 알려주는데, 앱 속 웹뷰는 «아무것도 안 알려준다».
+//      그래서 앱은 키보드가 뜬 줄을 모르고, 시트가 화면 맨 아래에 붙어 키보드에 깔린다.
+//      📌 22:02 캡처 = 알림 시트의 「괜찮아요」가 키보드 도구줄에 덮여 있었다(사파리에선 멀쩡한 판인데).
+//   ✅ 그래서 앱에서는 «부품이 알려주는 키보드 높이»를 그대로 쓴다 — 계산이 아니라 값을 받는 것이다.
+//   ⛔ 웹·갤럭시는 이 코드가 아예 안 돈다(부품이 없다) → 한 글자도 안 바뀐다.
+function 앱키보드듣기() {
+  try {
+    const K = window.Capacitor?.Plugins?.Keyboard
+    if (!K || !window.Capacitor?.isNativePlatform?.()) return
+    // ⭐ 값을 «한 곳»에 넣고 setAppHeight 를 다시 돌린다 — 계산식이 두 벌이 되면 반드시 갈린다(규칙 28).
+    const 넣기 = (높이) => { 앱키보드 = Math.max(0, Math.round(높이 || 0)); setAppHeight() }
+    K.addListener('keyboardWillShow', (e) => 넣기(e?.keyboardHeight))
+    K.addListener('keyboardWillHide', () => 넣기(0))
+  } catch { /* 부품이 없어도 앱은 그대로 돈다 */ }
+}
+앱키보드듣기()
+
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', setAppHeight)
   window.visualViewport.addEventListener('scroll', setAppHeight)
@@ -29,23 +100,37 @@ if (window.visualViewport) {
 window.addEventListener('resize', setAppHeight)
 window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 200))
 
-createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    {/* 🛟 울타리는 «맨 바깥»에 — 저장소(StoreProvider)보다 밖이라야 그 안에서 뭐가 터져도 잡는다 */}
-    <ErrorBoundary>
-      <StoreProvider>
-        <TimerProvider>
-          <App />
-        </TimerProvider>
-      </StoreProvider>
-    </ErrorBoundary>
-  </React.StrictMode>
-)
+function 그리기 () {
+  createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      {/* 🛟 울타리는 «맨 바깥»에 — 저장소(StoreProvider)보다 밖이라야 그 안에서 뭐가 터져도 잡는다 */}
+      <ErrorBoundary>
+        <StoreProvider>
+          <TimerProvider>
+            <App />
+          </TimerProvider>
+        </StoreProvider>
+      </ErrorBoundary>
+    </React.StrictMode>
+  )
+}
+
+// 🪞 되살리기 판정은 «첫 그리기 전»에 — 그려 놓고 되살리면 StoreProvider 가 빈 판을 먼저 저장해 거울을 못 쓴다.
+//    앱 밖(웹·안드로이드)에선 'skip' 이 바로 와서 그리기가 한 틱만 늦다(눈에 안 보인다).
+//    'restored' 면 안에서 새로고침하므로 여기선 안 그린다(깜빡임 한 번이 빈 화면보다 낫다).
+Promise.resolve()
+  .then(() => 거울되살리기())
+  .catch(() => 'skip')
+  .then((결과) => { if (결과 !== 'restored') { 그리기(); try { 거울귀기울이기() } catch { /* noop */ } } })
 
 // 📊 [2026-09-08] 이용 통계 — ⛔ 화면을 «그린 뒤에» 켠다(첫 화면을 늦추지 않는다 · 절대원칙 32).
 //   ⭐ 안에서 requestIdleCallback 으로 한 번 더 미룬다. measurementId 가 비어 있으면 아무 일도 안 한다.
 //   ⛔ 여기서 await 하거나 오류를 위로 던지지 않는다 — 통계가 죽어도 앱은 그대로 돌아야 한다.
 import('./stats').then((m) => m.통계시작()).catch(() => {})
+
+// 💳 [2026-10-22] 산 열쇠 따라붙이기 — 살 때 놓친 구매를 워커에 다시 보낸다(3초 뒤 · 결제 되는 기기에서만).
+//   ⭐ 아무도 안 샀으면 구글 목록이 비어 있어 아무 일도 안 한다.
+import('./billing').then((m) => m.syncOnStart()).catch(() => {})
 
 // 새 버전 자동 반영 — 새 서비스워커가 활성화되면 페이지를 한 번 새로고침하고,
 // 앱을 다시 열 때마다 업데이트를 확인한다. (앱 껐다 켜면 최신으로)

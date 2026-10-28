@@ -2,15 +2,20 @@ import { createContext, useCallback, useContext, useEffect, useLayoutEffect, use
 import { createPortal } from 'react-dom'
 import { useStore, 다읽었나 } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
+import { consumeIosShared, onIosShare } from './iosShare'
 import { makeInboxRecipe } from './screens/ImportScreen'
-import { ocrImage, getOcrLeft, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
+import { ocrImage, getOcrLeft, 열쇠셈, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw, 자리표제목 } from './parseRecipe'
-import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from './tidy'
+import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중, 번호알림받기, 선반집기, 동의안함으로끝났나 } from './tidy'
+import AIConsentSheet from './components/AIConsentSheet'   // 🔐 AI 로 보내기 전 허락 시트(큰 틀 6-② ⓑ)
+import PushConsentSheet from './components/PushConsentSheet'   // 🔔 폰 알림 허락 시트 — 담기가 끝난 «직후» 뜬다(2026-09-19)
+import { 까닭말, 다듬기끝말, 동의안함끝말, 남은열쇠말, 빚안내몸 } from './안내말'
+import { 만회값 } from './retidy'   // 🧺 선반에서 받은 답을 얹는 규칙 — 상세 화면 자동 만회와 «같은 곳»
 // ⏳ `fetchLinkRecipe` import 는 뺐다 — 「⏳⏳ 서버 되면 되살릴 것 ④」 참조(2026-08-27 · 창업자 확정 "1번").
 //    ⛔ `src/linkReader.js` 파일은 «안 지웠다» — 되살릴 때 그대로 쓴다(v11.19 와 같은 방식).
 import { guessCategory, fitImage, imageSize } from './utils'
 // 🖼 「뭘 많이 썼나」를 재는 자리 — 나가는 건 «화면 이름 하나»뿐이다(자물쇠는 `src/stats.js`).
-import { 화면봄 } from './stats'
+import { 화면봄, 레시피저장, 꾸민게쌓였나, 읽어냄, 못읽음, 알림으로들어옴 } from './stats'
 // 🍱 [2026-08-28] 공유로 담으면 아이콘이 빈 접시로 굳던 것 — 뿌리·막이 설명은 `shareIcon.js` 주석에.
 import { 공유아이콘 } from './shareIcon'
 // 🎴 축소 루프가 «자랑카드 표지»를 건드리지 않게 — 잣대는 화면·클라우드와 «같은 한 곳»(2026-09-02)
@@ -24,6 +29,9 @@ import { useTimer } from './timer'
 import Onboarding, { needsOnboarding } from './components/Onboarding'
 import CloudGate from './components/CloudGate'
 import ConfirmSheet from './components/ConfirmSheet'
+import { 앱안인가 } from './nativeAuth'                       // 🍎 아이폰 앱 안 = 로그인 필수 스위치(§8 ⑥)
+import { 로그인해뒀나, 사람지켜보기 } from './cloud'
+import TidyWaiting from './components/TidyWaiting'
 import { askOpenBackup, needsCloudGate, askOpenCloud, 클라우드보임, 자동받기켤까, shouldAskReview, shouldAskReviewNow, myRecipeCount, 문머리글 } from './nudges'
 import ReviewAskSheet from './components/ReviewAskSheet'
 import HomeScreen from './screens/HomeScreen'
@@ -60,7 +68,13 @@ export const useNav = () => useContext(NavCtx)
 // 이후 OCR이 무제한(월 5회 제한 우회). 저장 뒤엔 주소에서 파라미터를 지워 비밀키가 새지 않게 한다.
 try {
   const _p = new URLSearchParams(location.search)
-  const _f = _p.get('founder')
+  // ⛔⛔ [2026-09-10] URLSearchParams 는 「＋」를 «공백»으로 바꿔 읽는다(폼 규칙).
+  //    주소창에 열쇠를 그냥 치면 ＋ 가 든 열쇠는 조용히 «다른 값»이 되어 저장되고,
+  //    ASCII 검사(공백도 ASCII 다)를 «통과한 채» 서버에서 탈락한다 — 아무 오류도 안 뜬다.
+  //    ✅ 그래서 주소 원문에서 그대로 떼어 쓴다(＋를 안 건드린다). 앞뒤 공백만 턴다.
+  //    (적대적 검토가 잡았다 — 새 방패를 통과하는데도 틀리는 구멍이었다)
+  const _raw = (location.search.match(/[?&]founder=([^&]*)/) || [])[1]
+  const _f = (_raw != null ? decodeURIComponent(_raw.replace(/%(?![0-9a-fA-F]{2})/g, '%25')) : _p.get('founder') || '').trim()
   if (_f) {
     localStorage.setItem('hankki:founder', _f)
     _p.delete('founder')
@@ -92,7 +106,18 @@ export default function App() {
   //   ⛔ 이미 쓰고 있던 사람에겐 안 띄운다 — 잘 쓰던 앱이 갑자기 로그인 화면으로 시작하면 그건 «벽»으로 읽힌다.
   //      그 사람들은 홈 한 줄에서 만난다(규칙 18 ⓙ — 이미 깔린 폰).
   //   🔀 ＋ 공개 스위치(`클라우드보임`) — 켜는 날까지 창업자 폰에서만. 근거는 `nudges.js` 머리주석.
-  const [cloudGate, setCloudGate] = useState(() => 클라우드보임() && needsCloudGate() && needsOnboarding())
+  //   🍎🔐 [2026-09-10 · 창업자 확정 «로그인 필수» · docs/로그인-필수로 §8·§10] **아이폰 앱 안에선 조건이 다르다** —
+  //      「처음 한 번」이 아니라 «로그인해 두지 않았으면 언제나» 문이다(로그아웃·계정 삭제 뒤도).
+  //      ⛔ 스위치는 `앱안인가()` 하나 — 웹·안드로이드는 아래 조건 그대로(A/B 판정 뒤에만 넓힌다 · §8 ⑥).
+  //      ⭐ 표식(`로그인해뒀나`)으로 «먼저» 그리고, 진짜 상태는 아래 `사람지켜보기` 가 «확정»으로 말할 때 바로잡는다(§8 ⑤).
+  const [cloudGate, setCloudGate] = useState(() => 클라우드보임() && (앱안인가() ? !로그인해뒀나() : (needsCloudGate() && needsOnboarding())))
+  // 🍎 «확정 null» 이면 문을 다시 띄운다 — 로그아웃 · 계정 삭제 · 다른 기기에서 지운 계정(토큰 취소) 모두 여기로 온다.
+  //    ⛔ `확정: false`(붙기 실패 = 인터넷 없음)로는 «안» 띄운다 — 멀쩡히 쓰던 사람을 느린 망에서 쫓아내지 않는다.
+  //    ⭐ 문은 «덮어» 뜬다(화면 스택을 안 지운다) → 다시 로그인하면 쓰던 자리 그대로.
+  useEffect(() => {
+    if (!앱안인가()) return undefined
+    return 사람지켜보기((사람, m) => { if (사람 === null && m && m.확정) setCloudGate(true) })
+  }, [])
   // 🙏 한마디 청하기 — 「레시피를 저장한 직후」 (창업자 확정 2026-09-03 · 내 레시피 2개부터)
   //   ⛔⛔ **왜 «화면»이 아니라 여기서 띄우나** — `EditorScreen` 은 저장에 성공하면 `nav.popAll()` 로
   //      스스로 사라진다. 거기서 시트를 그리면 같은 틱에 언마운트돼 **아무것도 안 뜬다.**
@@ -136,6 +161,37 @@ export default function App() {
   // 🔁 못 보낸 신호를 앱 열 때 조용히 다시 보낸다 — 행동 열쇠 ＋ 「기본 인식으로 읽었다」 둘 다.
   //   ⛔ 화면에 아무것도 안 띄운다. 숫자만 맞춘다.
   useEffect(() => { 밀린열쇠보내기(); 밀린기본보내기() }, [])
+
+  // 🔔📊 [2026-09-22] **「알림을 눌러 들어왔나」를 «한 번»만 센다** — push_open
+  //   🔢 왜 = 워커는 「보냈다」까지만 안다. 이게 없으면 **몇 명이 «열었나»를 영영 못 본다.**
+  //      2026-09-22 에 `알림으로들어옴` 이 stats 에 «만들어만 놓고 부르는 곳이 0곳»인 채로 있는 걸 찾았다.
+  //      뿌리 = 계측-구멍검사가 `export function` 만 보고 `export const`(관문 17개)를 통째로 안 봤다(같이 고쳤다).
+  //   ⛔ 표(`?push=1`)를 «지운다» — 안 지우면 새로고침·뒤로가기마다 또 세어 숫자가 부푼다.
+  //   ⛔ 주소만 바꾼다(replaceState) — 화면을 다시 그리거나 앞으로 가기를 망치지 않는다.
+  useEffect(() => {
+    try {
+      const u = new URL(window.location.href)
+      if (u.searchParams.get('push') !== '1') return
+      알림으로들어옴()
+      u.searchParams.delete('push')
+      window.history.replaceState(null, '', u.pathname + u.search + u.hash)
+    } catch { /* ⛔ 통계가 죽어도 앱은 그대로 돈다 */ }
+  }, [])
+
+  // 🍎 아이폰 «앱»은 서비스워커가 없어 위 표(`?push=1`)가 안 온다 → 애플 사건을 직접 듣는다.
+  //   ⛔ 웹 번들이 플러그인을 곧장 import 하지 않는다(저장소 규칙) — 아이폰일 때만 늦게 불러온다.
+  useEffect(() => {
+    let 살아있나 = true
+    ;(async () => {
+      try {
+        const { 아이폰앱인가 } = await import('./pushConsent.js')
+        if (!아이폰앱인가() || !살아있나) return
+        const { 아이폰알림눌림듣기 } = await import('./pushNative.js')
+        아이폰알림눌림듣기(알림으로들어옴)
+      } catch { /* ⛔ 못 붙어도 앱은 그대로 돈다 */ }
+    })()
+    return () => { 살아있나 = false }
+  }, [])
 
   // 🔤 카드·표지를 사진으로 뽑을 때 쓰는 «글꼴 꾸러미»를 앱이 한가할 때 미리 만들어 둔다.
   //   ⛔⛔ 안 데워두면 유저가 「공유하기」를 누른 «뒤에» 글꼴 8개·1.7MB 를 만들기 시작해
@@ -236,6 +292,7 @@ export default function App() {
     const 위 = stack.length ? stack[stack.length - 1] : null
     화면봄(위 ? 위.name : tab)
   }, [tab, stack])
+
 
   // 안드로이드 '뒤로가기'가 앱을 바로 종료시키지 않도록: 열린 화면을 닫고,
   // 탭이면 홈으로. (히스토리 트랩을 유지해 갑작스런 종료 방지)
@@ -411,9 +468,90 @@ export default function App() {
 
   // '공유받기' — 인스타/갤러리에서 한끼로 공유된 링크·사진을 앱 시작 시 받아 Inbox 로.
   const store = useStore()
+  // 🧹🧹 **묵은다듬기털기** — 앱을 껐다 켜면 «도는 판»은 사라진다. 표시만 남으면 영영 도는 것처럼 보인다.
+  //   ⛔ tidyFail 은 «안» 건드린다 — 그건 「다음에 열면 만회한다」는 약속이라 살아 있어야 한다.
+  //   ⭐ 여기서 터는 것은 tidying(지금 도는 중) «하나»뿐이다. [2026-09-09]
+  useEffect(() => {
+    for (const r of store.recipes || []) if (r?.tidying) store.updateRecipe(r.id, { tidying: 0 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 🎨🎨 📊 [2026-09-14] 「꾸민 게 «쌓여» 있나」 — 📮창업자 = *"레꾸가 우리앱 아이덴티티니까"*
+  //
+  // ⛔ `decor_saved` 는 「오늘 저장을 «누른» 횟수」다 — 한 편을 두 번 고치면 2번 세지고,
+  //    앱을 지우면 같이 사라진다. 그래서 **「꾸민 레시피가 몇 개 쌓였나」를 못 본다.**
+  // ⭐ 그래서 앱을 열 때 «가지고 있는 개수»를 «구간»으로 딱 한 번 보낸다.
+  //
+  // 🔒 ⛔레시피 이름도, 무엇을 붙였는지도 한 자도 안 보낸다 — 구간 이름뿐이다.
+  // ⛔ 판정을 «새로 만들지 않는다» — `RecipeDetailScreen.jsx:418` 의 `isDecorated` 와 «같은 규칙»이다.
+  //    (규칙이 둘이 되면 화면과 통계가 서로 다른 말을 한다.)
+  // ⛔ 한 번만 — 화면을 옮길 때마다 보내면 숫자가 부풀어 거짓이 된다.
+  // ⛔⛔ [2026-09-14 잡은 사고] 처음엔 이걸 «위쪽 화면봄 옆»에 넣었다가 되돌렸다 —
+  //    그 컴포넌트엔 `recipes` 가 없다. **빌드는 통과했다**(전역 참조로 두고 넘어간다) —
+  //    폰에서야 터졌을 것이다. 📌 «변수가 그 자리에 있나»는 빌드가 아니라 눈으로 확인한다.
+  const 쌓임보냈나 = useRef(false)
+  useEffect(() => {
+    if (쌓임보냈나.current) return
+    const 목록 = store.recipes || []
+    if (!목록.length) return
+    쌓임보냈나.current = true
+    try {
+      const n = 목록.filter((r) => (r?.decor && r.decor.length) || (r?.decorBg && r.decorBg !== 'none') || r?.thumb === 'none').length
+      꾸민게쌓였나(n)
+    } catch { /* 통계가 죽어도 앱은 그대로 돈다 */ }
+  }, [store.recipes])
+
+
   // ⭐ 아래 「저절로 올리기」가 «한 번만» 도는데 그 안에서 최신 store 를 봐야 한다 — 그래서 ref 로 들고 있는다.
+  // 🧺 저절로 도는 다듬기 동안 뜨는 하얀 창 [2026-09-09]
+  const [자동다듬기창, set자동다듬기창] = useState(false)
+  const [자동남은말, set자동남은말] = useState('')   // 🔑 열쇠 잔량 — 하얀 창이 들고 간다
+  const [자동끝, set자동끝] = useState(null)        // 🔚 끝말(까닭별) — 있으면 창이 «끝 모양»으로 바뀐다
+  // ⛔ 유저가 「닫기」로 닫았으면 «다시 안 띄운다» — 60초 뒤에 창이 튀어나오면 하던 일을 끊는다.
+  //    ⭐ 그래도 결과는 잃지 않는다 — 임시보관함 카드 줄이 같은 말을 들고 있다. [2026-09-09]
+  const 창닫음 = useRef(false)
+  const 끝알림 = (끝말) => { set자동끝(끝말); if (!창닫음.current) set자동다듬기창(true) }
   const storeRef = useRef(store)
   storeRef.current = store
+
+  // 🧺🧺 **선반에 놓인 답을 집어온다 — 깨어날 때마다** [2026-09-10 · 창업자 실물 녹화로 잡았다]
+  //
+  //   📮 창업자 = 20초에 다른 앱으로 나갔고 42초에 돌아오니 「AI 다듬기가 안 됐어요」
+  //   ⛔⛔ 뿌리 = 폰이 앱을 얼리면 «물어보는 루프»가 죽는다. 워커는 계속 일해 답을 선반에 두는데
+  //      앱이 깨어나서 **다시 안 물어봤다** → 다 만든 답을 통째로 버리고 「안 됐어요」라고 말했다.
+  //      📌 창은 「앱을 닫아도 계속 다듬어요」라고 «약속»한다 — 그 약속을 못 지키고 있었다.
+  //   ⭐ 그래서 번호(tidyJob)를 레시피에 적어 두고, 깨어날 때 그 번호로 «한 번만» 물어본다.
+  //      ⛔ 기다리지 않는다 · AI 를 안 부른다(뉴런 0) · 없으면 지금과 똑같다(나빠지는 게 0).
+  //   ⏳ 선반은 1시간이다 — 그보다 오래된 번호는 «버린다»(영영 물어보는 것을 막는다).
+  //   🧪 판 = scripts/_repro-선반집기-0910.mjs
+  useEffect(() => {
+    const 한시간 = 60 * 60 * 1000
+    let 그만 = false
+    const 집으러 = async () => {
+      if (그만 || document.visibilityState !== 'visible') return
+      for (const r of storeRef.current.recipes || []) {
+        const 번호 = r && r.tidyJob
+        if (!번호) continue
+        if (r.tidyJobAt && Date.now() - r.tidyJobAt > 한시간) {
+          storeRef.current.updateRecipe(r.id, { tidyJob: '' })   // ⏳ 선반이 이미 비었다
+          continue
+        }
+        const 답 = await 선반집기(번호)
+        if (그만) return
+        if (답 === '아직') continue                               // 워커가 아직 일하는 중
+        if (!답) { storeRef.current.updateRecipe(r.id, { tidyJob: '' }); continue }
+        // ✅ 받았다 — 얹는 규칙은 retidy.js 의 만회값 «한 곳»(상세 화면 자동 만회와 같은 말)
+        const { 바꿀것 } = 만회값(r, String(r.rawText || ''), 답)
+        storeRef.current.updateRecipe(r.id, { ...바꿀것, tidyFail: 0, tidying: 0, tidyJob: '' })
+        showToastRef.current?.('AI가 다 다듬었어요 · 「레시피」 탭에서 보세요', 5000)
+      }
+    }
+    집으러()
+    const 깨면 = () => { if (document.visibilityState === 'visible') 집으러() }
+    document.addEventListener('visibilitychange', 깨면)
+    return () => { 그만 = true; document.removeEventListener('visibilitychange', 깨면) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // 🙏 저장 신호가 올라오면 «최신 레시피 수»로 판정한다 (위 `리뷰신호` 주석 참고).
   //   ⛔ 소개 화면·클라우드 첫 화면이 떠 있으면 안 띄운다 — 시트가 겹치면 둘 다 못 읽는다.
@@ -559,7 +697,9 @@ export default function App() {
   }, [])
   useEffect(() => {
     let cancelled = false
-    consumeSharedIntake().then(async (data) => {
+    // 🍎 [2026-09-13] 안드로이드(서비스워커 CacheStorage)와 iOS(Share Extension → App Group inbox) 가 «같은 모양»으로 들어와
+    //    아래 한 함수가 둘 다 담는다. 모양 = shareIntake.js / iosShare.js 가 맞춰 준다.
+    const 공유담기 = async (data) => {
       if (cancelled || !data) return
       const link = firstUrl(data.url, data.text)
       const caption = captionFrom(data.text)
@@ -625,6 +765,10 @@ export default function App() {
         if (raw) rec.rawText = raw
       }
       store.addRecipe(rec)
+      // 📊 [2026-09-12] 새 레시피가 담겼다 — ⛔이 길이 제일 크게 빠져 있었다.
+      //    여기는 «SNS·갤러리에서 공유로 받아» 담는 길이다. 인스타 광고로 온 사람이 제일 많이 쓸 길인데
+      //    한 건도 안 세고 있었다. 그 위에서 「저장 1명」이라고 말했다(2026-09-12 전수검사에서 잡았다).
+      try { 레시피저장() } catch { /* 통계가 죽어도 담기는 된다 */ }
       // ⛔ 정리가 끝난 것을 임시보관함으로 보내면 «거기 없다» — 그 화면은 미정리만 보여준다.
       //    그래서 정리된 것은 «그 레시피»를 바로 연다(방금 담은 걸 눈으로 확인하게).
       setStack([rec.status === 'sorted' ? { name: 'detail', id: rec.id } : { name: 'inbox' }])
@@ -659,12 +803,42 @@ export default function App() {
         const 장들 = (data.imageDataUrls && data.imageDataUrls.length ? data.imageDataUrls : [data.imageDataUrl])
         const 읽은글 = []
         for (const 장 of 장들) {
-          const t = await ocrImage(장)
+          // ⛔ 한 장이 터져도 나머지는 읽는다 — 여기서 던지면 아래 «까닭 안내»까지 통째로 날아간다.
+          let t = ''
+          try { t = await ocrImage(장) } catch { t = '' }
           if (cancelled) return
           if (t && t.trim()) 읽은글.push(t.trim())
         }
         const text = 읽은글.join('\n')
-        if (cancelled || !text.trim()) return
+        if (cancelled) return
+        // 🕳🕳 **[2026-09-09] 글자를 못 얻었을 때 «아무 말 없이» 끝나던 자리.**
+        //   ⛔ 옛 판은 여기서 그냥 return 했다 — 유저는 사진을 담았는데 **왜 아무 일도 없는지 모른다.**
+        //      열쇠를 썼는지조차 알 수 없다. 그게 오늘 밤 창업자가 겪은 침묵의 한 갈래다.
+        //   ⭐ 서버가 보낸 «왜»로 말을 고른다(tidy.js 의 까닭말 한 곳) — 짐작하지 않는다.
+        //   📖 표 = docs/열쇠와안내-까닭별-2026-09-09.md
+        // 📊📊 [2026-09-14] **여기가 계측의 «구멍»이었다** — 📮창업자 = *"붙여줘"*
+        //
+        // ⛔⛔ `읽어냄()`·`못읽음()` 이 `EditorScreen.jsx:520` «한 곳»에만 붙어 있었다.
+        //    그런데 글자를 읽는 길은 셋이다 — 편집 캡처 · **여기(공유받기)** · 냉장고 영수증.
+        //    ＝ **제일 많이 쓰는 갈래(`import_share` 10명)가 통째로 «안 세졌다».**
+        //
+        // ⛔ 그래서 2026-09-14 에 클로드가 「22명 고름 → 2명 읽음 = 20명이 샌다」고 잘못 읽었다.
+        //    진짜는 「2명만 «세졌다»」였다. 샜는지 아닌지는 **이 줄이 붙은 뒤라야 보인다.**
+        //
+        // 📌 구멍검사(`scripts/계측-구멍검사.mjs`)도 이걸 못 잡았다 —
+        //    「부르는 곳이 있나」만 보고 **「부를 자리가 더 있나」는 안 봤다.** 검사도 같이 고쳤다.
+        if (!text.trim()) {
+          try { 못읽음() } catch { /* 통계가 죽어도 안내는 뜬다 */ }
+          const 셈 = 열쇠셈()
+          set자동남은말('')
+          창닫음.current = false        // 새 사진이니 새 판이다
+          끝알림(까닭말(셈.왜, 셈.앎, 셈.빚))
+          return
+        }
+        try { 읽어냄() } catch { /* 통계가 죽어도 다듬기는 돈다 */ }
+        // 💸 환불 빚으로 AI 읽기가 막혔는데 기본 인식이 글자를 얻은 경우 — 끝 창에 이유를 같이 남긴다(10/24 점검 · 말은 안내말.js)
+        const 빚말 = (() => { const s = 열쇠셈(); return s.왜 === 'debt' ? `지금은 AI 읽기를 할 수 없어요 · ${빚안내몸(s.빚)}` : '' })()
+        const 빚덧 = (끝) => (빚말 ? { ...끝, 열쇠말: 빚말 } : 끝)
         // 🤖🤖 [2026-08-29] **AI 다듬기 — ⭐여기가 창업자가 실제로 쓰는 문이다.**
         //   ⛔⛔ 8/29 아침에 AI 를 `EditorScreen`(편집 화면 캡처 단추) «한 곳»에만 붙여서
         //      「가져오기 → 사진」·공유받기로 담은 것은 **워커를 한 번도 안 불렀다**
@@ -776,20 +950,17 @@ export default function App() {
         //    ⛔ `unknown` 이면 숫자를 안 적는다 — 서버가 아직 답한 적이 없다는 뜻이라
         //       그때 숫자를 적으면 «안 써 봤을 때의 기본값 20»을 사실처럼 말하게 된다(규칙 15).
         const left = getOcrLeft()
-        // 📢📢 ⭐**여기가 «첫인상»이다** — 인스타 공유가 「제일 많이 써요」 길이다.
-        //   「AI 가 더 다듬는 중」을 **같은 줄에** 붙인다(문구는 `tidy.js` 한 곳).
-        //   ⛔ 따로 띄우면 이 안내(열쇠 잔량)를 즉시 덮어 «정보를 잃는다».
-        //   ⏱ 20초 — 다 되면 아래 결과 토스트가 덮고, 실패하면 조용히 사라진다.
-        showToast(
-          // 🔓 [2026-09-02] 운영자에겐 숫자를 안 붙인다 — 서버가 «실제로 쓴 만큼» 깎인 0 을 주는데
-          //    한도는 안 걸리므로 「0개 남았어요」가 거짓말이 된다(창업자 폰 실물).
-          //    잣대는 `getOcrLeft().무제한` 하나 — 설정 알약·임시보관함도 같은 것을 본다.
-          (left.unknown || left.무제한
-            ? '사진에서 글자를 읽어 채웠어요'
-            : `사진에서 글자를 읽어 채웠어요 · 무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요`)
-            + AI다듬는중,
-          20000,
-        )
+        // 📢📢 ⭐**[2026-09-09 창업자] 유저에겐 하얀 창 «하나»만.**
+        //   📮 창업자 = "파랑토스트를 없애던가 하고 하얀색을 띄워서 거기에 다 안내를 해 위아래 뜨면 정신없으니까"
+        //           ＋ "유저는 굳이 파랑색토스트를 띄울필요가 없자나"
+        //   ⛔ 위아래로 둘이 뜨면 «둘 다» 안 읽힌다. 그래서 열쇠 잔량까지 하얀 창이 들고 간다.
+        //   ⭐ 띠는 «창업자 폰에서만» 남긴다 — 진단 꼬리(모델·ms·사진크기)를 봐야 하기 때문이다.
+        //   ⭐ 말은 안내말.js 한 곳에서 온다 — 0 이면 「다 썼어요」로 «갈아서» 준다 [창업자 2026-09-09]
+        const 남은말 = left.unknown ? '' : 남은열쇠말(left)
+        set자동남은말(남은말)
+        if (tidyFounder()) {
+          showToast((남은말 ? `사진에서 글자를 읽어 채웠어요 · ${남은말}` : '사진에서 글자를 읽어 채웠어요') + AI다듬는중, 20000)
+        }
 
         // ② AI — «뒤에서». 오면 갈아끼우고, 안 오면 아무 일도 안 난다.
         //   👁 [창업자 판정 2026-09-01 = ⓒ] 글자와 «함께 사진»을 준다.
@@ -808,15 +979,31 @@ export default function App() {
         //   ⭐ 새 장치를 안 만들었다 — 실패의 «모양»만 바꿨다(절대원칙 34):
         //      「날아감」 → 「다음에 열면 저절로 채워짐」.
         //   🧪 판 = `_repro-앱이정리됨-0904.mjs`
-        store.updateRecipe(rec.id, { tidyFail: 1 })
-        tidyRecipe(text, 장들[0]).then((ai) => {
-          if (cancelled) return
+        // 🔵🔵 **[2026-09-09 창업자 실물] 「도는 중」과 「실패」를 «가른다»**
+        //   📮 창업자 = *"1분넘었지.. 변화없음. ai가 읽었는지 안읽었는지 얘기도 없어"*
+        //   ⛔⛔ 옛 판 = 시작할 때 남긴 tidyFail 1 을 임시보관함이 **「AI 다듬기가 안 됐어요」**로 읽었다
+        //      (InboxScreen 의 남은까닭). **아직 도는 중인데 「안 됐다」고 «거짓말»을 했다.**
+        //      그 말을 본 유저는 끝날 때까지 기다릴 까닭이 없어진다 — 20~60초를 통째로 잃는다.
+        //   ⭐ tidyFail 은 «그대로 둔다»(앱이 정리돼도 만회하는 길이다) — 옆에 tidying 을 «따로» 둔다.
+        //      ⛔ 앱을 껐다 켜면 도는 판은 사라지므로, 켤 때 묵은 tidying 을 턴다(아래 묵은다듬기털기).
+        store.updateRecipe(rec.id, { tidyFail: 1, tidying: 1 })
+        창닫음.current = false        // 새 사진 = 새 판 · 지난번에 닫았어도 다시 띄운다
+        set자동다듬기창(true)
+        // 🧺 워커가 맡은 «번호»를 그 레시피에 적어 둔다 — 앱이 얼어도 살아남는다 [2026-09-10]
+        //   ⛔ 이게 없으면 깨어났을 때 «물어볼 번호»가 없어 선반에 놓인 답을 통째로 버린다.
+        번호알림받기((번호) => store.updateRecipe(rec.id, { tidyJob: 번호, tidyJobAt: Date.now() }))
+        // 🤖 auto = 공유받기 직후 앱이 «저절로» 돈다 — 유저가 AI 를 부른 게 아니다 (2026-09-14)
+        tidyRecipe(text, 장들[0], { 까닭: 'auto' }).then((ai) => {
+          set자동다듬기창(false)
+          if (cancelled) { store.updateRecipe(rec.id, { tidying: 0 }); return }
           if (ai) {
             // ⭐ **여기가 「AI 가 읽어서 성공했을 때」다** — 졸업은 이 판에서만 일어난다(창업자 확정 2026-09-05).
-            채우기(mergeTidy(기본, ai), { AI끝남: true })
+            채우기(mergeTidy(기본, ai, text), { AI끝남: true })
             // ✅ 다 됐으니 「아직 못 다듬음」 표시를 «지운다» — 안 지우면 다음에 열 때 또 다듬는다(뉴런 낭비).
-            store.updateRecipe(rec.id, { tidyFail: 0 })
-            showToast('AI가 레시피를 더 다듬었어요' + tidyTail())
+            store.updateRecipe(rec.id, { tidyFail: 0, tidying: 0, tidyJob: '' })   // 🧺 다 받았으니 번호를 버린다
+            // 🔚 창이 «끝말»로 바뀐다 — 사라지기만 하면 됐는지 안 됐는지 모른다.
+            끝알림(빚덧(다듬기끝말(true, tidyFounder() ? tidyTail() : '')))
+            if (tidyFounder()) showToast('AI가 레시피를 더 다듬었어요' + tidyTail())
             return
           }
           // ⛔ 실패는 «유저에게 안 알린다» — 이미 채워져 있어 유저가 할 일이 0이다.
@@ -830,8 +1017,21 @@ export default function App() {
           //   ⛔ 지금 다시 걸지 않는다 — 방금 실패한 조건 그대로라 또 실패할 확률이 높고,
           //      그러면 무료 통만 두 배로 먹는다. **표만 남기고 «다음에» 만회한다.**
           //   📌 표를 지우는 것도 여기서 안 한다 — 만회한 쪽(상세 화면)이 지운다.
-          store.updateRecipe(rec.id, { tidyFail: 1 })
-          if (tidyFounder()) showToast('AI 다듬기는 못 했어요' + tidyTail())
+          store.updateRecipe(rec.id, { tidyFail: 1, tidying: 0 })   // ⭐ 번호는 «안» 지운다 — 선반에 답이 놓일 수 있다
+          // 📢📢 **[2026-09-09 창업자] 실패도 «유저에게» 말한다.**
+          //   📮 창업자 = "당황스럽잖아 이게 됐는지 안됐는지 모르니까. 안내를 해줘야 할 거 아냐. 어떻게 하라고"
+          //   ⛔ 옛 판은 창업자에게만 알렸다 — 「이미 채워져 있으니 유저가 할 일이 0」이라고 봤다.
+          //      그런데 «졸업»이 AI 성공에 걸려 있어서, 실패하면 그 편은 임시보관함에 그대로 남는다.
+          //      말이 없으면 유저는 「왜 안 넘어가지」만 남고 «무엇을 누르면 되는지»를 모른다.
+          //   ⭐ 그래서 무엇이 안 됐는지 ＋ «어떻게 하면 되는지»를 한 줄로 붙여 말한다.
+          // 🙅 [2026-09-13] 「사용 안 함」을 고른 건 실패가 아니다 — 표시를 지우고 «선택했다»고 말한다.
+          if (동의안함으로끝났나()) { store.updateRecipe(rec.id, { tidyFail: 0, tidying: 0, tidyJob: '' }); 끝알림(동의안함끝말()); return }
+          끝알림(빚덧(다듬기끝말(false, tidyFounder() ? tidyTail() : '')))
+          if (tidyFounder()) showToast('AI 다듬기는 못 했어요' + tidyTail(), 6500)
+        }).catch(() => {
+          // ⛔ 여기까지 오면 표시가 «영영» 도는 것으로 굳는다 — 그게 제일 나쁜 모양이다.
+          set자동다듬기창(false)
+          store.updateRecipe(rec.id, { tidyFail: 1, tidying: 0 })   // ⭐ 번호는 «안» 지운다 — 선반에 답이 놓일 수 있다
         })
         return
       }
@@ -865,9 +1065,19 @@ export default function App() {
       //    📌 v11.19 「링크 주소만 담아두기」와 같은 말이 된다 — 가져오기 화면과 말이 맞는다.
       if (!link) return
       showToast('링크를 담았어요')
-    })
+    }
+    consumeSharedIntake().then(공유담기)
+    // 🍎 iOS — 부품은 앱을 «직접 못 연다»(Apple 제한). 그래서 ①시작 ②앞으로 돌아올 때 ③hankki://share 신호, 세 자리에서 꺼낸다.
+    //    consume 이 읽는 즉시 지우므로 겹쳐 불러도 두 번 담기지 않는다. 갤럭시·웹에선 빈 배열이라 아무 일 없다.
+    const iOS담기 = () => consumeIosShared().then(async (arr) => { for (const d of arr) await 공유담기(d) })
+    iOS담기()
+    const offIos = onIosShare(iOS담기)
+    const 앞으로오면 = () => { if (document.visibilityState === 'visible') iOS담기() }
+    document.addEventListener('visibilitychange', 앞으로오면)
     return () => {
       cancelled = true
+      offIos()
+      document.removeEventListener('visibilitychange', 앞으로오면)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -1010,6 +1220,9 @@ export default function App() {
             📮 창업자 2026-08-21 = *"새유저는 그냥 첫화면에 로그인하고시작 «왜냐면 온보드는 그냥 건너뛰기할수도있어»"*
             ⛔ 소개 «마지막 장»에 두려던 내 안을 창업자가 잡았다 — 「건너뛰기」가 매 장 오른쪽 위에 있어 첫 장에서 통째로 넘어간다. */}
         {cloudGate && <CloudGate onDone={() => setCloudGate(false)} />}
+        {/* 🤖🔐 AI 다듬기 허락 시트 — tidy.js 가 보내기 «전»에 물으면 여기서 뜬다(큰 틀 6-② ⓑ · 2026-09-08) */}
+        <AIConsentSheet />
+        <PushConsentSheet />
 
         {/* 🙏 한마디 청하기 — 레시피를 저장한 직후(내 레시피 2개부터 · 30일에 한 번).
             ⛔ 자리는 «여기»라야 한다 — 편집 화면은 저장에 성공하면 popAll 로 스스로 사라진다. */}
@@ -1037,8 +1250,16 @@ export default function App() {
             onRestore={() => { setOnboard(false); askOpenBackup(); go('profile') }}
           />
         )}
+        {/* 🧺 저절로 도는 다듬기에도 «하얀 창»을 띄운다 [창업자 2026-09-09]
+            📮 창업자 = "그걸 토스트(파랑색)이 하는게 아니라 아래 하얀창이 해줘야할 것 같은데"
+            ⛔ 문구는 «다르게» 한다 — 이 길로 온 사람은 기다리려고 온 게 아니다(자동 갈래). */}
+        {자동다듬기창 && (
+          <TidyWaiting 자동 남은말={자동남은말} 끝={자동끝}
+            onClose={() => { set자동다듬기창(false); set자동끝(null); 창닫음.current = true }} />
+        )}
       </div>
     </NavCtx.Provider>
+
   )
 }
 

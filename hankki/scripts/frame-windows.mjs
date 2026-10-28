@@ -139,7 +139,7 @@ function insideRect(mask, w, h, b) {
   return lo
 }
 
-const files = readdirSync(DIR).filter((f) => /^pf_.*\.png$/.test(f)).sort()
+const files = readdirSync(DIR).filter((f) => /^p[fb]_.*\.png$/.test(f)).sort()   // pf_ = 프레임 · pb_ = 기본 그릇(2026-09-21) — 둘 다 «창»이 있다
 const out = {}
 let none = []
 for (const f of files) {

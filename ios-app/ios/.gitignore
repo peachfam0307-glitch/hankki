@@ -1,0 +1,16 @@
+App/build
+App/Pods
+App/output
+App/App/public
+DerivedData
+xcuserdata
+
+# Cordova plugins for Capacitor
+capacitor-cordova-ios-plugins
+
+# Generated Config files
+App/App/capacitor.config.json
+App/App/config.xml
+
+# 🍎 2026-09-08 — cap sync 가 만드는 «절대경로» 심볼릭링크(SPM packageOptions.symlink). 커밋하면 맥 러너에서 깨진다 · 러너는 cap sync 로 다시 만든다
+App/CapApp-SPM/symlinks/

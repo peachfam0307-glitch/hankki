@@ -3,7 +3,13 @@ import { COACH, COACH_KEYS } from '../coach'
 import { useStore, 서랍한도, 서랍다시재기 } from '../store'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
-import { APP_VERSION, APP_TAGLINE, FEEDBACK_URL, LAB_SURVEY_URL, LAB_BUG_URL } from '../version'
+import { APP_VERSION, APP_TAGLINE, FEEDBACK_URL, LAB_SURVEY_URL, LAB_BUG_URL, INSTAGRAM_DM_URL } from '../version'
+// 📒 tidy 에서 오는 것 «한 줄로» 모은다 — 2026-09-10 에 두 줄로 갈려 있었다.
+//    ⛔ 갈려 있으면 다음 사람이 한쪽만 보고 「유저 눈을 안 본다」고 착각한다(오늘 실제로 그런 사고를 냈다).
+//    tidyFounder = 유저 눈을 «따른다» · 진짜운영자 = 유저 눈과 «무관»(스위치를 그릴지 정한다)
+import { tidyFounder, 다듬기기록, 진짜운영자, 유저눈인가, 유저눈설정 } from '../tidy'
+// 🙋‍♀️ [2026-09-16] 우리 기기 = 통계 안 보냄 · 7번 탭 열쇠 칸 · 점검 30분 · 보낸 기록 — 판정은 stats.js 한 곳
+import { 내부기기인가, 내부기기설정, 점검보내기까지, 점검보내기설정, 보낸기록, 인스타DM } from '../stats'
 import Icon from '../components/Icon'
 import KeyBadge from '../components/KeyBadge'
 import TabTips from '../components/TabTips'
@@ -11,17 +17,24 @@ import EmojiPicker from '../components/EmojiPicker'
 import FoodIconPicker from '../components/FoodIconPicker'
 import Buddy, { BUDDY_GROUPS } from '../components/Buddies'
 import Portal from '../components/Portal'
+import PushGuideSheet from '../components/PushGuideSheet'
 import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import LabSheet from '../components/LabSheet'
 import CloudSheet from '../components/CloudSheet'
+import DeleteAccountSheet from '../components/DeleteAccountSheet'   // 🗑 계정 · 데이터 삭제(큰 틀 6-① ⓑ)
+import KeyShopSheet from '../components/KeyShopSheet'   // 🏪 한끼상점(2026-10-22 · 판매 스위치 뒤)
+import { 상점보여도되나 } from '../billing'
+import { KEY_NAME } from '../열쇠이름.js'
+import uiShop from '../assets/ui/hankki_shop.png'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 // 📣 [창업자 2026-09-03 · ④⑤ 스샷] 그 앱 설정엔 「정보」 갈래에 «공지사항»이 있다.
 //   🔢 실측 = 우리 「한끼 소식」 입구는 **홈 하나뿐**이었다(`HomeScreen.jsx:440` 만이 `PreviewSheet` 를 연다).
 //      → 홈에서 지나쳐 버리면 **다시 볼 길이 없었다.** 그게 ⑤와의 진짜 빈 칸이다.
 //   ⭐ 새로 만들지 않는다 — 홈이 쓰는 «그 부품 그대로». 두 곳이 어긋날 수가 없다.
 import PreviewSheet from '../components/PreviewSheet'
+import UpdateLogSheet from '../components/UpdateLogSheet'   // 📣 업데이트 내역 — 날짜별 전체 (창업자 2026-09-17)
 import { isNewsUnread, markNewsSeen } from '../components/NewsPopup'
 import { whatsNew } from '../data/whatsnew'
 import { cropSquare, openExternal } from '../utils'
@@ -30,6 +43,8 @@ import { takeOpenBackup, backupDone, takeOpenCloud, 클라우드보임, STORE_UR
 import { 로그인해뒀나 } from '../cloud'
 import { 잠긴장수, 백업풀기 } from '../diaryLock'
 import { 백업만들기 } from '../backupData'
+import { 기본빼기, 백업편수, 작은백업켬 } from '../backupSlim'
+import { allBasicRecipes } from '../data/basics'
 
 // 설정 첫 방문 코치마크 — 백업(제일 중요)과 의견 보내기 안내(창업자 딸 아이디어 ⭐)
 const PROFILE_COACH_KEY = COACH.profile
@@ -45,16 +60,42 @@ import { FAV_NAME } from '../favName'
 // 🏷 갈래 이름도 «한 곳»에서만 온다(`src/settingsGroups.js`) — 화면과 관문이 같은 목록을 본다.
 //    ⛔ 여기에 갈래 이름을 «다시 적지» 말 것. 2026-09-04 에 화면과 관문이 각각 적어서 실제로 갈렸다.
 import { 설정갈래, 설정섹션, 설정이름표스타일 } from '../settingsGroups'
+import { 앱안인가 } from '../nativeAuth'   // 🍎 아이폰 앱 = 파일 다운로드(<a download>)가 조용히 안 된다 · 서비스워커 갱신도 없다(2026-09-13 전수점검)
+import { AI동의상태, AI동의쓰기, 바뀜이벤트 } from '../aiConsent'   // 🤖🔐 AI 다듬기 사용 켜기/끄기(큰 틀 6-② ⓑ)
+// 🔔 [2026-09-19] 알림 켜기/끄기 — 시트가 「언제든 설정에서 끌 수 있어요」라고 «약속»한다. 이 줄이 그 약속이다(창업자 *"알림켤수있는 것도 설정에 따로 넣어야겠네"*).
+import { 알림동의상태, 알림바뀜, 푸시가능, 브라우저권한 } from '../pushConsent'
+import { 알림켜기, 알림끄기 } from '../pushSubscribe'
 
 export default function ProfileScreen() {
   const store = useStore()
   const { profile, setProfile, recipes, clearAll, reset, importAll } = store
   const nav = useNav()
+  // 🏪 한끼상점 — 판매 스위치 ＋ 살 수 있는 기기만(`billing.js 상점보여도되나`)
+  const [상점보임, set상점보임] = useState(false)
+  useEffect(() => { let 산다 = true; 상점보여도되나().then((v) => { if (산다) set상점보임(v) }); return () => { 산다 = false } }, [])
+  const [상점, set상점] = useState(false)
   // 홈의 백업 안내로 들어왔으면 도착하자마자 백업 시트를 연다
   // (탭 이동은 인자를 못 넘겨서 nudges.js 쪽지로 받는다. 읽는 순간 지워져 한 번만 열린다.)
   const [backup, setBackup] = useState(() => takeOpenBackup())
   const [avatarSheet, setAvatarSheet] = useState(false)
+  // 👀 [2026-09-10] 유저 눈으로 보기 — 켜고 끄면 화면을 다시 그려야 해서 상태로 든다
+  const [유저눈, set유저눈] = useState(() => 유저눈인가())
+  // 🙋‍♀️ [창업자 확정 2026-09-16] 설정 맨 아래 버전 글자 «7번 탭» → 운영자 열쇠 칸(아이폰 앱엔 주소창이 없어 ?founder= 길이 없다)
+  //    열쇠가 «이미» 있으면 칸을 안 연다 — 상태·점검·해제는 아래 운영자 칸에 늘 보인다(숨은 판을 따로 안 만든다).
+  const [열쇠칸, set열쇠칸] = useState(false)
+  const 탭셈 = useRef({ n: 0, t: 0 })
+  const 버전탭 = () => {
+    const 지금 = Date.now()
+    if (지금 - 탭셈.current.t > 3000) 탭셈.current.n = 0   // 3초 넘게 쉬면 처음부터
+    탭셈.current = { n: 탭셈.current.n + 1, t: 지금 }
+    if (탭셈.current.n < 7) return
+    탭셈.current.n = 0
+    if (내부기기인가()) { nav.showToast('이미 내부 기기예요 · 위 운영자 칸에서 점검·해제해요'); return }
+    set열쇠칸(true)
+  }
+  const 점검까지 = 점검보내기까지()
   const [editSheet, setEditSheet] = useState(false)
+  const [알림길, set알림길] = useState(false)   // 🖼 폰 설정에서 알림 켜는 길(그림) — PushGuideSheet
   const [confirmAsk, setConfirmAsk] = useState(null) // { title, message, confirmLabel, danger, onConfirm }
   const [unlockAsk, setUnlockAsk] = useState(null) // 백업 안 잠긴 일기를 풀 때 { n, data }
   // 인라인 시트(백업·아바타) — 뒤로가기로 닫기(편집·붙여넣기·확인 시트는 자체 처리)
@@ -66,11 +107,18 @@ export default function ProfileScreen() {
   const [checking, setChecking] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
   const [lab, setLab] = useState(false) // 한끼연구소(의견·설문·오류) 시트
+  const [delAccount, setDelAccount] = useState(false) // 🗑 계정 · 데이터 삭제 시트(2026-09-08)
   const [소식, set소식] = useState(false) // 한끼 소식(＝공지사항) 시트 — 홈과 «같은 부품»
+  const [업뎃내역, set업뎃내역] = useState(false) // 📣 업데이트 내역 — 소식은 최신 한 줄, 여기는 전부(창업자 2026-09-17)
   const 소식들 = whatsNew()
   const 안본소식 = isNewsUnread(소식들)
   // ☁️ 홈 한 줄로 들어왔으면 도착하자마자 클라우드 시트를 연다(백업 쪽지와 같은 길)
   const [cloud, setCloud] = useState(() => takeOpenCloud())
+  // 🤖🔐 AI 다듬기 허락 상태 — 'yes' | 'no' | null(아직 안 물음). 시트에서 답하면 바뀜이벤트로 여기도 갱신된다.
+  const [ai동의, setAi동의] = useState(() => AI동의상태())
+  useEffect(() => { const f = () => setAi동의(AI동의상태()); window.addEventListener(바뀜이벤트, f); return () => window.removeEventListener(바뀜이벤트, f) }, [])
+  const [알림동의, set알림동의] = useState(() => 알림동의상태())
+  useEffect(() => { const f = () => set알림동의(알림동의상태()); window.addEventListener(알림바뀜, f); return () => window.removeEventListener(알림바뀜, f) }, [])
   // ⛔⛔ `useLayerBack` 은 «반드시» 위 `useState` «아래»에 둔다 —
   //   위에 두면 `cloud` 를 선언 «전»에 읽어 `Cannot access before initialization` 으로 **설정 화면이 통째로 죽는다.**
   //   📌 2026-08-21 에 실제로 그렇게 냈다. 빌드도 통과하고 스모크도 통과했다 — **화면을 열어서야 드러났다**(규칙 21).
@@ -83,6 +131,7 @@ export default function ProfileScreen() {
   // 바로 활성화 → controllerchange 로 앱이 자동 새로고침(main.jsx). 없으면 '최신' 안내만.
   const checkUpdate = async () => {
     if (checking) return
+    if (앱안인가()) { nav.showToast('아이폰 앱은 App Store 에서 업데이트돼요 · 지금 판이 최신이에요'); return }   // 🍎 번들이 앱 안에 실려 있어 서비스워커 갱신이 없다
     if (!('serviceWorker' in navigator)) {
       nav.showToast('이 환경에선 업데이트 확인이 안 돼요 · 브라우저를 새로고침해 주세요')
       return
@@ -152,6 +201,8 @@ export default function ProfileScreen() {
   //   ⛔ 여기와 클라우드가 따로 만들면 «백업 파일엔 들어가는데 클라우드엔 안 들어가는 칸»이 생긴다.
   //      그건 폰을 바꾼 «뒤에야» 드러난다 — 제일 늦게 발견되는 사고다.
   const buildBackup = () => 백업만들기(store)
+  // 📉 복사·파일·공유는 «손 안 댄 기본 레시피»를 뺀 판 — ⛔클라우드(아래 CloudSheet)엔 buildBackup 그대로 (backupData.js 기본빼기)
+  const buildExport = async () => (작은백업켬 ? 기본빼기(await buildBackup(), allBasicRecipes) : buildBackup())
 
   // 📁 파일 이름에 «시각»까지 넣는다 (2026-08-16 창업자 캡처)
   //   ⛔ 날짜만 넣었더니 같은 날 두 번째 저장에서 안드로이드가
@@ -168,8 +219,11 @@ export default function ProfileScreen() {
 
   // 다운로드 폴더로 저장 (데스크톱·폴백)
   const downloadBackup = async () => {
+    // 🍎 [2026-09-13] 아이폰 껍데기(WKWebView)는 <a download> 를 «조용히» 무시한다 — 그런데 아래가 「저장했어요」라고 말했다.
+    //    실패를 성공이라 말하지 않는다 → 앱 안에선 공유 창 길로 안내한다(백업 «됐다» 표시도 안 남긴다).
+    if (앱안인가()) { nav.showToast('이 폰에선 「백업 보내서 저장하기」로 공유 창에 보내 주세요 (파일에 저장 · 카톡 나에게)'); return }
     // ⛔ await 를 빼면 `JSON.stringify(Promise)` 가 `{}` 로 굳어 **백업이 통째로 빈다.**
-    const blob = new Blob([JSON.stringify(await buildBackup())], { type: 'application/json' })
+    const blob = new Blob([JSON.stringify(await buildExport())], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -185,7 +239,7 @@ export default function ProfileScreen() {
 
   // 공유로 보내기 — 카톡 나에게·드라이브·파일 앱 등 안전한 곳에 바로 저장 (모바일)
   const shareBackup = async () => {
-    const file = new File([JSON.stringify(await buildBackup())], backupFilename(), { type: 'application/json' })
+    const file = new File([JSON.stringify(await buildExport())], backupFilename(), { type: 'application/json' })
     try {
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
@@ -234,7 +288,7 @@ export default function ProfileScreen() {
   const CLIP_MAX = 100 * 1024
 
   const copyBackup = async () => {
-    const json = JSON.stringify(await buildBackup())
+    const json = JSON.stringify(await buildExport())
 
     // ⛔⛔⛔ [2026-08-16 두 번째 고침] **큰 백업은 복사를 «시도조차 하지 않는다».**
     //   📮 창업자 캡처 = 「클립보드로 복사하지 못했습니다」(시스템) ＋ 우리 안내가 «겹쳐서» 떴다.
@@ -245,6 +299,7 @@ export default function ProfileScreen() {
     //   ⭐ 그래서 클 때는 **바로 파일로** 저장하고 «왜 그랬는지»를 말해준다.
     //      파일은 다운로드 알림이 떠서 유저가 «됐다»를 안다.
     if (json.length > CLIP_MAX) {
+      if (앱안인가()) { nav.showToast('저장한 게 많아 복사가 안 돼요 · 「백업 보내서 저장하기」로 공유 창에 보내 주세요'); return }   // 🍎 앱 안엔 <a download> 가 없다 — 「파일로 저장했어요」라고 말하지 않는다
       downloadBackup()
       nav.showToast('저장한 게 많아 복사 대신 «파일»로 저장했어요 다운로드 폴더를 확인하세요')
       return
@@ -300,7 +355,7 @@ export default function ProfileScreen() {
       if (!Array.isArray(data.recipes)) throw new Error('형식 오류')
       setConfirmAsk({
         title: '백업 불러오기',
-        message: `레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
+        message: `레시피 ${백업편수(data)}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
         confirmLabel: '불러오기',
         onConfirm: () => 불러오기끝(data),
       })
@@ -319,7 +374,7 @@ export default function ProfileScreen() {
         if (!Array.isArray(data.recipes)) throw new Error('형식 오류')
         setConfirmAsk({
           title: '백업 불러오기',
-          message: `레시피 ${data.recipes.length}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
+          message: `레시피 ${백업편수(data)}개가 담긴 백업이에요.\n불러오면 지금 데이터가 이 백업으로 바뀌어요. 계속할까요?`,
           confirmLabel: '불러오기',
           onConfirm: () => 불러오기끝(data),
         })
@@ -360,7 +415,15 @@ export default function ProfileScreen() {
     //    ⛔ 그다음 `alert` 로 갔더니 **삼각형 경고 표시**라 「나쁜 일」로 읽혔다(열어 보고 잡았다 · 절대원칙 21).
     //    ✅ `gift` — 소식 팝업이 이미 선물색을 쓰고 「새로」 알약도 `--gift` 라 **한 벌로 읽힌다.**
     { icon: 'gift', label: '한끼 소식', badge: 안본소식 ? '새로' : '', onClick: () => { markNewsSeen(소식들); set소식(true) } },
+    // 📣 [창업자 2026-09-17] *"설정칸에 업데이트를 쭉 날짜별로 볼수있게 하고, 한끼소식에는 한줄만"*
+    //   ⛔ 「새로」 알약은 안 붙인다 — 배포마다 켜지면 아무도 안 본다(소식 alert 층에서 뺀 것과 같은 이유).
+    { icon: 'sparkle', label: '업데이트 내역', desc: '언제 무엇이 달라졌는지 날짜별로 봐요', onClick: () => set업뎃내역(true) },
     { icon: 'star', label: '스토어에 한마디', badge: '리뷰 남기기', 밖: true, onClick: () => openExternal(STORE_URL) },
+    // 📷 [창업자 2026-09-21] *"설정에도 하나 넣자"* — 홈 인스타 칸과 «같은 관문»(insta_go). 홈에서 못 찾은 사람의 상시 입구.
+    //    📮 창업자 *"DM보내는 걸로(바로)"* → 설정 줄은 «메시지 창»으로. 주소 = ig.me/m/<계정> (인스타 공식 DM 링크 꼴 — ⚠️이 환경에선 인스타를 못 열어 실물 확인은 창업자 폰에서).
+    { icon: 'instagram', label: '한끼에 DM 보내기', badge: '인스타그램', 밖: true, onClick: () => { try { 인스타DM() } catch { /* noop */ } openExternal(INSTAGRAM_DM_URL) } },
+
+
     // 🔖 [2026-08-18] 「즐겨찾기」 → **「책갈피」** (창업자 확정 · 유저에게 보이는 여섯 곳을 같이 바꿨다)
     { icon: 'heart', label: FAV_NAME, onClick: () => nav.push({ name: 'favorites' }) },
     // 💾 백업은 이 목록에서 «꺼냈다» — 아래 독립 카드로. (창업자 2026-08-16)
@@ -397,7 +460,46 @@ export default function ProfileScreen() {
     //   ⛔ 여기서 «바로 지우지» 않는다 — 지우는 단추는 클라우드 시트 안의 ［클라우드 비우기］다.
     //      이 줄은 «어디서 지우는지 알려주는 길»이고, 그게 Play 가 말하는 「인앱 경로」다.
     //   ⛔ 로그인 안 한 사람에게도 보인다 — 기기 안 데이터를 지우는 법도 그 페이지에 있다.
-    { icon: 'trash', label: '계정 · 데이터 삭제', 밖: true, onClick: () => { const a = document.createElement('a'); a.href = (import.meta.env.BASE_URL || './') + 'delete-account.html'; a.target = '_blank'; a.rel = 'noopener'; a.click() } },
+    //   🍎 [2026-09-08 · 큰 틀 6-① ⓑ] 이제 «앱 안 시트»가 뜬다 — 애플 5.1.1(v) = 앱 안에서 계정 삭제를 «시작»할 수 있어야 한다.
+    //      실측 = 위 주석이 가리키던 ［클라우드 비우기］ 단추가 **앱 어디에도 없었다**(`클라우드비우기()` 를 부르는 곳 0).
+    //      시트 = 「클라우드 비우기」(서버 기록만) ＋ 「계정 삭제」(기록＋계정) · ⛔이 폰의 레시피는 어느 쪽도 안 건드린다 · 웹 안내 링크는 시트 맨 아래.
+    // 🤖🔐 AI 다듬기 사용 — 애플 5.1.2(i) 「제3자 AI 로 보내기 전 허락」의 «바꾸는 자리»(큰 틀 6-② ⓑ · 2026-09-08)
+    //   · 처음엔 「아직 안 물음」 — 첫 다듬기 때 시트가 묻는다 · 여기서 켜면 시트 없이 바로 'yes' · 끄면 AI 를 안 부른다(규칙 정리만)
+    {
+      icon: 'sparkle', label: 'AI 다듬기 사용', badge: ai동의 === 'yes' ? '켜짐' : ai동의 === 'no' ? '꺼짐' : '처음 쓸 때 물어봐요',
+      onClick: () => {
+        if (ai동의 === 'yes') { AI동의쓰기('no'); nav.showToast('AI 다듬기를 껐어요 · 레시피는 앱 안 규칙으로만 정리해요') }
+        else { AI동의쓰기('yes'); nav.showToast('AI 다듬기를 켰어요 · 글자·사진이 Cloudflare Workers AI 로 가요') }
+      },
+    },
+    // 🔔 알림 받기 — 담기 시트가 «약속»한 「설정에서 끌 수 있어요」의 실물(2026-09-19). 설계 = docs/알림-설계-2026-09-19.md
+    //   · 🍎 아이폰(WKWebView)·옛 브라우저 = 「이 기기는 안 돼요」 — 거짓 약속을 안 한다
+    //   · 브라우저가 «차단»이면 우리가 못 푼다 → 폰 설정으로 안내 · 켜기 = 다시묻기(「괜찮아요」 했던 사람도 다시 묻는다)
+    //   · 끄기 = 폰의 구독을 지운다 → 아무것도 안 온다(워커 칸은 다음 보낼 때 410 으로 스스로 빠진다)
+    {
+      icon: 'clock', label: '알림 받기',
+      badge: !푸시가능() ? '이 기기는 안 돼요' : 브라우저권한() === 'denied' ? '폰 설정에서 차단됨' : (알림동의 === 'yes' && 브라우저권한() === 'granted') ? '켜짐' : 알림동의 === 'no' ? '꺼짐' : '담을 때 물어봐요',
+      onClick: async () => {
+        if (!푸시가능()) { nav.showToast('이 기기에선 알림을 받을 수 없어요'); return }
+        if (브라우저권한() === 'denied') { set알림길(true); return }   // 🖼 [2026-09-26] 글 대신 그림 — 창업자 「글만 있으면 까먹던데」
+        if (알림동의 === 'yes' && 브라우저권한() === 'granted') { await 알림끄기(); nav.showToast('알림을 껐어요'); return }
+        const 됐나 = await 알림켜기({ 다시묻기: true })
+        // 🔔 [2026-09-24] 실패를 «왜»로 가른다 — 창업자 갤럭시(2026-09-23)는 한끼가 홈 화면에 «설치»돼 있어
+        //   권한이 그 앱 소관이었고, 크롬 «탭»에서는 허용을 눌러도 영영 default 였다. 폰 설정은 이미 켜져 있었다.
+        //   ⛔ 날짜·시각을 글자로 박지 않는다 — 「월·수 15:30」이 이미 어긋나 있었다(진짜 17:00 · 요일 고정 아님).
+        if (됐나) { nav.showToast('알림을 켰어요 · 새 소식이 열리는 날 하루 한 번'); return }
+        const 권한지금 = 브라우저권한()
+        if (권한지금 === 'denied') { set알림길(true); return }
+        const 설치앱안 = (() => { try { return window.matchMedia('(display-mode: standalone)').matches } catch { return false } })()
+        nav.showToast(
+          권한지금 === 'denied' ? '폰 설정 → 앱 → 한끼 → 알림에서 켜 주세요'
+          : 권한지금 === 'granted' ? '알림을 켜지 못했어요 · 잠시 뒤 다시 눌러 주세요'
+          : 설치앱안 ? '알림을 켜려면 「허용」을 눌러 주세요'
+          : '홈 화면에 한끼를 설치했다면 그 아이콘으로 열어서 켜 주세요'
+        )
+      },
+    },
+    { icon: 'trash', label: '계정 · 데이터 삭제', onClick: () => setDelAccount(true) },
     // 📊 [2026-09-08] 「이용 통계 보내기」 줄은 여기 «없다» — 방침 페이지 «안»으로 옮겼다.
     //   📮 창업자 = *"우리도 깊이 묻어놓자"* · *"설정에서 딱 안보이게"*
     //   ⛔ 다시 넣지 말 것. 끄는 자리가 «두 곳»이 되면 한쪽이 반드시 낡는다.
@@ -427,6 +529,115 @@ export default function ProfileScreen() {
             ⭐ 가져오기와 «같은 부품»이다 — 모양도 숫자도 어긋날 수가 없다. */}
         <KeyBadge />
       </div>
+
+      {/* 👀👀 [창업자 확정 2026-09-10] **유저 눈으로 보기** — ⛔운영자 기기에만 뜬다.
+          📮 창업자 = *"이게 나랑 유저랑 보이는 화면이 다르니까 테스트하기가 너무 어렵네"*
+          ⛔ 그날 실제로 하루를 태웠다 — 창업자 폰에서 단추가 하나만 떠서 세 번을 버그로 의심했고,
+             진짜는 «창업자가 무제한이라» 그런 것이었다(시크릿 모드에선 멀쩡했다).
+          ⭐ 켜면 무제한 표시·운영자 배지가 «일반 유저»처럼 굴어서, 이 폰이 그대로 「유저 눈」이 된다.
+          ⭐⭐ **[2026-09-10 저녁 · 바뀌었다] 이제 열쇠도 진짜로 깎인다** (창업자 = "a로가").
+          유저 눈이면 두 워커(hankki-ocr · hankki-tidy)에 운영자 열쇠를 «안» 보낸다 →
+          개인 한도를 그대로 받고, 계기판의 「창업자」에도 안 실린다.
+          ⛔ 끄면 «표시»만 무제한으로 돌아온다 — 그동안 쓴 열쇠는 «안» 돌아온다(워커가 쓴 수를 누적한다).
+          ⛔ 판정은 `tidy.js` 한 곳이 갖는다(잣대를 늘리지 않는다). */}
+      {진짜운영자() && (
+        <div className="pad" style={{ paddingTop: 0 }}>
+          <button
+            className="press"
+            onClick={() => { 유저눈설정(!유저눈); set유저눈(!유저눈); location.reload() }}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px',
+              borderRadius: 14, textAlign: 'left',
+              border: `1px solid ${유저눈 ? 'var(--brown)' : 'var(--line)'}`,
+              background: 유저눈 ? 'var(--cream-deep)' : 'var(--card)',
+            }}
+          >
+            {/* ⛔ `eye` 아이콘은 우리 Icon 에 «없다» — 있는 것 중에 「사람」을 쓴다(유저 눈이니까) */}
+            <Icon name="user" size={18} color="var(--brown)" />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 800, fontSize: 15.5 }}>유저 눈으로 보기</div>
+              <div className="t-sub" style={{ fontSize: 13.5, marginTop: 2 }}>
+                {유저눈 ? '켜짐 · 일반 유저 화면이에요 · 열쇠가 진짜로 깎여요(안 돌아와요)' : '꺼짐 · 지금 운영자 화면이에요'}
+              </div>
+            </div>
+            <div style={{
+              flex: '0 0 auto', width: 44, height: 26, borderRadius: 999, padding: 3,
+              background: 유저눈 ? 'var(--brown)' : 'var(--line)',
+              display: 'flex', justifyContent: 유저눈 ? 'flex-end' : 'flex-start',
+            }}>
+              <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff' }} />
+            </div>
+          </button>
+
+          {/* 📊📊 [창업자 확정 2026-09-16] **이 기기는 통계를 안 보내요** — 운영자 기기에만 뜬다.
+              📮 창업자 = *"아이폰 유저가 늘었을때 내폰이랑 섞이면 진짜 어려워지거든?? 네가 설계를 잘 해야해.."*
+              ⭐ 판정·저장은 전부 `stats.js`(보낼까·점검보내기설정·보낸기록) — 여기는 그리고 누르는 것뿐.
+              ⭐ 「점검 30분」 = 계측이 도는지 볼 때만. internal 딱지로 나가고 30분 뒤 저절로 꺼진다(잊어도 원칙이 안 흐려진다).
+              ⭐ 「보낸 기록」 = 점검 중 나간 최근 5건 — GA4 필터가 사용중이라 실시간엔 안 뜨니 우리 쪽은 이걸로 본다.
+              ⚠️ 「해제」 = 열쇠를 지운다 → AI 무제한(운영자 통로)도 같이 꺼진다(열쇠는 하나다). 확인 시트로 한 번 더 묻는다. */}
+          <div data-coach="stats-internal" style={{ marginTop: 10, padding: '12px 13px', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--card)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Icon name="settings" size={18} color="var(--brown)" />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 800, fontSize: 15.5 }}>내부 기기 · 통계 {점검까지 ? '점검 중' : '안 보냄'}</div>
+                <div className="t-sub" style={{ fontSize: 13.5, marginTop: 2 }}>
+                  {점검까지
+                    ? `internal 딱지로 보내는 중 · ${Math.max(1, Math.ceil((점검까지 - Date.now()) / 60000))}분 뒤 저절로 꺼져요`
+                    : '이 기기에서 연 화면은 이용 통계에 안 실려요(표본에서 빠져요)'}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <button
+                className="press"
+                onClick={() => { 점검보내기설정(!점검까지); location.reload() }}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 12, border: '1px solid var(--line)', background: 점검까지 ? 'var(--cream-deep)' : 'var(--bg)', fontWeight: 700, fontSize: 14 }}
+              >
+                {점검까지 ? '점검 끄기' : '점검 30분 켜기'}
+              </button>
+              <button
+                className="press"
+                onClick={() => setConfirmAsk({
+                  title: '내부 기기 해제',
+                  message: '운영자 열쇠를 이 기기에서 지워요.\n통계가 다시 보내지고, AI 다듬기 무제한도 같이 꺼져요(열쇠는 하나예요).\n다시 켜려면 버전 글자를 7번 눌러 열쇠를 넣으면 돼요.',
+                  confirmLabel: '해제',
+                  danger: true,
+                  onConfirm: () => { 내부기기설정(''); location.reload() },
+                })}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--bg)', fontWeight: 700, fontSize: 14, color: 'var(--text-sub)' }}
+              >
+                내부 기기 해제
+              </button>
+            </div>
+            {/* 🔔 [2026-09-19 아이폰 세션] 「이 폰(앱 안)에서 웹 푸시가 되나」 판정 한 줄 — 내부 기기 카드 안에만 뜬다(유저 안 보임).
+                아이폰 앱(WKWebView)은 사파리·홈화면 웹앱과 조건이 달라 실측이 필요하다 → docs/아이폰-알림-설계-2026-09-19.md 1절 */}
+            <div className="t-sub" style={{ fontSize: 13, marginTop: 8 }} data-probe="push">
+              푸시 API: {typeof window !== 'undefined' && 'PushManager' in window && 'serviceWorker' in navigator ? '있음' : '없음'}
+              {typeof Notification !== 'undefined' ? ` · 알림 권한 ${Notification.permission}` : ' · Notification 없음'}
+            </div>
+            {/* 🐾🍎 [2026-09-20 밤] 아이폰 알림이 «어디까지 갔나» — 창업자 딸 폰에서 권한창이 안 떠서 넣었다.
+                앱 안에서 나는 일은 내가 볼 길이 «전혀» 없다(오류도 안 난다) → 발자국을 남겨 30초에 자리를 찾는다.
+                ⛔ 유저에겐 안 보인다 — 이 카드가 내부 기기(열쇠 넣은 폰)에만 뜬다. */}
+            <div className="t-sub" style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.5, wordBreak: 'break-all' }} data-probe="ios푸시">
+              🍎 부품: {typeof window !== 'undefined' && window.Capacitor?.Plugins?.PushNotifications ? '있음' : '없음'}
+              {' · 앱: '}{typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.() ? (window.Capacitor.getPlatform?.() || '?') : '웹'}
+              <br />⌨️ 지금 {(() => { try { return localStorage.getItem('hankki:kb:재본값') || '아직 없음' } catch { return '못 읽음' } })()}
+              <br />⌨️ 떴을때 {(() => { try { return localStorage.getItem('hankki:kb:떴을때') || '아직 없음' } catch { return '못 읽음' } })()}
+              <br />🐾 {(() => { try { return localStorage.getItem('hankki:push:ios발자국') || '아직 없음' } catch { return '못 읽음' } })()}
+            </div>
+            {보낸기록().length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div className="t-sub" style={{ fontSize: 13, fontWeight: 700 }}>점검 중 보낸 것 (최근 {보낸기록().length}건)</div>
+                {보낸기록().map((줄, i) => (
+                  <div key={i} className="t-sub" style={{ fontSize: 13, lineHeight: 1.7 }}>
+                    {new Date(줄.t).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} · {줄.이름} · {줄.방식}{줄.내부 ? ' · internal' : ''}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="pad">
         {/* 프로필 — 아바타는 눌러서 이모지·사진으로 바꿀 수 있다 */}
@@ -536,6 +747,20 @@ export default function ProfileScreen() {
           {/* 예전 'Inbox' — 홈에서 뺀 대신 여기 통계에서 연다. 아직 편집 안 끝난(미정리) 레시피 개수, 탭하면 목록 */}
           <Stat n={recipes.filter((r) => r.status === 'unsorted').length} label="미정리" onClick={() => nav.push({ name: 'inbox' })} />
         </div>
+
+        {/* 🏪 한끼상점 Ⓒ — 통계 아래 카드 한 줄 · 창업자 그림 「꽃 화분 가게」 64px (창업자 확정 2026-10-04 14:10·14:36)
+            ⛔ 판매 스위치(`상점열쇠()`)가 꺼져 있으면 안 그린다 — 실제 구매 시험 통과 전엔 일반 유저 화면 그대로. */}
+        {상점보임 && (
+          <button className="card press" onClick={() => set상점(true)} style={{ marginTop: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left' }}>
+            <img src={uiShop} alt="" aria-hidden="true" draggable={false} style={{ width: 64, height: 'auto', flex: 'none' }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 17, fontWeight: 800 }}>한끼상점</div>
+              <div className="t-sub" style={{ fontSize: 15, marginTop: 2 }}>{KEY_NAME}를 더 받을 수 있어요</div>
+            </div>
+            <Icon name="chevron-right" size={18} color="var(--brown)" />
+          </button>
+        )}
+        {상점 && <KeyShopSheet onClose={() => set상점(false)} showToast={nav.showToast} />}
 
         {/* 💾💾 백업 = 메뉴 목록에서 «꺼내» 따로 세운다 (창업자 2026-08-16)
             📮 *"설정에 백업 내보내기는 **버튼색을 다르게한다거나. 뭔가 눈에 확띄게** 해야할 것 같아.
@@ -745,12 +970,57 @@ export default function ProfileScreen() {
           {checking ? '확인 중…' : '최신 버전 확인'}
         </button>
         <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 15, marginTop: 10, lineHeight: 1.5 }}>
-          설치한 앱이 옛 버전에서 멈췄을 때 눌러요
+          {앱안인가() ? '아이폰 앱은 App Store 에서 업데이트돼요' : '설치한 앱이 옛 버전에서 멈췄을 때 눌러요'}
         </div>
-        <div style={{ textAlign: 'center', color: 'var(--sand)', fontSize: 15, marginTop: 12 }}>
+        {/* 📒📒 **최근 AI 다듬기 다섯 번 — ⛔창업자 폰에만 보인다** [창업자 2026-09-10]
+            📮 창업자 = *"갈색띠가 안떠 성공해도"* ＋ *"계속남게할순없어?"* ＋ *"나만보이게해줘"*
+            ⛔ 띠는 최대 4.8초다. 게다가 성공이 «나가 있는 동안» 나면 떴다 사라져 볼 수가 없다.
+            ⭐ 그래서 «지나가는 말»이 아니라 «쌓이는 기록»으로. 걸린 시간이 쌓이면
+               아직 못 푼 「왜 2분을 넘겼나」도 저절로 답이 나온다.
+            ⛔ 레시피 «글자»는 한 자도 안 적는다 — 모델·걸린 시간·까닭만(개인정보 0). */}
+        {tidyFounder() && 다듬기기록().length > 0 && (
+          <div style={{ marginTop: 16, padding: '12px 14px', borderRadius: 'var(--r-md)', background: 'var(--cream)', border: '1px solid var(--line)' }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--brown)', marginBottom: 8 }}>
+              최근 AI 다듬기 5번 <span style={{ fontWeight: 400, color: 'var(--text-sub)' }}>· 나만 보여요</span>
+            </div>
+            {다듬기기록().map((줄, i) => (
+              <div key={i} className="t-sub" style={{ fontSize: 14, lineHeight: 1.7, wordBreak: 'keep-all' }}>
+                {줄.ok ? '✅' : '⛔'} {new Date(줄.때).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                {줄.ms ? ` · ${(줄.ms / 1000).toFixed(1)}초` : ''}
+                {줄.model ? ` · ${줄.model}` : ''}
+                {줄.ok ? '' : ` · ${줄.why || '까닭없음'}`}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 🙋‍♀️ 버전 글자 7번 탭 = 운영자 열쇠 칸(2026-09-16). 유저는 못 찾는다 — 7번 ＋ 열쇠 둘 다 있어야 한다. */}
+        <button
+          className="press"
+          data-tap="version"
+          onClick={버전탭}
+          style={{ display: 'block', width: '100%', textAlign: 'center', color: 'var(--sand)', fontSize: 15, marginTop: 12, background: 'transparent', border: 0, padding: '6px 0' }}
+        >
           한끼 · {APP_VERSION} — {APP_TAGLINE}
-        </div>
+        </button>
+        {내부기기인가() && (
+          <div className="t-sub" style={{ textAlign: 'center', fontSize: 12.5, marginTop: 2 }}>내부 기기 · 통계 {점검까지 ? '점검 중' : '안 보냄'}</div>
+        )}
       </div>
+
+      {열쇠칸 && (
+        <PromptSheet
+          title="운영자 열쇠"
+          fields={[{ key: 'k', label: '운영자 열쇠', value: '', placeholder: '열쇠를 붙여넣어요' }]}
+          onSubmit={(v) => {
+            if (!내부기기설정(v.k)) { nav.showToast('저장이 안 됐어요 · 저장 공간을 확인해요'); return }
+            if (!String(v.k || '').trim()) return
+            nav.showToast('내부 기기로 표시했어요 · 이제 통계를 안 보내요')
+            setTimeout(() => location.reload(), 700)
+          }}
+          onClose={() => set열쇠칸(false)}
+        />
+      )}
 
       <input ref={fileRef} type="file" accept="application/json,.json" onChange={importData} style={{ display: 'none' }} />
 
@@ -830,12 +1100,15 @@ export default function ProfileScreen() {
                      순서만 바꾸고, 코드 복사엔 「길다」를 미리 적어 놀라지 않게 한다. */}
               <div style={{ background: 'var(--cream)', borderRadius: 12, padding: '12px 13px', marginBottom: 14, fontSize: 15.5, lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-line' }}>
                 <b style={{ color: 'var(--brown)' }}>제일 쉬운 방법 (2단계)</b>{'\n'}
-                <b>1.</b> 아래 <b>폰에 파일로 저장</b> 누르기{'\n'}
-                <b>2.</b> 끝! <b>다운로드 폴더</b>에 파일 하나가 생겨요
+                {앱안인가()
+                  ? <><b>1.</b> 아래 <b>백업 보내서 저장하기</b> 누르기{'\n'}<b>2.</b> 공유 창에서 <b>「파일에 저장」</b> 또는 카톡 <b>「나에게」</b></>
+                  : <><b>1.</b> 아래 <b>폰에 파일로 저장</b> 누르기{'\n'}<b>2.</b> 끝! <b>다운로드 폴더</b>에 파일 하나가 생겨요</>}
               </div>
-              <button className="btn-primary press" onClick={downloadBackup}>폰에 파일로 저장 (추천)</button>
+              {앱안인가()
+                ? <button className="btn-primary press" onClick={shareBackup}>백업 보내서 저장하기 (추천)</button>
+                : <button className="btn-primary press" onClick={downloadBackup}>폰에 파일로 저장 (추천)</button>}
               <div className="t-sub" style={{ fontSize: 15, lineHeight: 1.55, margin: '8px 2px 12px', whiteSpace: 'pre-line' }}>
-                파일 앱 → <b>다운로드</b> 에 <b>한끼백업-날짜.json</b> 이 생겨요.{'\n'}폰이 고장나도 남게 하려면 그 파일을 <b>드라이브·카톡 「나에게」</b>에 한 번 더 올려두면 제일 안전해요.
+                {앱안인가() ? <>공유 창에서 <b>「파일에 저장」</b>을 고르면 파일 앱에 <b>한끼백업-날짜.json</b> 으로 남아요.{'\n'}</> : <>파일 앱 → <b>다운로드</b> 에 <b>한끼백업-날짜.json</b> 이 생겨요.{'\n'}</>}폰이 고장나도 남게 하려면 그 파일을 <b>드라이브·카톡 「나에게」</b>에 한 번 더 올려두면 제일 안전해요.
               </div>
               <button className="btn-ghost press" style={{ width: '100%' }} onClick={shareBackup}>백업 보내서 저장하기 <span style={{ fontWeight: 500, opacity: 0.8 }}>· 공유 창으로</span></button>
               {/* ⚠️ 저장한 게 많으면 복사가 «안 되는» 폰이 있다(창업자 폰 247KB 에서 실패).
@@ -905,7 +1178,11 @@ export default function ProfileScreen() {
 
       {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
       {lab && <LabSheet onClose={() => setLab(false)} />}
+      {/* 🗑 계정 · 데이터 삭제 — 앱 안 시트(큰 틀 6-① ⓑ · 2026-09-08) */}
+      {알림길 && <PushGuideSheet onClose={() => set알림길(false)} />}
+      {delAccount && <DeleteAccountSheet onClose={() => setDelAccount(false)} showToast={nav.showToast} />}
       {소식 && <PreviewSheet onClose={() => set소식(false)} />}
+      {업뎃내역 && <UpdateLogSheet onClose={() => set업뎃내역(false)} />}
 
       {/* 첫 방문 코치마크 — 백업·의견 보내기 안내 */}
       {coach && <CoachMarks storageKey={PROFILE_COACH_KEY} steps={PROFILE_COACH_STEPS} onDone={() => setCoach(false)} />}

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Icon from './Icon'
+import { 소개봄, 소개건너뜀, 소개끝냄, 소개장도달 } from '../stats'   // 🚪 [2026-09-21] 관문 — 덮개 층이라 화면봄이 못 잡는다
 // 🛒 장보기 콤비 — 꼬르곰이 카트, 펭펭이 바구니. 스토어 스샷 ⑤가 쓰는 그 컷이다.
 //    ⚠️ `sharepool` 에 있어서 `F()`(stickers/photo) 로는 못 부른다 → 직접 import.
 import duoCart from '../assets/sharepool/duo_cart.png'
@@ -62,6 +63,8 @@ const Img = ({ k, style, cls }) => <img src={F(k)} alt="" draggable={false} clas
 // zoom은 브라우저가 축소된 크기 기준으로 레이아웃·래스터를 다시 하므로 폰트도 이미지도 선명하다.
 function Stage({ bg, children }) {
   const [scale, setScale] = useState(0.34)
+  // ⛔⛔ [2026-09-21 15:1x GA4 실측] 여기(Stage)에 onboard_seen 을 걸었더니 «한 사람당 10번» 나갔다(50건/5명).
+  //    Stage 는 «장마다» 하나씩 마운트되는 틀이다 — 열 장이면 열 번. 관문은 아래 Onboarding(한 번 뜨는 것)에 건다.
   useEffect(() => {
     const fit = () => setScale(Math.min(window.innerWidth / 1080, (window.innerHeight * 0.82) / 1920))
     fit(); window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit)
@@ -509,7 +512,22 @@ const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, SlideD, Slide3, SlideS, Slide6
 //      유저는 빈 앱을 보고 「초기화됐다」고 읽는다 (창업자 *"저장한거 초기화되면 나같으면 앱지워"*).
 export default function Onboarding({ onDone, onRestore }) {
   const N = SLIDES.length
+  // 🚪 onboard_seen — 「소개를 본 사람」. skip/done 과 견줘야 «중간에 앱을 꺼 버린 사람»이 보인다.
+  //    ⭐ «이 컴포넌트»는 한 번만 뜬다 → 사람당 1건. (⛔Stage 에 걸면 장마다 나간다 — 위 주석)
+  useEffect(() => { try { 소개봄() } catch { /* 통계가 죽어도 소개는 뜬다 */ } }, [])
   const [i, setI] = useState(0)
+  // 📖📖 [창업자 2026-09-23 「온보딩 계측 심어줘」] **몇 번째 장까지 갔나** — onboard_step_1..10
+  //   ⛔⛔ 그 전엔 seen·skip·done 셋뿐이라 «어디서 나가는지»가 0 이었다.
+  //      🔢 2026-09-22 = 본 사람 23 · 끝낸 사람 9 · 건너뛴 사람 4 → **10명의 행방을 못 셌다.**
+  //   ⭐ **«처음 도달한 장»만 한 번** 보낸다 — 뒤로 갔다 오면 두 번 세져서 깔때기가 거짓이 된다.
+  //   ⛔ 1장은 `소개봄` 과 «같은 순간»에 나가야 한다 — 따로 걸면 1장 도달자가 seen 보다 적게 나온다.
+  //   ⚠️ 여기는 `Stage` 가 아니라 «이 컴포넌트»다 — Stage 에 걸면 장마다 열 번 나간다(2026-09-21 사고).
+  const 밟은장 = useRef(new Set())
+  useEffect(() => {
+    if (밟은장.current.has(i)) return
+    밟은장.current.add(i)
+    try { 소개장도달(i + 1) } catch { /* 통계가 죽어도 소개는 뜬다 */ }
+  }, [i])
   const [drag, setDrag] = useState(0)      // 손가락 따라오는 오프셋(px)
   const [dragging, setDragging] = useState(false)
   const startX = useRef(0)
@@ -518,7 +536,8 @@ export default function Onboarding({ onDone, onRestore }) {
   const last = i === N - 1
 
   const finish = () => { markOnboarded(); onDone && onDone() }
-  const next = () => { if (last) finish(); else setI((v) => Math.min(N - 1, v + 1)) }
+  // 🚪 onboard_done = 마지막 장에서 「한끼 시작하기」 · onboard_skip = 오른쪽 위 「건너뛰기」 — 둘 다 finish 를 지나지만 «다른 사람»이다.
+  const next = () => { if (last) { try { 소개끝냄() } catch { /* noop */ } finish() } else setI((v) => Math.min(N - 1, v + 1)) }
   const prev = () => setI((v) => Math.max(0, v - 1))
 
   // 손가락 드래그 추적(트랙이 손가락 따라오다 놓으면 스냅) — 캐러셀 페이징
@@ -540,7 +559,7 @@ export default function Onboarding({ onDone, onRestore }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--bg)', display: 'flex', flexDirection: 'column', paddingTop: 'calc(var(--safe-top) + 6px)', paddingBottom: 'calc(var(--safe-bottom) + 20px)' }}>
       <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 16px' }}>
-        {!last && <button className="press" onClick={finish} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 700, padding: '6px 8px' }}>건너뛰기</button>}
+        {!last && <button className="press" onClick={() => { try { 소개건너뜀() } catch { /* noop */ } finish() }} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 700, padding: '6px 8px' }}>건너뛰기</button>}
       </div>
       <div ref={wRef} style={{ flex: 1, overflow: 'hidden', position: 'relative' }}
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>

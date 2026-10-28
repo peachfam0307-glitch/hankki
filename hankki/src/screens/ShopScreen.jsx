@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { COACH } from '../coach'
 import { useStore, newId } from '../store'
 import { pantryExpiryCount } from '../pantryExpiry'
+import FoodCostView from './FoodCostView'
+import { 사러나감, 장보기담음, 식비적음, 장바구니펼침 } from '../stats'   // 🚪 [2026-09-21] 장바구니펼침 — 창업자 「주부의 장바구니 몇 명이 눌러봤나」
+import { 알림켜기 } from '../pushSubscribe'   // 🔔 담기가 «끝난 직후» 알림을 묻는다(2026-09-19 · 창업자 확정)
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
@@ -35,9 +38,12 @@ import PantryView from '../components/PantryView'
 import TabTips from '../components/TabTips'
 import TabTalk from '../components/TabTalk'
 import ConfirmSheet from '../components/ConfirmSheet'
+import CurationDetailSheet from '../components/CurationDetailSheet'   // 🛒 제품 상세(원재료·알레르기) — 창업자 2026-09-17
+import { LAB_BUG_URL } from '../version'
 import { openExternal, matchKo } from '../utils'
-import { CURATION, curIcon, weeklyPicks, isHansalim } from '../data/curation'
+import { CURATION, curIcon, weeklyPicks, isHansalim, productLink, productMall } from '../data/curation'
 import { weeklyNow, todayKST } from '../data/weekly'
+import SeasonHeadCut from '../components/SeasonHeadCut.jsx'
 
 // 외부 쇼핑몰 열기 — 정식 새 탭(설치된 앱 있으면 App Link 로 앱)으로 연다.
 // (features 문자열을 주면 팝업 창으로 열려 모바일에서 세로로 깨지고 두 번 열린 듯 보였음)
@@ -94,6 +100,25 @@ export default function ShopScreen() {
     try { sessionStorage.setItem('hankki:shopView', v) } catch { /* noop */ }
   }
   const [clearAsk, setClearAsk] = useState(false)
+  const [값편집, set값편집] = useState(null)   // 💰 값 칸이 열린 줄 id (2026-09-17)
+  // 💰💰 [2026-09-18 · 열쇠를 뗐다 — 모든 유저에게 열린다]
+  //   📮 창업자 = *"앞으로 아이폰이랑 유저에게 보이는 시점을 맞출거야 절대원칙"*
+  //   🍎 그래서 «아이폰 빌드에 이 판이 들어가야» 두 쪽 유저가 같은 날 본다 — 아이폰은 빌드에 굳어지기 때문이다.
+  //   ⛔ 그렇다고 이 커밋을 배포 갈래로 밀지 않는다 — 우리는 «푸시 = 즉시 배포»다.
+  //      `hold/식비공개-0918` 에 담아 두고, **아이폰 승인이 난 날** 배포 갈래로 옮긴다(창업자 «아이폰이랑 같이 밀자»).
+  // ⭐ 이제 늘 켜져 있다. ⛔`?식비=0` 은 «끄는 길»로 남겨 둔다 — 문제가 나면 그 폰에서 바로 닫을 수 있어야 한다.
+  const [식비켬] = useState(() => {
+    try {
+      const v = new URLSearchParams(location.search).get('식비')
+      if (v === '1') localStorage.removeItem('hankki:식비끔')
+      if (v === '0') localStorage.setItem('hankki:식비끔', '1')
+      return localStorage.getItem('hankki:식비끔') !== '1'
+    // ⛔ 저장소를 못 읽는 폰(사생활 모드·데이터 차단)에서도 «켜진» 쪽이 맞다 — 못 읽는다고 기능을 감추면 안 된다.
+    } catch { return true }
+  })
+  // 💰 합계 = 값을 «적은 줄»만. 안 적은 줄은 0 이 아니라 «모르는 것»이라 개수를 같이 밝힌다.
+  const 값있는수 = shoppingList.filter((i) => Number(i.won) > 0).length
+  const 합계 = shoppingList.reduce((s, i) => s + (Number(i.won) || 0), 0)
   // ✏️ 지금 «고치는 중인» 장보기 줄 — { id, text } · null 이면 아무 줄도 편집 중이 아니다
   const [편집, set편집] = useState(null)
   // 인라인 시트(쇼핑몰 편집·추가/편집 폼) — 뒤로가기로 닫기(비우기 확인은 ConfirmSheet 자체 처리)
@@ -111,8 +136,9 @@ export default function ShopScreen() {
               ⭐ 여기만 펭펭인 이유 = 이 화면 «아래» 「주부의 장바구니」에 이미 장바구니 든 꼬르곰이 있다.
                  상단바까지 꼬르곰이면 한 화면에 같은 애가 둘 → 펭펭을 올려 둘 다 나오게 했다.
               🧍‍♀️ [2026-08-14 확정] 캐릭터는 **글자 «왼쪽»** — 창업자 *"캐릭터는 같은방향에넣자.왼쪽으로"* */}
-          <img src={uiPengShop} alt="" draggable={false} width={34} height={45} className="hk-m-tongtong"
-            style={{ display: 'block', objectFit: 'contain', margin: '-6px 0' }} />
+          {/* 🎑🎃 명절엔 명절 컷으로 바뀐다. ⭐장보기와 냉장고는 «다른 컷»이다(같은 화면이지만 보는 게 다르다). */}
+          <SeasonHeadCut 탭={view === 'pantry' ? 'fridge' : 'shop'} 기본={uiPengShop}
+            폭={34} 높이={45} 여백={-6} 모션="hk-m-tongtong" />
           <div className="h-title">장보기</div>
           <TabTips tab="shop" />
         </div>
@@ -125,6 +151,10 @@ export default function ShopScreen() {
         {/* 장보기가 주(첫인상), 냉장고는 옆 토글(부). 냉장고 기능은 유지하되 앞으로 안 내세운다. */}
         <div className="segment" style={{ marginTop: 4 }}>
           <button type="button" className={`seg ${view === 'shop' ? 'on' : ''}`} onClick={() => setView('shop')}>장보기</button>
+          {/* 💰 [2026-09-17 시제품] 식비 — ⭐«장보기 다음» 자리다(창업자 확정 2026-09-17 *"탭이 장보기-식비-냉장고여야해"*).
+                장을 보고 «바로» 값을 적는 흐름이라 둘이 붙어 있어야 한다. 냉장고는 그 뒤.
+                ⭐«쌓이지» 않는다: 여기 오면 장보기 리스트·주부의 장바구니는 안 그린다(냉장고와 같은 규칙). */}
+          {식비켬 && <button type="button" className={`seg ${view === 'cost' ? 'on' : ''}`} onClick={() => setView('cost')}>식비</button>}
           {/* 🔴 「냉장고 ②」 — 임박·지난 재료 개수. 탭바 점과 같은 셈(`pantryExpiry.js`). 0 이면 숫자가 없다. (창업자 확정 2026-09-06) */}
           <button type="button" className={`seg ${view === 'pantry' ? 'on' : ''}`} data-coach="pantry" onClick={() => setView('pantry')}>
             냉장고{expN > 0 && <span className="seg-count" data-testid="pantry-exp-count">{expN}</span>}
@@ -132,6 +162,7 @@ export default function ShopScreen() {
         </div>
 
         {view === 'pantry' && <PantryView />}
+        {식비켬 && view === 'cost' && <FoodCostView />}
 
         {view === 'shop' && (
         /* 📐📐 [2026-08-13 창업자 지시 *"장보기를 오른쪽에 장바구니를 왼쪽에"*]
@@ -140,6 +171,7 @@ export default function ShopScreen() {
               「담기·사러가기 버튼이 너무 크고 설명은 왼쪽에 쏠린다」가 됐다(창업자 제보).
            ⭐ 폰(1열)에선 **지금 순서를 그대로 지킨다** — 담은 게 있으면 리스트가 위로 온다
               (긴 큐레이션에 리스트가 묻힌다는 옛 피드백). CSS `order` 로만 바꾸고 DOM 은 안 건드린다. */
+        <>
         <div className={`shop-pair${shoppingList.length > 0 ? ' has-items' : ''}`}>
         <div className="shop-cur" data-coach="curation"><Curation /></div>
 
@@ -163,9 +195,20 @@ export default function ShopScreen() {
             )}
           </div>
         </div>
-        <ChecklistAdd />
+        <ChecklistAdd 식비켬={식비켬} />
+        {/* 📝📝 [2026-09-13 창업자 확정] 빈손 안내문을 «두 줄»로 줄이고 글씨를 키웠다(15 → 17px).
+            📮 창업자 = *"장보기리스트 설명 살재료를 적어보세요~ 글씨크기 키우고 2줄로 안내"*
+            ⛔ 옛 글 = 「…**위** 주부의 장바구니나…」 — 이제 장바구니가 «아래»로 내려가서
+               **「위」가 거짓말이 된다.** 시안 Ⓑ 캡처에서 눈으로 보고 잡았다.
+            ⭐ 첫 줄은 «할 일», 둘째 줄은 «다른 길». 세 줄짜리가 자리를 제일 많이 먹던 자리다.
+            ⛔⛔ 이 주석을 아래 `? (` «안»으로 넣지 말 것 — 표현식이 열리는 자리라
+               객체 리터럴로 파싱돼 `Expected ")"` 로 빌드가 죽는다(CLAUDE.md 에 적힌 함정 · 2026-09-13 또 밟았다). */}
         {shoppingList.length === 0 ? (
-          <div className="empty" style={{ padding: '24px' }}>{'필요한 재료를 담아보세요.\n위 주부의 장바구니나 레시피 상세 “재료 담기”로도 담을 수 있어요.'}</div>
+          <div className="empty" style={{ padding: '18px 8px', fontSize: 17, lineHeight: 1.75 }}>
+            {/* ⛔ 둘째 줄이 길면 «세 줄»로 넘친다 — 17px·411px 폭에서 실측했다(창업자는 «2줄»을 지정했다).
+                   「레시피 상세의 “재료 담기”로도 담을 수 있어요」 = 세 줄. 짧게 줄여 두 줄로 맞췄다. */}
+            {'살 재료를 적어보세요\n레시피에서 「재료 담기」로도 담겨요'}
+          </div>
         ) : (
           shoppingList.map((it) => (
             <div key={it.id} className="shop-row">
@@ -183,7 +226,13 @@ export default function ShopScreen() {
                   autoFocus
                   value={편집.text}
                   onChange={(e) => set편집({ id: it.id, text: e.target.value })}
-                  onBlur={() => { store.updateShopItem(it.id, 편집.text); set편집(null) }}
+                  onBlur={() => {
+                    // ✏️💰 [2026-09-18 창업자 *"수정도 되게 해줘. 입력한거 잘못 적었을때"*]
+                    //   ⭐ 이름을 고칠 때 «값도 같이» 고친다 — 「두부 2500」으로 바꾸면 이름은 두부, 값은 2,500.
+                    //   ⭐ 값을 지우려면 숫자만 빼고 저장하면 된다(두부). ⛔따로 다른 칸을 찾아 누를 필요가 없다.
+                    store.updateShopItem(it.id, 편집.text)
+                    set편집(null)
+                  }}
                   onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') set편집(null) }}
                   style={{
                     flex: 1, minWidth: 0, fontSize: 17, fontFamily: 'inherit', color: 'var(--text)',
@@ -194,7 +243,7 @@ export default function ShopScreen() {
               ) : (
                 <button
                   className="press"
-                  onClick={() => set편집({ id: it.id, text: it.name })}
+                  onClick={() => set편집({ id: it.id, text: it.won ? `${it.name} ${it.won}` : it.name })}
                   aria-label={`${it.name} 고치기`}
                   style={{
                     flex: 1, minWidth: 0, textAlign: 'left', fontSize: 17, fontFamily: 'inherit',
@@ -206,11 +255,42 @@ export default function ShopScreen() {
                   {it.name}
                 </button>
               )}
+              {/* 💰💰 [2026-09-17 시제품 · 창업자 «품목별로 금액 적으면 아래 총합이 뜨게»]
+                    ⭐ 값은 «안 적어도» 된다 — 적은 것만 아래에서 더한다(부분합이라고 밝힌다).
+                    ⛔ 늘 `<input>` 이 아니다 — 이름 편집과 같은 규칙으로 «누른 줄만» 칸이 열린다.
+                    🔢 9,999,999 상한·앞 0 무시는 store 가 맡는다(0 이면 칸을 지운다). */}
+              {식비켬 && (값편집 === it.id ? (
+                <input
+                  autoFocus
+                  inputMode="numeric"
+                  defaultValue={it.won || ''}
+                  placeholder="0"
+                  onBlur={(e) => { store.setShopItemWon(it.id, e.target.value.replace(/[^0-9]/g, '')); set값편집(null) }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') set값편집(null) }}
+                  style={{ width: 84, fontSize: 15.5, fontFamily: 'inherit', textAlign: 'right', color: 'var(--text)', background: 'var(--cream)', border: '1.5px solid var(--brown)', borderRadius: 9, padding: '5px 8px', outline: 'none' }}
+                />
+              ) : (
+                /* 💰 [2026-09-18 창업자 *"+금액도 적는칸이라는걸 티나게보여줌좋겠어"*]
+                      ⛔ 글자만 연하게 두면 «눌러서 적는 자리»인 줄 모른다 — 빈 칸엔 테두리를 줘서 «적는 칸»처럼 보이게 한다.
+                      ⭐ 값이 적힌 뒤엔 테두리를 뺀다 — 그땐 「얼마」가 읽히는 게 먼저다. */
+                <button className="press" onClick={() => set값편집(it.id)} aria-label={`${it.name} 금액 적기`}
+                  style={{
+                    fontSize: 15.5, fontWeight: it.won ? 700 : 400,
+                    color: it.won ? 'var(--text)' : 'var(--text-sub)',
+                    background: it.won ? 'none' : 'var(--cream)',
+                    border: it.won ? 'none' : '1.5px dashed var(--line)',
+                    borderRadius: 9, padding: it.won ? '5px 2px' : '4px 9px', whiteSpace: 'nowrap',
+                  }}>
+                  {/* ⛔ [2026-09-18 창업자 «연하게 값이라고 되어있어서 이부분수정»] 옛 글자 = 「값」 한 자.
+                        무엇을 하라는 자리인지 안 보였다 — 누르면 금액을 적는 자리라고 «글자로» 말한다. */}
+                  {it.won ? `${it.won.toLocaleString('ko-KR')}원` : '＋ 금액'}
+                </button>
+              ))}
               {/* ⛔ `noBuy`(한살림) 는 사러가기를 안 그린다 — 담을 때 붙여 둔 표식이다.
                   ⚠️ 이 줄이 없으면 `buyUrlFor()` 가 url 없는 줄을 **쿠팡·네이버 검색으로 보내서**
                      큐레이션에서 링크를 뺀 게 통째로 헛일이 된다(담은 뒤에 새는 구멍). */}
               {!noBuyRow(it) && (
-                <button className="press mini-buy" onClick={() => openUrl(buyUrlFor(it, shops), it.name)}>
+                <button className="press mini-buy" onClick={() => { 사러나감('cart'); openUrl(buyUrlFor(it, shops), it.name) }}>
                   사러가기
                 </button>
               )}
@@ -222,15 +302,53 @@ export default function ShopScreen() {
         )}
         {/* 💡 **고칠 수 있다는 걸 알려준다** — 누를 수 있어도 «누를 수 있는 줄 모르면» 없는 기능이다.
               ⭐ 예를 «창업자가 말한 그대로» 적는다 — *"양파 1망 돼지고기 600g은 맞지."* */}
+        {/* 💰💰 담은 것 합계 — «값을 적은 줄만» 더한다. 그래서 「값 적은 것 N개」를 «꼭» 같이 적는다.
+              ⛔ 이 수를 「장본 값」이라고 부르지 않는다 — 안 적은 줄이 빠져 있어 총액이 아니다(부분합).
+              ⭐ 「식비로 적기」 = 「완료 지우기」를 안 누르는 사람에게도 길을 준다(같은 일을 한다). */}
+        {식비켬 && 값있는수 > 0 && (
+          <div className="sum-box">
+            <div className="sum-row">
+              <span>담은 것 합계 <b className="sum-n">금액 적은 것 {값있는수}개</b></span>
+              <b className="sum-v">{합계.toLocaleString('ko-KR')}원</b>
+            </div>
+            {/* ⛔ 예전엔 «체크한 줄»만 옮기면서도 늘 「적었어요」라고 말했다 — 창업자가 값만 적고 눌렀을 때 아무 일도 안 났다.
+                  ✅ 이제 값이 적힌 줄을 전부 옮기고, 실제로 옮긴 «개수와 금액»을 말한다. */}
+            <button className="press sum-btn" onClick={() => { store.shopToFoodCost(); 식비적음('shop'); nav.showToast(`식비에 적었어요 · ${값있는수}개 ${합계.toLocaleString('ko-KR')}원`) }}>
+              식비에 넣기
+            </button>
+          </div>
+        )}
         {shoppingList.length > 0 && (
           <div className="t-sub" style={{ fontSize: 16.5, marginTop: 18, lineHeight: 1.85 }}>
             재료를 누르면 <b style={{ color: 'var(--brown)' }}>사는 양</b>을 적을 수 있어요 · 「양파 1망」 「돼지고기 600g」 처럼요.
+            {/* 💰 [2026-09-18 창업자] *"우리가 지금까지는 금액을 안적었었어. 그럼 금액을적으면 계산해준다거나 그런말이 들어가야하는게아닌가?"*
+                  ⛔ 옛 글 = 「안 적어도 돼요」 — «빼도 되는 이유»만 말하고 «적으면 뭐가 좋은지»를 안 말했다.
+                     창업자부터 「단위를 적지 말라는 줄」로 읽었다. 창업자가 헷갈리면 유저는 더 헷갈린다.
+                  ✅ 그래서 «어디로 가는지»를 말한다 — 적으면 식비에 모인다. */}
+            {/* 💰 [창업자 2026-09-18] *"유저가적을때는 두부 1910만 원은 자동으로 붙게"*
+                  ⭐ 보여주는 예시엔 «원»을 안 붙인다 — 붙여 두면 «꼭 적어야 하는 것»처럼 읽힌다.
+                  ⭐ 담기고 나면 줄에 「1,910원」으로 뜬다(원은 우리가 붙인다).
+                  ⛔ 그래도 «받기»는 넓다 — 두부 1910원·두부 ₩1910 도 금액으로 읽는다(`이름값가르기`). */}
+            {식비켬 && <><br /><b style={{ color: 'var(--brown)' }}>「두부 1910」</b> 처럼 금액도 같이요.</>}
           </div>
         )}
 
         {/* ⛔ 큐레이션을 여기 한 번 «더» 그리던 것을 지웠다 — 위로 올려 하나만 둔다.
             담은 게 있을 때 리스트를 위로 올리는 건 이제 CSS `order` 가 한다(`.shop-pair.has-items`). */}
 
+
+        {shopForm && <ShopEdit shop={shopForm} onClose={() => setShopForm(null)} />}
+        </div>
+        </div>
+
+        {/* ⛔⛔ 여기가 «형제 둘»이 되는 자리라 위를 `<>` 로 감쌌다 —
+            JSX 는 루트를 하나만 받는다. 2026-09-13 에 감싸는 걸 빼먹어 빌드가 죽었다. */}
+        {/* 🛍🛍 [2026-09-13 창업자 확정] 쇼핑몰 바로가기를 «맨 아래»로 내렸다.
+            📮 창업자 = *"C로 가자 쇼핑몰 바로가기도 맨 아래로"*
+            ⛔ 그 전엔 `.shop-list` 안에 있어서, 리스트를 위로 올리자 «장보기와 주부의 장바구니 사이»에
+               끼어 장바구니를 첫 화면 밖으로 밀어냈다(시안 Ⓒ 캡처에서 눈으로 봤다).
+            ⭐ `.shop-pair` «밖»으로 뺐다 — 패드 2단에서도 전체 폭으로 맨 아래에 온다.
+            📌 하는 일이 다르다 — 위 둘은 「무엇을 살까」이고 이건 「어디서 살까」다. 맨 아래가 맞다. */}
         {/* 3) 쇼핑몰 바로가기 — 리스트 확인하고 바로 사러 가는 자리(리스트 바로 아래). */}
         <div className="sec-head" style={{ marginTop: 24 }}>
           <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="tag" size={18} color="var(--brown)" stroke={1.9} />쇼핑몰 바로가기</div>
@@ -297,9 +415,7 @@ export default function ShopScreen() {
                         · 비조합원은 «매장»에서 10% 비싼 값으로만
               · 자연드림(아이쿱) = 일반가·조합원가가 따로 있다 = **비조합원도 온라인 구매 가능**
                         → 그래서 자연드림엔 아무 표시도 안 붙인다(그게 기본이다). */}
-        {shopForm && <ShopEdit shop={shopForm} onClose={() => setShopForm(null)} />}
-        </div>
-        </div>
+        </>
         )}
       </div>
 
@@ -378,7 +494,7 @@ function Curation() {
   // 🧾 큰 칸을 골랐을 때 «소칸(줄)» 몇 개까지 — 창업자 *"양념류가 9줄이야. 3개정도만 보이고 아래 더보기"*
   const CATFOLD = 3
   const [openG, setOpenG] = useState({})   // 펼쳤나 — 열쇠는 `g:큰칸` · `c:소칸` (이름이 겹쳐도 안 섞이게)
-  const [openCard, setOpenCard] = useState({}) // 카드별 «설명을 펼쳤나»
+  const [detail, setDetail] = useState(null)   // 🛒 탭한 제품 — 상세 시트(원재료명·알레르기). 카드는 그대로, 시트로 본다(창업자 2026-09-17)
   // 큰 칸으로 다시 묶는다 — ⚠️ 소제목(작은 칸)은 그대로 살린다. 접히는 건 «개수»뿐이다.
   const byGroup = [...new Set(shownGroups.map((g) => g.group))].map((name) => ({
     name,
@@ -396,26 +512,29 @@ function Curation() {
     return out
   }
 
-  // '사러가기' 연결: url 이 있으면 그 직접 링크로, mall 이 있으면 그 쇼핑몰 검색으로,
-  // 없으면 무엇이든 잘 찾는 네이버쇼핑 통합검색으로.
-  const MALL_SEARCH = {
-    coupang: 'https://www.coupang.com/np/search?q={q}',
-    oasis: 'https://www.oasis.co.kr/product/search?keyword={q}',
-    naver: 'https://search.shopping.naver.com/search/all?query={q}',
-  }
-  // 쇼핑몰 검색으로 연결. (설치 PWA 안에서 외부 '앱' 강제 열기는 브라우저 제어라 불안정 →
-  //  쿠팡 앱 직접 열기는 정식 TWA 출시 때 다시. 지금은 웹 검색이 안정적.)
-  // ⛔ 한살림은 **빈 문자열** = 「사러가기를 안 그린다」 (창업자 2026-08-17 *"링크안달면되고"*)
-  //   ⚠️ 폴백을 타면 한살림 제품을 네이버에서 찾게 되므로 «맨 먼저» 걸러 낸다.
-  const linkFor = (it) =>
-    isHansalim(it) ? '' : it.url || (MALL_SEARCH[it.mall] || MALL_SEARCH.naver).replace('{q}', encodeURIComponent(it.q))
-  const buy = (it) => openUrl(linkFor(it), [it.brand, it.name].filter(Boolean).join(" "))
+  // 🔗🔗 [2026-09-12] 「사러가기」 연결 = **`curation.js` 의 `productLink` 하나만 쓴다.**
+  //
+  // ⛔⛔⛔ **여기에 `MALL_SEARCH` 표와 `linkFor` 가 «통째로 베껴져» 있었다.** 창업자 = *"왜 이거 자꾸 이렇게 돼????? 컬리 몇번째야.."*
+  //    🌲 **그게 뿌리였다.** 2026-08-29 에 컬리 검색 주소를 넣었는데 **`curation.js` 쪽에만** 넣었고,
+  //       화면이 실제로 부르는 건 **여기 있던 베낀 표**라 컬리가 없었다.
+  //       → 배지엔 「컬리」라고 뜨는데 누르면 **네이버 검색**으로 갔다. 자연드림(icoop)도 같은 이유로 빠져 있었다.
+  //    📌 **「고쳤다」고 말한 게 거짓이 아니라, 고친 곳이 화면이 보는 곳이 아니었다.**
+  //       두 벌이면 한 벌은 반드시 낡는다 — 「현행이 둘이면 하나는 틀린 값」(2026-08-13)과 같은 사고다.
+  //    ⛔ 그래서 여기에 컬리 한 줄을 «더 넣지» 않았다 — 그러면 세 번째가 또 난다(절대원칙 34).
+  //       **표를 하나로 만들었다.** 이제 몰을 늘릴 곳은 `curation.js` 의 `MALL_SEARCH` «한 곳»뿐이다.
+  const linkFor = productLink
+  // 🛒 [2026-09-10] 「주부의 장바구니」에서 «바로» 사러 나간 자리 — 레시피 상세의 픽과 «따로» 센다
+  const buy = (it) => { 사러나감('pick_shop'); openUrl(linkFor(it), [it.brand, it.name].filter(Boolean).join(" ")) }
   const add = (it) => {
     // ⭐ 담는 건 그대로 된다 — 매장에 갈 때 «적어두는 것»은 여전히 쓸모가 있다.
     //   다만 `noBuy` 를 같이 담아 **리스트에서도** 사러가기를 안 그린다.
     //   ⛔ 이게 없으면 `buyUrlFor()` 가 url 없는 줄을 쿠팡·네이버 검색으로 보낸다(＝링크 뺀 게 헛일).
     store.addShopItem({ name: it.name, url: linkFor(it), ...(isHansalim(it) ? { noBuy: true } : {}) })
+    장보기담음()   // 🛒 [2026-09-10] 담기까지 세야 「들어와서 담지도 않는가」가 갈린다
     nav.showToast('장보기 리스트에 담았어요')
+    // 🔔 [2026-09-19] 담기가 «끝난 뒤»에 알림을 물어본다 — ⛔담는 중에 물으면 담기가 끊기고 놀라서 차단한다.
+    //    물을 자리가 아니면(아이폰·이미 답함·이미 차단) 아무 일도 안 일어난다.
+    try { 알림켜기() } catch { /* 알림이 죽어도 담기는 된다 */ }
   }
 
   // 🏬 **「파는 곳」 이름들** — `brand` 칸에 들어 있어도 이건 제조사가 아니라 «쇼핑몰»이다.
@@ -425,33 +544,10 @@ function Curation() {
   //    📌 **한 칸(`brand`)에 두 가지가 섞여 있었다.** 그래서 「이름 앞이냐 딱지냐」를 이 목록으로 가른다.
   const 파는곳 = ['자연드림', '한살림', '쿠팡', '컬리', '마켓컬리', '오아시스', '네이버', '산지톡']
   // '사러가기' 버튼에 붙는 구매처 배지 라벨
-  const mallLabel = (it) => {
-    if (it.mall === 'coupang') return '쿠팡'
-    if (it.brand === '자연드림') return '자연드림'
-    if (it.mall === 'oasis') return '오아시스'
-    const u = it.url || ''
-    // ⭐ 한살림만 「조합원만」을 덧붙인다 — 창업자 2026-08-03
-    //   *"한살림템을 사러가기 누르면 안내해주는건 어때?"* → *"너무 복잡한가..."*
-    //   ⭐ **누른 뒤 시트로 알리는 것보다 누르기 «전»에 배지로 보이는 게 낫다** — 헛걸음이 아예 없고
-    //      시트·기억·버튼 같은 새 장치가 하나도 안 생긴다. 창업자 원래 걱정(*"조합원이 아니면
-    //      온라인몰 이용어려우니까"*)은 이 네 글자로 다 해결된다.
-    //   ⚠️ 한살림 온라인 장보기는 **조합원만**(가입비 3천원＋출자금 3만원·탈퇴 시 환불 · 공식 안내 확인)
-    //   🌱 2026-08-17 부터 **사러가기를 아예 안 단다** → 그래서 「조합원만」이 아니라 «전용»이라고 못 박는다.
-    //      ⛔ 판정을 `url` 로 하면 안 된다 — url 을 뺐으니 영영 안 걸린다(`mall` 표식으로).
-    if (isHansalim(it)) return '한살림 · 조합원 전용'
-    if (u.includes('sanjitalk')) return '산지톡'
-    if (u.includes('smartstore.naver') || u.includes('brand.naver')) return '네이버'
-    // ⛔⛔ [2026-08-23 창업자] *"하바티치즈는 왜 딱지없어? 쇼핑몰"* · *"쿠팡딱지 붙여야해 (하바티)"*
-    //    🔢 실측 = `mall:'coupang'` 26개 · `mall:'oasis'` 2 · `mall:'hansalim'` 7 인데
-    //       **쿠팡 링크는 5개**다 → 「링크는 쿠팡인데 `mall` 표식이 빠진 줄」이 있었다(하바티치즈).
-    //    ⭐ 표식이 «있어야만» 붙는 구조라 **손으로 안 적으면 조용히 빠진다.** 데이터를 고치면
-    //       다음에 제품을 넣을 때 또 빠진다 → **링크를 보고도 알아채게** 한 곳에서 고친다.
-    //    ⚠️ `mall` 표식이 우선이다 — 링크가 바뀌어도 창업자가 적어 둔 값이 이긴다.
-    if (u.includes('coupang.com')) return '쿠팡'
-    if (u.includes('oasis.co.kr')) return '오아시스'
-    if (u.includes('kurly.com')) return '컬리'
-    return ''
-  }
+  // 🏷 구매처 배지 = `curation.js` 의 `productMall` «하나»를 쓴다 (2026-09-12).
+  //    ⛔ 여기에 있던 판정 60줄을 그쪽으로 «옮겼다» — 두 벌이면 한 벌은 반드시 낡는다.
+  //       실제로 2026-09-10 에 한 번 갈려서 자연드림 배지 10개가 조용히 빠졌었다.
+  const mallLabel = productMall
   // 🏷 딱지는 이제 **둘**이다 — 분류tag(모래) · 쇼핑몰mall(크림).
   // ⛔⛔ [2026-08-23] 「브랜드 딱지(회색)」를 **없앴다.** 2026-08-22 에 *"브랜드 딱지는 따로 달자"* 로
   //    만들었는데, 창업자가 말한 「브랜드」는 **쿠팡·컬리 같은 «파는 곳»**이었고 나는 «제조사»로 읽었다.
@@ -477,7 +573,8 @@ function Curation() {
       {/* 🔠 [2026-08-22 창업자] *"아이콘이랑 제목을 같은 줄. 설명은 내려서 아이콘 아래로.
           그럼 글자가 더 많이 보이잖아. 아이콘은 좀 더 키우고"*
           ⭐ 설명이 아이콘 «옆」이 아니라 «아래»로 내려와 카드 폭을 다 쓴다 → 한 줄에 들어가는 글자가 늘어난다. */}
-      <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
+      {/* 🛒 [창업자 2026-09-17 «원재료가 중요한거야»] 이름 줄을 누르면 상세 시트 — 카드는 안 키운다(132장 스크롤). */}
+      <div role="button" tabIndex={0} onClick={() => setDetail(it)} onKeyDown={(e) => { if (e.key === 'Enter') setDetail(it) }} style={{ display: 'flex', gap: 15, alignItems: 'center', cursor: 'pointer' }}>
         <div className="emoji-tile" style={{ width: 58, height: 58, fontSize: 31, flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {curIcon(it.icon) ? <img src={curIcon(it.icon)} alt="" draggable={false} style={{ width: 53, height: 53, objectFit: 'contain' }} /> : it.emoji}
         </div>
@@ -509,10 +606,14 @@ function Curation() {
               ⛔ 자르지 «않는다». 39개를 재보니 **가장 짧은 설명도 41자**(가운데 74 · 최장 127)라
                  한 줄에 들어가는 게 하나도 없고, 이 설명이 바로 큐레이션의 값어치다
                  (*"남편이 콩국수를 좋아해서…"*). 잘라내면 그냥 상품 목록이 된다.
-              ⭐ 그래서 «접어만» 둔다 — 훑을 땐 짧고, 궁금하면 눌러서 한 글자도 안 빠진 전문을 본다. */}
+              ⭐ 그래서 «접어만» 둔다 — 훑을 땐 짧고, 궁금하면 눌러서 한 글자도 안 빠진 전문을 본다.
+              🧾 [창업자 2026-09-17] 이제 누르면 «그 자리에서 펼치지 않고» 상세 «시트»로 간다 — 아이콘·이름·설명 어디를 눌러도 같은 시트.
+                 📮 *"설명도 다 아이콘 누르는 걸로 바꿀까"* · *"그럼 깔끔해지긴하겠다"* · 걱정 = *"유저들이 모르려나??"*
+                 → 그래서 「자세히 보기 ›」 표시를 남긴다(눌리는 곳이라는 신호). 시트에 전문·원재료·담기·사러가기가 다 있다.
+                 ⛔ 두 동작(펼침/시트)을 같이 두면 누르는 자리마다 결과가 달라 헷갈린다 — 하나로. */}
           <button
             className="press"
-            onClick={() => setOpenCard((s) => ({ ...s, [it.name]: !s[it.name] }))}
+            onClick={() => setDetail(it)}
             style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0 }}
           >
             {/* ↩️ **[2026-08-23 창업자] *"올리고당설명줄바꿈되게"*** — 줄바꿈이 «뜻»을 갈랐다.
@@ -528,8 +629,8 @@ function Curation() {
             <span
               className="t-sub"
               style={{
-                display: openCard[it.name] ? 'block' : '-webkit-box',
-                WebkitLineClamp: openCard[it.name] ? 'none' : 2,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
                 /* 🔠 [2026-08-29] 창업자 = *"장바구니 설명도 글자 1-2포인트만 작게해도 될 것 같고"*
@@ -537,16 +638,20 @@ function Curation() {
                    설명 글은 «훑는» 글이라 제품 이름(16.5px)보다 커 보이면 무게가 뒤집힌다. */
                 fontSize: 17,
                 lineHeight: 1.75,
-                textWrap: 'balance',
+                /* ⛔⛔ [2026-09-11 창업자] *"더오담도 혼자 이상하게 줄바꿈이 되어있네. 쭉 적어줘"*
+                   🔢 실물 = 「냉동실에 2개씩은 꼭 / 있어요. 아침대용으로도 / 좋고, 맛있어서 추천합니다」
+                      — 폭이 남는데도 세 줄로 «고르게» 끊겼다. 옆 카드들은 꽉 차게 흐르는데 이것만 달랐다.
+                   ⭐ 범인 = `textWrap: 'balance'`. 줄 길이를 맞추려고 **일부러 짧게 끊는다.**
+                   ⚠️ 바로 위 주석이 *"긴 설명은 한 글자도 안 바뀐다 → 손해가 없다"* 라고 적어뒀는데
+                      **짧은 설명에서는 바뀐다.** 「긴 것만 재보고 손해가 없다」고 적은 것이다 —
+                      재본 범위를 결론의 범위로 삼으면 안 된다.
+                   ✅ 그래서 뺐다. 이제 여느 글처럼 «쭉» 채운다. */
               }}
             >
               {it.benefit}
             </span>
-            {/* 🔽🔼 [2026-08-12] 창업자 *"주부의 장바구니(접기버튼 잘보이게)"*
-                ⛔ 옛 코드는 `!openCard[...]` 라 **펼친 뒤엔 「접기」가 아예 안 그려졌다.**
-                   접으려면 설명 글 자체를 다시 눌러야 하는데 그걸 알려주는 표시가 없었다.
-                   → 「펼치기는 보이는데 접기가 안 보인다」가 정확히 이것이다.
-                ✅ 펼쳐도 «같은 자리에» 「접기」를 그린다 ＋ 화살표를 붙여 눌리는 곳임을 보인다. */}
+            {/* 🔽🔼 [2026-08-12] 창업자 *"주부의 장바구니(접기버튼 잘보이게)"* — 눌리는 곳엔 «표시»를 남긴다(화살표).
+                (옛 「더보기/접기」 펼침은 2026-09-17 에 시트로 합쳐졌다 — 위 🧾) */}
             {/* 👆 [2026-08-29] 창업자 = *"그거랑 담기가 너무 붙어있어. 접기. 누르려다 담기를 누르게돼."*
                 🔢 옛 실측 = 「더보기」 글자 아래끝 ↔ 「담기」 위끝이 **11px** 뿐이었다.
                 ⭐⭐ 오터치를 막는 건 «완충 지대»다 — 아무 버튼도 아닌 «빈 공간»이라야
@@ -556,8 +661,8 @@ function Curation() {
                 ✅ 그래서 둘 다 조금씩 = 「더보기」는 눌리기 쉽게 살짝 키우고(paddingBottom 4),
                    그 «아래»는 빈 공간으로 벌린다 → 실제 간격 11 → **22px**. */}
             <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--brown)', display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 6, paddingBottom: 4 }}>
-              {openCard[it.name] ? '접기' : '더보기'}
-              <Icon name={openCard[it.name] ? 'chevron-up' : 'chevron-down'} size={12} />
+              자세히 보기
+              <Icon name="chevron-right" size={12} />
             </span>
           </button>
       </div>
@@ -581,7 +686,7 @@ function Curation() {
     <button
       key={key}
       className={`pill press ${curCat === key ? 'active' : ''}`}
-      onClick={() => setCurCat(key)}
+      onClick={() => { try { 장바구니펼침() } catch { /* noop */ } setCurCat(key) }}   /* 🚪 pick_open_shop — 칩을 눌러 «펼쳐 봤다» */
       style={key === 'pick' ? { position: 'relative', overflow: 'visible' } : undefined}
     >
       {key === 'pick' && (
@@ -604,7 +709,7 @@ function Curation() {
     <>
       <div className="sec-head" style={{ marginTop: 6 }}>
         <div className="h-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><img src={uiGomShop} alt="" draggable={false} style={{ width: 28, height: 28, objectFit: 'contain', flex: '0 0 auto' }} />주부의 장바구니{/* 📅 「토」 = 매주 토요일 3개씩 새로 열린다(weeklypick.js 갓열린것 · 창업자 2026-09-07 「주부의 장바구니 토요일도 같이 달아줘」) · 홈 「이번 주」 상자의 월·수 배지와 같은 모양 */}<span className="weekly-day" aria-label="토요일마다 새로 와요">토</span></div>
-        <button className="press" style={secBtnStyle} onClick={() => setOpen((v) => !v)}>{open ? '접기' : '펼치기'}</button>
+        <button className="press" style={secBtnStyle} onClick={() => { if (!open) { try { 장바구니펼침() } catch { /* noop */ } } setOpen((v) => !v) }}>{open ? '접기' : '펼치기'}</button>
       </div>
       {/* ⭐ 「계속 올라와요」를 여기로 올렸다 — 창업자 2026-08-03 *"주부의 장바구니옆에 계속 올라오다는
           문구 적어줘. (원래 지워지는 아래안내판에 있었음)"*. 아래 안내판을 빼면서 그 말만 살렸다.
@@ -643,21 +748,25 @@ function Curation() {
              📌 쿠팡 파트너스 «최종» 승인 심사도 **이 문구가 보이는 스크린샷**을 요구한다.
              ⛔ 여기서 「쿠팡 파트너스」·「수수료」·「받아요」를 빼지 말 것 —
                 `check-affiliate.mjs` 가 그 셋을 찾고, 조건부 표현이 다시 들어오면 배포를 막는다. */}
-      <div className="t-sub" style={{ fontSize: 15, marginTop: 0, marginBottom: 12, lineHeight: 1.45 }}>
-        {/* ⭐ 굵은 말에 `nowrap` — 좁은 폰에서 줄이 넘어가도 「쿠팡 파트너스」 덩어리는 안 갈린다 */}
-        <b style={{ color: 'var(--brown)', whiteSpace: 'nowrap' }}>쿠팡 파트너스 활동으로</b> 일정액의 수수료를 받아요 · 값은 그대로예요
-      </div>
       {/* 💰💰 [2026-09-08] 쿠팡 파트너스 «표준 문구» — 📮창업자 = *"쿠팡은 파트너스링크야"*
           ⭐ 오늘 `link.coupang.com` 파트너스 링크가 앱에 «처음» 들어왔다(리오마레·퍼시피카나).
              그 전 69개는 파트너스가 아니라 맨 `coupang.com` 주소였다 — **성격이 다르다.**
           📄 문구는 내가 지어낸 게 아니다 — `docs/쿠팡-링크-전수-2026-09-05.md` 151줄에
              *「최종 승인 스샷 = ①고지 문구가 보이는 화면 ②link.coupang.com 이 보이는 화면
                → 우리 앱은 둘 다 없다」* 라고 적혀 있고, 오늘 ②가 생겼으니 ①을 채운다.
-          ⛔ 윗줄(「값은 그대로예요」)을 지우지 않는다 — 그건 «유저를 안심시키는» 말이고
-             이 줄은 «심사·공정위가 요구하는» 말이다. 하는 일이 서로 다르다.
-          ⚠️ 한 줄이 늘어난다 — 창업자가 2026-08-03 에 *"아래위로 좀 지저분해보여"* 로 박스를 뺐던 자리라
-             글자를 13px·연한 색으로 낮춰 «읽히되 안 튀게» 뒀다. 미감 판정은 창업자 몫이다. */}
-      <div className="t-sub" style={{ fontSize: 13, marginTop: -6, marginBottom: 12, lineHeight: 1.4, opacity: 0.75 }}>
+          ⭐⭐ **[2026-09-13 창업자 확정] 고지를 «한 줄»로 합쳤다 — 중복이었다.**
+             📮 창업자 = *"이건 하나로 안내하자"* → *"둘중에 하나만 쓰면 되지 중복고지니까"*
+             ⛔ 지운 것 = 「쿠팡 파트너스 활동으로 일정액의 수수료를 받아요 · **값은 그대로예요**」
+                📮 창업자 = *"값은 그대로에요가 좀 애매하긴하거든"* — **맞는 지적이다.**
+                   «무엇의» 값인지 안 드러나고, 쿠팡 값이 오르내리면 그 말이 «틀린 말»이 된다.
+             ✅ 남긴 것 = **쿠팡 표준 문구 그대로.** 승인 심사가 이 문구를 확인하고,
+                없거나 다르면 반려·정산 제외·계정 정지까지 간다(2026-09-13 리서치).
+                ⛔ 그러니 이 문장은 **한 글자도 고치지 않는다.**
+             📌 「값은 그대로」를 다시 넣고 싶으면 «정확한 말»로 — 예: 「수수료는 쇼핑몰이 한끼에 주는 거예요」.
+                그건 사실이라 안 애매하다. ⛔옛 문장을 되살리지는 말 것.
+          ⭐ 이제 이 줄이 «유일한» 고지라 글자를 키웠다(13 → 14px · opacity 0.75 → 0.9) —
+             쿠팡이 *"상단에 눈에 띄게"* 를 요구한다. ⛔더 흐리게 만들지 말 것. */}
+      <div className="t-sub" style={{ fontSize: 14, marginTop: 0, marginBottom: 12, lineHeight: 1.45, opacity: 0.9 }}>
         한끼는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
       </div>
 
@@ -777,22 +886,45 @@ function Curation() {
               「앞으로도 하나씩 계속 올라와요」는 **맨 위 부제로 옮겨 살렸다** — 창업자가 콕 집어 남기라 했다. */}
         </>
       )}
+      {detail && (
+        <CurationDetailSheet
+          it={detail}
+          iconSrc={curIcon(detail.icon)}
+          title={detail.brand && !파는곳.includes(detail.brand) ? `${detail.brand} ${detail.name}` : detail.name}
+          mallLabel={mallLabel(detail)}
+          canBuy={!!linkFor(detail)}
+          onAdd={() => { add(detail); setDetail(null) }}
+          onBuy={() => buy(detail)}
+          onReport={LAB_BUG_URL ? () => openUrl(LAB_BUG_URL, '오류 신고') : null}
+          onClose={() => setDetail(null)}
+        />
+      )}
     </>
   )
 }
 
-function ChecklistAdd() {
+function ChecklistAdd({ 식비켬 }) {
   const { addShopItems } = useStore()
   const [text, setText] = useState('')
   const add = () => {
     if (!text.trim()) return
     addShopItems([text])
+    // 📊 [2026-09-12] 담았다 — 직접 입력해서 담는 길도 «담기»다.
+    장보기담음()
     setText('')
+    // 🔔 [2026-09-19] 위 자리와 짝이다 — 한쪽만 붙이면 반을 놓친다.
+    try { 알림켜기() } catch { /* 알림이 죽어도 담기는 된다 */ }
   }
   return (
     <div className="searchbar" style={{ marginBottom: 12 }}>
       <Icon name="cart" size={19} color="var(--text-sub)" />
-      <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} placeholder="살 재료 입력하고 Enter" />
+      {/* 💰 [2026-09-18 창업자 «금액 적는 안내나 양식이 없어 유저들은 모를듯해»]
+            ⭐ 안내를 «적는 자리»에 둔다 — 목록 아래 설명은 이미 있었지만 적을 땐 안 보인다(빈손이면 아예 없다). */}
+      {/* 🔒 aria-label 은 «안 바뀌는 표식»이다 — 안내문(placeholder)이 바뀌어도 판이 안 깨진다.
+            ⛔ 2026-09-18 에 안내문을 바꾸자 이 칸을 찾던 재현판 셋이 한꺼번에 죽었다. */}
+      <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()}
+        aria-label="살 재료 적기"
+        placeholder={식비켬 ? '두부 1910 처럼 적어 보세요' : '살 재료 입력하고 Enter'} />
       {text && (
         <button className="press" onClick={add} aria-label="추가"><Icon name="plus" size={20} color="var(--brown)" /></button>
       )}

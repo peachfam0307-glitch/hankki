@@ -139,6 +139,39 @@ LOCAL="$(git rev-parse HEAD 2>/dev/null || true)"
 [ -n "$LOCAL" ] || exit 0
 DIRTY="$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
 
+# 🍎🍎 **안전장치 ④ (2026-09-08 · 창업자 "훅 고쳐도 돼") — «지금 갈래»가 배포 갈래가 아니면 배포 갈래로 «옮기지 않는다».**
+#    ⛔⛔ 사고 = 12:24 KST 아이폰 갈래(claude/annyeong-yoi12y)에서 일하는 중에 «배포 갈래»가 다른 세션 커밋으로
+#       3개 앞서자, 아래 BEHIND(HEAD..origin/배포) 가 3이 되어 **이 훅이 아이폰 갈래를 버리고 배포 갈래로 갈아탔다.**
+#       안 커밋된 변경 15개가 날아갔다(wip/auto 스냅샷으로 되살렸다 · 잃은 것 0 — 운이 좋았다).
+#    🌲 뿌리 = 「낡았다」의 잣대가 «배포 갈래» 하나뿐이었다. 다른 갈래에서 일하면 배포 갈래가 앞서는 게 «정상»이다.
+#    ✅ 잣대 = «지금 갈래의 자기 원격». 자기 원격보다 뒤면 그 갈래를 «앞으로만»(ff) 당기고, 아니면 손대지 않는다.
+#       ⛔ 어느 경우에도 다른 갈래에 서 있으면 배포 갈래로 checkout 하지 않는다 — 그건 이 훅이 낼 수 있는 제일 큰 사고다.
+#    🧪 재현 = hankki/scripts/_repro-되감기갈래-0908.sh (배포 갈래가 앞선 채 다른 갈래에 서서 돌리면 «안 옮긴다»)
+if [ -n "$BR" ] && [ "$BR" != "$DEPLOY" ]; then
+  refresh_hooks
+  # 🧷 «로컬 배포 갈래 ref» 만 원격에 맞춰 둔다(ff · 워킹트리 안 건드림 · 지금 갈래는 그대로).
+  #    ⛔ 안 하면 base-guard 가 「로컬 배포 ref ≠ 원격」을 «되감김»으로 읽고 모든 bash 를 막는다(2026-09-08 14:5x 실제로 막혔다).
+  #    ⭐ 체크아웃돼 있지 않은 갈래라 refspec 갱신이 안전하다 · ff 가 안 되면(로컬이 앞섬) 그냥 둔다.
+  git fetch -q origin "$DEPLOY:$DEPLOY" >/dev/null 2>&1 || true
+  if git rev-parse --verify --quiet "origin/$BR" >/dev/null 2>&1; then
+    run 30 git fetch origin "$BR" --quiet >/dev/null 2>&1 || true
+    OWN_BEHIND="$(git rev-list --count "HEAD..origin/$BR" 2>/dev/null || echo 0)"
+    OWN_AHEAD="$(git rev-list --count "origin/$BR..HEAD" 2>/dev/null || echo 0)"
+    if [ "${OWN_BEHIND:-0}" != "0" ] && [ "${OWN_AHEAD:-0}" = "0" ] && [ "$DIRTY" = "0" ]; then
+      if git merge --ff-only -q "origin/$BR" >/dev/null 2>&1; then
+        note "🔄 자기 갈래를 앞으로 당겼다 (@$BR · ${OWN_BEHIND}커밋 · 배포 갈래로는 안 옮긴다)"
+        echo "🔄 «$BR» 이 자기 원격보다 ${OWN_BEHIND}커밋 뒤져 있어 앞으로 당겼다(배포 갈래로는 옮기지 않았다)."
+        exit 0
+      fi
+    fi
+    note "· 다른 갈래에서 일하는 중 (@$BR · 자기 원격 대비 뒤=${OWN_BEHIND:-0} 앞=${OWN_AHEAD:-0} · 안 커밋=$DIRTY · 배포 갈래로 안 옮긴다)"
+    [ "${OWN_BEHIND:-0}" != "0" ] && echo "⚠️ «$BR» 이 자기 원격보다 ${OWN_BEHIND}커밋 뒤져 있다(안 커밋=$DIRTY 라 손대지 않았다) — 먼저 담고 git pull --ff-only origin $BR 을 할 것."
+  else
+    note "· 원격에 없는 갈래에서 일하는 중 (@$BR · 배포 갈래로 안 옮긴다)"
+  fi
+  exit 0
+fi
+
 # ✅ 이미 맞다 → 훅을 git 밖으로 새로 깔고 조용히 통과
 if [ "$BR" = "$DEPLOY" ] && [ "$LOCAL" = "$REMOTE" ] && [ "$DIRTY" = "0" ]; then
   refresh_hooks; note "✅ 이미 맞다 ($LOCAL)"; exit 0

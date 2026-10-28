@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from 'react'
 // 쓰던 내용이 날아가지 않게 한다. 저장 완료하면 지운다.
 const DRAFT_KEY = 'hankki:editorDraft'
 import { useStore, newId, 기본표지, 방금저장됐나 } from '../store'
+import { 레시피저장, 읽어냄, 못읽음 } from '../stats'
 import { useNav } from '../App'
 import { useLayerBack } from '../useBackHandler'
 import Icon from '../components/Icon'
@@ -15,11 +16,14 @@ import PromptSheet from '../components/PromptSheet'
 import ConfirmSheet from '../components/ConfirmSheet'
 import { guessFoodIcon } from '../components/FoodIcon'
 import { CATEGORIES } from '../theme'
+import { 나라들 } from '../data/종류'
 import { TAG_LIST } from '../data/seed'
 import { guessCategory, cropSquare, clampGraphemes, openExternal } from '../utils'
-import { ocrImage, getOcrNote, getOcrLeft, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
+import { ocrImage, getOcrNote, getOcrLeft, 열쇠셈, 열쇠셈리셋, KEY_NAME, KEY_SHORT, KEY_UNIT, keyCount } from '../ocr'
+import { 빚안내몸 } from '../안내말'
 import { parseRecipeText, cleanMemo, isGibberish, stripLeadingOcrJunk, keepRaw, NO_TITLE } from '../parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중 } from '../tidy'
+import { AI동의받기 } from '../aiConsent'   // 🔐 AI 로 보내기 전 허락(큰 틀 6-② ⓑ)
 import { normalizeNumerals } from '../ocrCorrect'
 import { embedUrl } from '../embed'
 // 🗄 저장된 사진은 「큰 창고」(IndexedDB)에 있고 상태엔 쪽지만 남는다 — 편집기는 열 때 꺼내 온다
@@ -74,6 +78,8 @@ export default function EditorScreen({ id, prefill }) {
   const ocrParts = useRef([]) // 읽은 글자를 «고른 순서대로» 담는다(끝나는 순서가 아니라)
   const ocrCropped = useRef(0) // 지금까지 자른 장 수 = 다음 장의 자리(idx)
   const ocrCropOpen = useRef(false) // 자르기 화면이 지금 떠 있나 — 마무리를 미룰지 판단
+  // 📊 이번 «한 번의 가져오기»에서 읽기 셈을 보냈나 — 여러 장이어도 한 번만 세려고(finishOcr 안에서 쓴다)
+  const 읽기셈보냄 = useRef(false)
   const ocrAccum = useRef('') // 'all' 자동분류용 — 여러 장의 인식 텍스트를 모아 한 번에 파싱
   // 👁👁 [창업자 판정 2026-09-01 = ⓒ] AI 에게 «글자와 함께 사진»을 준다.
   //   ⛔ 그 전엔 사진을 읽고 «버렸다» — 그래서 AI 가 「생가즈 조그」를 짐작으로 고쳤고
@@ -102,6 +108,9 @@ export default function EditorScreen({ id, prefill }) {
   //   ⛔ 편집 화면 «안»의 캡처 단추는 이걸 안 탄다(`prefill` 이 없다) — 거긴 지금처럼 열쇠를 쓴다.
   //      창업자 확정 = 열쇠 쓰는 길과 공짜 길이 «둘 다» 살아 있어야 한다.
   const ocrNoVision = useRef(!!prefill?.noVision)
+  // 📊 왜 열쇠를 «안 썼나» — 고름(있는데 안 씀) / 없음(0 이라 못 씀). 처방이 정반대라 갈라 센다.
+  //   기본값을 '고름' 으로 둔다 — 옛 화면에서 들어오면 그 전 셈법 그대로다(숫자가 튀지 않는다).
+  const ocrNoVisionWhy = useRef(prefill?.noVisionWhy || '고름')
   const ingRef = useRef(null) // 재료 입력칸
   const stepRef = useRef(null) // 만드는 법 입력칸
   const titleRef = useRef(null) // 제목 입력칸 — 제목 없이 저장 누르면 여기로 데려간다
@@ -175,6 +184,15 @@ export default function EditorScreen({ id, prefill }) {
   // 🚨 저장이 «실패»했다 — 화면에 빨간 띠로 남긴다(토스트는 지나가면 못 본다)
   const [saveFailed, setSaveFailed] = useState(false)
   const [다듬는중, set다듬는중] = useState(false) // 🤖 「AI로 다시 다듬기」가 도는 동안
+  // 🆓 [2026-09-14] 이번 판을 «무료로» 읽었나 — 「AI로 다시 다듬기」 단추를 가릴 잣대다.
+  //   ⛔ ref 로 두면 화면이 다시 안 그려져 단추가 남는다(창업자 확정 = 열쇠 없이 AI 정리는 어디에도 안 연다).
+  const [무료판, set무료판] = useState(false)
+  // 🔚🔚 **[2026-09-13 창업자 실물 · 아이폰 빌드 15] 「20~60초 다듬는다고 하고 그 창이 사라지면 조용해 · 끝난 건지 안 된 건지 몰라」**
+  //   ⛔ 옛 판 = 위 「다듬는 중」 줄이 «사라지기만» 했다. 성공은 4.8초 띠 하나(놓친다), 실패는 아무 말 없음(09-09 결정).
+  //   ⭐ 창업자가 그 결정을 뒤집었다 — «끝났는지»는 알아야 한다. 그래서 줄이 사라지는 대신 **끝말로 바뀐다**(9초).
+  //      공유로 담는 길(App.jsx 끝알림·다듬기끝말)과 같은 모양이다 — 두 길이 같은 말을 한다.
+  const [다듬끝, set다듬끝] = useState(null)   // null | { 됐나: boolean }
+  const 끝표시 = (됐나) => { set다듬끝({ 됐나 }); setTimeout(() => set다듬끝((v) => (v && v.됐나 === 됐나 ? null : v)), 9000) }
   // 📥 [2026-08-22] 파서에 넣은 «원문» — 화면엔 안 보이고 저장만 된다.
   //    파서를 고친 날 「다시 읽기」로 되살릴 재료다(→ `parseRecipe.js` 의 `keepRaw` 주석).
   //    ⛔ 편집으로 들어왔는데 원문이 없으면 «빈 값으로 덮지» 않는다 — 없는 값으로 덮는 건 지우는 것이다(규칙 18 ⓙ).
@@ -351,6 +369,23 @@ export default function EditorScreen({ id, prefill }) {
           5200,
         )
       }
+      // ✂️✂️ **[창업자 확정 2026-09-13] 기본 흐름은 자르기 화면을 «안 띄운다».**
+      //   📮 창업자 = *"내가 방금 업청큰 사진있는거 그냥했는데 완전 잘돼"* · *"안내만 안뜨게 숨길수는 없어?"*
+      //            · *"굳이 귀찮게 자를필요 없으니까"*
+      //   ⭐ 왜 이제 괜찮나 = 같은 날 AI 다듬기를 고쳐서 **캡션을 통째로 줘도 잘 나눈다**
+      //      (제목 수식어 떼기·조리 문장에서 재료 뽑기·홍보 문구는 memo — 프롬프트 규칙 2·4·6).
+      //      오히려 «잘라내면» 재료를 뽑을 글이 사라진다(스테이크솥밥에서 쌀·올리브오일·물이 그랬다).
+      //   🔢 걸음 수 = 6걸음 → **5걸음**. 창업자가 짚은 「귀찮다」가 그 한 걸음이었다.
+      //
+      //
+      // ✂️✂️ **[창업자 실물 2026-09-15] 그 결정을 되돌린다 — «언제나» 자른다.**
+      //   📮 창업자 = *"자르기안내도 없어 어제 우리 문구까지 다 정했잖아"*
+      //            · *"사진올리면 사진부분 자르고 블라블라 하는거 안내 자르기되게 하기로 했는데"*
+      //   ⛔⛔ 뿌리 = 9/13 의 「안 띄운다」와 9/14 의 자르기 안내가 «부딪혔는데 아무도 안 알려줬다».
+      //      9/14 에 열쇠·무료 두 갈래 문구를 다 정해 넣었는데 **그 화면이 안 열려서 한 번도 못 떴다.**
+      //      글자만 넣고 「반영했다」고 말한 것이다 — 도달하는지를 안 봤다(규칙 21).
+      //   ⭐ 안내는 둘 다 이미 있다 — 열쇠 = CropSheet.jsx 기본 hint · 무료 = 아래 1580줄 무렵.
+      //   ⛔ 이제 갈래가 «하나»다. 다시 가르지 않는다 — 가르는 순간 또 한쪽이 못 뜬다.
       ocrCropOpen.current = true
       setCropImg(urls[0])
   }
@@ -399,8 +434,11 @@ export default function EditorScreen({ id, prefill }) {
     ocrJobs.current.push({ img, idx: ocrCropped.current })
     ocrCropped.current += 1
     if (ocrQueue.current.length) {
+      // ✂️ [2026-09-15] 위 「고른 직후」와 «같은 잣대» — 언제나 자른다.
+      //   ⛔ 두 곳이 갈리면 반드시 어긋난다(첫 장만 뜨거나 둘째 장에서 갑자기 튀어나온다).
+      const 다음 = ocrQueue.current.shift()
       ocrCropOpen.current = true
-      setCropImg(ocrQueue.current.shift()) // 👉 사람은 다음 장을 자른다 · 앞 장은 뒤에서 읽힌다
+      setCropImg(다음) // 👉 사람은 다음 장을 자른다 · 앞 장은 뒤에서 읽힌다
     } else {
       ocrCropOpen.current = false
     }
@@ -413,6 +451,8 @@ export default function EditorScreen({ id, prefill }) {
     if (ocrBusy.current) return // 이미 돌고 있으면 그 펌프가 이어서 다 처리한다
     const target = ocrTargetRef.current || 'all'
     const total = ocrTotal.current
+    // 🔒 이번 읽기의 «열쇠 셈»을 0 으로 — 앞 읽기의 값이 남으면 안내가 어긋난다
+    if (!ocrParts.current.some((t) => t)) { 열쇠셈리셋(); 읽기셈보냄.current = false }   // 📊 읽기 셈도 같이 0 으로
     ocrBusy.current = true
     // ⛔ `try/finally` 로 감싼다 — 여기서 무엇이 터져도 `ocrBusy` 가 true 로 «굳으면»
     //    남은 장이 영영 안 들어오고 단추도 계속 흐린 채로 남는다(옛 판에서 실제로 났던 사고).
@@ -425,7 +465,7 @@ export default function EditorScreen({ id, prefill }) {
         let text = ''
         try {
           // 🆓 `noVision` 이면 구글 AI 를 건너뛰고 기본 인식으로만 읽는다 = 열쇠가 안 깎인다
-          text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }), { batch: ocrBatch.current, noVision: ocrNoVision.current })
+          text = await ocrImage(img, (pct) => setOcr({ busy: true, pct, page, total }), { batch: ocrBatch.current, noVision: ocrNoVision.current, noVisionWhy: ocrNoVisionWhy.current })
         } catch {
           // ⛔ 한 장이 실패해도 «남은 장은 계속 간다».
           text = ''
@@ -455,6 +495,21 @@ export default function EditorScreen({ id, prefill }) {
     const target = ocrTargetRef.current || 'all'
     ocrAccum.current = ocrParts.current.filter((t) => t && t.trim()).join('\n').trim()
 
+    // 📊📊 [2026-09-12] 「읽었나 / 못 읽었나」를 «여기서 한 번»만 센다.
+    //   ⛔⛔ **장마다 세면 안 된다** — 3장을 넣은 사람이 3명처럼 보인다. 이 함수는 «다 읽은 뒤»
+    //      한 번만 불린다(위 454줄이 `ocrCropOpen || ocrQueue.length` 면 돌아가게 막는다).
+    //   ⭐ 왜 필요했나 = 2026-09-12 실측에서 「갈래 고름 10명 → 저장 1명」 사이가 깜깜했다.
+    //      이 한 줄이 그 아홉이 «읽기에서» 샜는지 «읽은 뒤»에 샜는지를 가른다.
+    //   ⛔ 나가는 건 이름뿐이다 — 읽은 «글자»는 한 자도 안 보낸다.
+    // 🔒 **안전벨트** — 이번 읽기에서 «한 번만» 보낸다.
+    //    ⛔ finishOcr 가 한 번만 불리는 건 코드로 확인했지만(454줄 가드), 재현판으로 «증명은 못 했다»
+    //       — 사진 3장 흐름을 재현판이 못 몰았다(2026-09-12). 증명 못 한 것은 코드로 막는다.
+    //    📮 창업자 = *"엉뚱하게 잘못재면 타격이 커"*
+    if (!읽기셈보냄.current) {
+      읽기셈보냄.current = true
+      if (ocrAccum.current) 읽어냄(); else 못읽음()
+    }
+
     // 🆓🆓 [창업자 확정 2026-08-29] **「그냥 읽기」로 들어왔으면 «열쇠 얘기를 아예 안 한다».**
     //   📮 창업자 = *"3번은 열쇠다썼지만 무료로 쓰고싶은 사용자들이 거의 쓰겠네 **안내도 잘해줘야 할 듯.**"*
     //
@@ -469,24 +524,57 @@ export default function EditorScreen({ id, prefill }) {
     //         그래야 무료유저도 안떠나"*
     //   ⭐ 「사진 보며 고쳐 주세요」로 닫는 게 핵심이다 — 이 길은 사진이 **저절로 떠 있어서**
     //      바로 고칠 수 있다. 「덜 읽혔다」만 말하고 끝내면 그건 그냥 나쁜 소식이다.
-    const freeTail = ocrNoVision.current ? ' · 열쇠 안 쓰고 읽어서 덜 정확해요' : ''
+    // 🔒🔒 **열쇠 꼬리는 «서버가 실제로 깎았나»로만 만든다.** 화면이 추측하지 않는다.
+    //
+    //   📮 창업자 2026-09-09 = *"열쇠는 그대로에요 안내했는데 차감되는게 최악이야"*
+    //
+    //   ⛔⛔ 그 전엔 여기서 `noVision`·`getOcrNote()` 로 **짐작해** 문구를 만들었다.
+    //      서버가 무엇을 했는지는 안 봤으니 어긋날 수밖에 없었다.
+    //   ⭐ 이제 `ocr.js` 의 `열쇠셈()` 이 **서버가 보낸 사실**만 들고 있다:
+    //      · `깎인장수` = 진짜로 깎인 수  · `앎` = 서버 답을 받았나  · `안부름` = 「그냥 읽기」였나
+    //
+    //   📖 **한 줄 규칙** — 「열쇠 그대로」는 **깎인 장수가 0 이고, 그걸 «아는» 때만** 말한다.
+    //      ⛔ 답을 못 받았으면(`앎 === false`) **열쇠 얘기를 아예 안 한다**(모르면 침묵이 정답).
+    //   🔒 `scripts/_repro-지문장부-0909.mjs` 가 이 규칙을 잰다.
+    const 셈 = 열쇠셈()   // 🔒 서버가 보낸 «사실»(ocr.js) — 화면은 이 값만 읽는다
+    const 안썼다 = 셈.앎 && 셈.깎인장수 === 0
+
+    // 🆓 「그냥 읽기」 — 서버를 아예 안 불렀다. 창업자가 콕 집은 «두 가지»를 말한다:
+    //    ⑴ 열쇠를 안 썼다(고른 대로 됐다) ⑵ 덜 읽힐 수 있다(인식률 차이)
+    //    📮 창업자 = *"기본인식이라 인식률의 차이가 잇으니까 이부분을 집어줘야해 그래야 무료유저도 안떠나"*
+    const freeTail = 셈.안부름 ? ' · 열쇠 안 쓰고 읽어서 덜 정확해요' : ''
+
+    // 🈳 **원인별 한 줄 안내** — 서버가 말한 `왜` 로만 고른다.
+    //    ⛔ 「열쇠는 그대로예요」는 `안썼다` 일 때만 붙인다 — 이 조건이 이 판의 전부다.
+    //    ⛔ 「전에읽음」엔 열쇠 얘기를 «안» 한다 — 유저는 그냥 읽힌 걸로 느끼면 된다(설명이 잔소리가 된다).
+    const 원인Tail = 셈.안부름 ? ''
+      : 셈.왜 === '빈손' && 안썼다 ? ' · 글자가 안 보여요 · 밝은 곳에서 다시 찍어주세요 (열쇠는 그대로예요)'
+        : 셈.왜 === '구글실패' && 안썼다 ? ' · AI가 잠깐 안 돼요 · 열쇠는 그대로예요'
+          : ''
 
     // (마지막 장) 프록시 한도 안내 — 무료 소진 등이면 "기본 인식으로 진행됐어요" 꼬리를 붙인다.
     //   ⛔ `noVision` 이면 프록시를 «안 불렀으므로» 이 값들은 이번 읽기와 무관하다 → 통째로 죽인다.
-    const note = ocrNoVision.current ? null : getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
+    const note = 셈.안부름 ? null : getOcrNote() // 'user_quota' | 'global_quota' | 'rate_limited' | null
     const quotaTail =
-      note === 'user_quota'
+      // 💸 환불로 생긴 빚(창업자 10/24 문구 · 말은 안내말.js 한 곳)
+      note === 'debt'
+        ? ` · 지금은 AI 읽기를 할 수 없어요 · ${빚안내몸(셈.빚)}`
+        : note === 'user_quota'
         ? ` · 무료 ${KEY_NAME}를 다 써서 기본 인식이에요`
         : note === 'global_quota' || note === 'rate_limited'
           ? ' · 지금 이용이 많아 기본 인식이에요'
           : ''
+    // ⏱ 빚 안내는 두 문장(약 110자)이라 6.5초로는 못 읽는다(10/24 점검) → 12초
+    const 긴띠 = note === 'debt' ? 12000 : 6500
 
     // 📢 남은 장수 알림 — 창업자 *"20장을 다쓰면 다썼다고 알려줘야해 무료서비스로 변경된다고"*
     //   ⭐ 「막힌 다음」이 아니라 «마지막 장을 쓴 그 순간» 알린다. 그래야 한 박자 늦지 않다.
     //   ⭐⭐ 미리 알림은 «1장 남았을 때 한 번만** (창업자 *"어차피 유저도 알잖아 쓰면서 몇장남았는지"*)
     //      ⛔ 3장·1장 두 번은 안 한다 — 가져오기 화면 뱃지가 이미 잔량을 보여줘서 잔소리가 된다.
+    //   ⛔⛔ **안 깎였으면 잔량 얘기를 꺼내지 않는다**(`안썼다`) — 안 썼는데 「1장 남았어요」가 뜨면
+    //      유저는 「어? 썼나?」로 읽는다. 그게 이 판이 없애려는 바로 그 어긋남이다.
     const leftNow = getOcrLeft()
-    const leftTail = quotaTail || ocrNoVision.current // 🆓 안 썼으면 잔량 얘기를 꺼내지 않는다
+    const leftTail = quotaTail || 원인Tail || 안썼다
       ? ''
       : leftNow.total === 0
         ? ` · 무료 ${KEY_NAME}를 다 썼어요 · 이제 기본 인식으로 계속 돼요`
@@ -497,12 +585,16 @@ export default function EditorScreen({ id, prefill }) {
     // 마지막 장 — 결과 반영
     if (target === 'ingredients' || target === 'steps') {
       const base = target === 'ingredients' ? '재료 초안을 담았어요' : '만드는 법 초안을 담았어요'
-      nav.showToast(base + (freeTail || quotaTail || leftTail || ' · 다듬어 주세요'), freeTail || quotaTail || leftTail ? 6500 : 4800)
+      nav.showToast(base + (freeTail || 원인Tail || quotaTail || leftTail || ' · 다듬어 주세요'), freeTail || 원인Tail || quotaTail || leftTail ? 긴띠 : 4800)
       return
     }
     const combined = ocrAccum.current
+    // 🆓 「그냥 읽기」로 왔나 = 프록시를 «한 번도 안 불렀다»(셈.안부름). 화면이 고른 값이 아니라 «사실»이다.
+    const 무료로읽었다 = !!셈.안부름
+    set무료판(무료로읽었다)
     // 🆓 freeTail = 「그냥 읽기」로 왔다(열쇠를 안 썼다) — 열쇠 얘기보다 «먼저» 말한다
-    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + (freeTail || quotaTail), freeTail || quotaTail ? 6000 : 3200); return }
+    // 🈳 글자를 못 얻었다 — 원인Tail 이 「열쇠는 그대로예요」까지 말해 준다(서버가 안 깎았을 때만)
+    if (!combined.trim()) { nav.showToast('사진에서 글자를 찾지 못했어요' + (freeTail || 원인Tail || quotaTail), freeTail || 원인Tail || quotaTail ? 긴띠 : 3200); return }
     // 🤖 AI 다듬기 — ⭐**규칙 파서를 «먼저» 돌려놓는다.**
     //   AI 가 안 되든 느리든 이상하든 이 `r` 이 그대로 쓰인다(3층 구조 1층 · 앱은 절대 안 죽는다).
     //   ⛔ 순서를 뒤집지 말 것 — AI 를 먼저 기다렸다가 실패하면 그때 파싱하면, 실패한 만큼 유저가 더 기다린다.
@@ -549,11 +641,17 @@ export default function EditorScreen({ id, prefill }) {
       //   ⏱ 그래서 길이(ms)를 «준다» — 20초. 다 되면 아래 결과 토스트가 덮는다.
       (freeTail
         ? '초안을 채웠어요' + freeTail + ' · 사진 보며 고쳐 주세요'
-        : quotaTail
+        : 원인Tail
+          ? '초안을 채웠어요' + 원인Tail
+          : quotaTail
           ? '초안을 채웠어요' + quotaTail + ' · 결과를 더 다듬어 주세요'
           : leftTail
             ? '초안을 채웠어요' + leftTail
-            : '초안을 채웠어요 · 사진 보며 다듬어 주세요') + AI다듬는중,
+            : '초안을 채웠어요 · 사진 보며 다듬어 주세요')
+        // 🆓🆓 [창업자 실물 2026-09-14 20:37] 무료로 읽었는데 꼬리에 「AI가 더 다듬는 중이에요」가
+        //   «무조건» 붙어 있었다 — 무료는 AI 를 아예 안 부르는데 도는 척을 한 것이다.
+        //   ⛔ 창업자 = "이거까지 띄우면 너무 정신없어서". 안 도는 일을 말하지 않는다.
+        + (freeTail ? '' : AI다듬는중),
       20000,
     )
 
@@ -564,17 +662,59 @@ export default function EditorScreen({ id, prefill }) {
     //      그때 표시가 없으면 **영영 안 다듬어진다** — 열쇠는 이미 나갔는데.
     //   ✅ 표시가 남아 있으면 그 레시피를 열 때 `RecipeDetailScreen` 이 저절로 만회한다(열쇠 0).
     //   🧪 판 = `_repro-앱이정리됨-0904.mjs`
-    updateRecipe(r.id, { tidyFail: 1 })
-    tidyRecipe(combined, shotAccum.current).then((ai) => {
+    // 🆓🆓 [2026-09-14 · 창업자 확정 2026-08-29] 무료로 읽었으면 AI 정리가 «아예 없다» —
+    //   그래서 「아직 못 다듬음」 표시도 «안» 남긴다. 남기면 레시피 상세가 저절로 만회해서
+    //   결국 열쇠 0개로 AI 가 도는 그 길이 다시 열린다(막는 곳이 하나여야 한다).
+    //   ⭐ 대신 «무료로 읽었다»를 레시피에 적어 둔다 — 「AI로 다시 다듬기」 단추를 가릴 잣대다.
+    if (무료로읽었다) updateRecipe(r.id, { freeRead: 1, tidyFail: 0 })
+    else updateRecipe(r.id, { tidyFail: 1 })
+    // 🏷🏷 **제목만 못 찾았을 때 — 「직접 적어주세요」로 데려간다** (창업자 확정 2026-09-09)
+    //
+    //   📮 창업자 = *"캡쳐에 제목이 없는거는 ai스캔을해도 안나오잖아. 이건 그냥 유저가 저장을 하는게 맞아"*
+    //
+    //   ⛔⛔ **이게 「기본읽기가 많은」 진짜 원인일 수 있다.** 제목이 안 잡히면 유저는
+    //      «나가서 사진을 다시 골랐다» — 열쇠를 또 태우는데 **같은 사진이라 결과도 똑같다.**
+    //      공짜 길(「AI로 다시 다듬기」·열쇠 0개)이 있는데 **접힌 서랍 안에 숨어 있어서** 아무도 못 찾았다.
+    //   ⭐ 그래서 «사진에 없는 것»은 AI 를 또 돌리지 말고 **한 줄로 알려주고 제목 칸으로 데려간다.**
+    //      ⛔ 열쇠 얘기는 «안» 한다 — 글자는 얻었으니 정당하게 쓴 것이다. 꺼내면 오히려 「깎였나?」로 읽힌다.
+    //
+    //   ⏱ **AI 다듬기가 «끝난 뒤»에 본다** — AI 가 제목을 채워 줄 수도 있어서,
+    //      먼저 말하면 20초 뒤 제목이 생겨 **틀린 안내**가 된다.
+    const 제목챙기기 = () => {
+      const el = titleRef.current
+      if (!el || el.value.trim()) return            // 이미 제목이 있으면 조용히 넘어간다
+      nav.showToast('사진에 제목이 없어요 · 직접 적어주세요', 6000)
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setTimeout(() => el.focus(), 300)
+    }
+    // 🔵🔵 **[2026-09-09 창업자 실물 제보] 「빙글빙글이 사라지고 30초쯤 아무 일도 없다가 갑자기 된다」**
+    //   ⛔ 옛 판 = 위 토스트가 «20초»만 떠 있는데(20000) `tidy.js` 의 문구는 «20~60초»라고 말한다.
+    //      안내가 스스로 모순이라 **다듬는 동안 화면이 죽은 것처럼 보였다.**
+    //   ⭐ 그래서 시간이 정해진 토스트 말고 **끝날 때까지 남는 줄**을 켠다(아래 `다듬는중` 표시).
+    //   ⛔⛔ 두 갈래(성공·실패) «모두»에서 꺼야 한다 — 한 쪽을 빠뜨리면 «영영 도는 것»으로 굳는다.
+    // 🆓 무료로 읽었으면 여기서 끝이다 — 규칙 파서 결과가 그대로 남는다(확정의 「불편한 쪽」).
+    //   ⛔ 「다듬는 중」 표시도 안 켠다 — 돌지도 않는데 도는 것처럼 보이면 그게 더 나쁘다.
+    if (무료로읽었다) { setTimeout(제목챙기기, 1200); return }
+    set다듬는중(true)
+    tidyRecipe(combined, shotAccum.current, { 무료: 무료로읽었다 }).then((ai) => {
+      set다듬는중(false)
+      끝표시(!!ai)   // 🔚 사라지지 않고 «끝말»로 바뀐다 — 됐는지 안 됐는지 보인다
       if (ai) {
-        채우기(mergeTidy(r, ai))
+        채우기(mergeTidy(r, ai, combined))
         updateRecipe(r.id, { tidyFail: 0 })   // ✅ 다 됐으니 표시를 지운다(안 지우면 또 다듬는다)
         nav.showToast('AI가 레시피를 더 다듬었어요' + tidyTail())
+        setTimeout(제목챙기기, 1200)          // ⏱ 위 안내를 읽을 틈을 준 뒤에
         return
       }
       // ⛔ 실패는 «유저에게 안 알린다» — 이미 채워져 있어 할 일이 0이다. 창업자(운영자)만 이유를 본다.
       //    ⭐ 표시는 «그대로 둔다» — 다음에 그 레시피를 열 때 만회한다.
       if (tidyFounder()) nav.showToast('AI 다듬기는 못 했어요' + tidyTail())
+      setTimeout(제목챙기기, 1200)
+    }).catch(() => {
+      // ⛔ 여기까지 오는 일은 «없어야» 하지만 — 오면 표시가 영영 남는다. 그게 제일 나쁜 모양이다.
+      set다듬는중(false)
+      끝표시(false)
+      setTimeout(제목챙기기, 1200)
     })
   }
 
@@ -585,6 +725,8 @@ export default function EditorScreen({ id, prefill }) {
   //   ⛔ 두 번 눌러 두 판이 겹치지 않게 `다듬는중` 으로 막는다(뉴런이 두 배로 나간다).
   const 다시다듬기 = async () => {
     if (다듬는중 || !rawText) return
+    // 🔐 허락 «먼저» — 직접 눌렀으니 「사용 안 함」이었어도 다시 묻는다(큰 틀 6-② ⓑ · 2026-09-08)
+    if (!(await AI동의받기({ 다시묻기: true }))) return
     set다듬는중(true)
     nav.showToast('AI가 다시 다듬는 중이에요 · 20~60초 걸려요', 6000)
     // ⭐ 규칙 파서를 «먼저» 돌려둔다 — AI 가 분량을 떼먹으면 이걸로 되살린다(`mergeTidy`).
@@ -593,15 +735,16 @@ export default function EditorScreen({ id, prefill }) {
     //   ⛔ dataURL 이 아니면 안 보낸다(`tidy.js` 가 또 한 번 거른다).
     const 표지 = typeof editing?.image === 'string' ? editing.image : ''
     const 사진 = shotAccum.current || (표지.startsWith('data:image/') ? 표지 : '')
-    const ai = await tidyRecipe(rawText, 사진)
+    const ai = await tidyRecipe(rawText, 사진, { 무료: 무료판 || !!editing?.freeRead })
     set다듬는중(false)
+    끝표시(!!ai)
     if (!ai) {
       // ⛔ 여기선 실패를 «유저에게도» 알린다 — 유저가 «직접 눌렀으니» 결과를 알 권리가 있다.
       //    (공유받기 때 조용한 것과 다르다. 거긴 유저가 부른 적이 없다)
       nav.showToast('AI 다듬기는 못 했어요 · 한 번 더 눌러 보세요' + (tidyFounder() ? tidyTail() : ''), 6000)
       return
     }
-    const m = mergeTidy(기본, ai)
+    const m = mergeTidy(기본, ai, rawText)
     setF((prev) => ({
       ...prev,
       title: m.title || prev.title,
@@ -699,6 +842,11 @@ export default function EditorScreen({ id, prefill }) {
     } else {
       const rec = { id: newId(), favorite: false, cooked: 0, savedAt: Date.now(), ...patch }
       addRecipe(rec)
+      // 🪜 [2026-09-10] 퍼널의 마지막 걸음 — «진짜로 저장됐나».
+      //    ⛔ 여기(새로 만든 쪽)에서«만» 보낸다 — 위쪽 `editing` 갈래(이미 있는 편을 고친 것)에서
+      //       같이 보내면 마지막 칸이 부풀어 «새는 자리»를 가린다.
+      //    ⛔ 단추를 두 번 눌러도 여기까지는 한 번만 온다(저장이 끝난 자리다).
+      레시피저장()
       나갈까(() => {
         // ⛔ 임시저장은 «성공한 뒤»에만 지운다 — 실패했는데 지우면 적던 것까지 잃는다
         try { localStorage.removeItem(DRAFT_KEY) } catch { /* noop */ }
@@ -730,7 +878,13 @@ export default function EditorScreen({ id, prefill }) {
               </span>
               {UNITS.map((u) => (
                 <button key={u} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => insertUnit(u, focusField === 'steps' ? stepRef : ingRef, focusField)}
-                  style={{ flex: '0 0 auto', padding: '8px 14px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', border: '1px solid var(--line)', fontSize: 16, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
+                  // 🥄🥄 [창업자 확정 2026-09-14 · 시안 B] **파란 알약 + 바탕색 글씨.**
+                  //   📮 창업자 = "잘보이는 색으로 바꾸자" · "눈에 띄어야 그걸보고 쉽게 고치지"
+                  //   ⛔ 옛 판 = 바탕 var(--cream) #f2ede3 인데 화면 바탕이 #fdfbf7 이라 «거의 같은 색»이었다.
+                  //      크림 알약은 앱 곳곳(태그·알약)에 널려 있어 그 사이에 묻혔다 — 누르는 것인지도 안 읽혔다.
+                  //   ⭐ 글씨를 #fff 로 «박지 않는다» — var(--bg) 면 밝은 테마에선 거의 흰색,
+                  //      다크에선 차콜(#17171b)이 되어 파란 알약 위에서 «둘 다» 또렷하다.
+                  style={{ flex: '0 0 auto', padding: '8px 14px', borderRadius: 999, background: 'var(--brown)', color: 'var(--bg)', border: '1px solid var(--brown)', fontSize: 16, fontWeight: 700, fontFamily: /[a-zA-Z]/.test(u) ? 'var(--mono, monospace)' : 'inherit' }}>
                   {u}
                 </button>
               ))}
@@ -781,7 +935,9 @@ export default function EditorScreen({ id, prefill }) {
         </button>
       </div>
 
+
       <input ref={photoRef} type="file" accept="image/*" onChange={onPhoto} style={{ display: 'none' }} />
+
       <input ref={ocrRef} type="file" accept="image/*" multiple onChange={onOcrFile} style={{ display: 'none' }} />
 
       {/* 보면서 쓰기 — 영상(유튜브·인스타)이나 캡처 원본을 위에 고정하고 아래에서 적는다.
@@ -1012,13 +1168,22 @@ export default function EditorScreen({ id, prefill }) {
                     ⭐ 둘 다 «그때» 이미 말하고 있다 — 소진은 340~360줄 꼬리가, 고치기는 각 칸의 📷 단추가.
                  ⑶ 예시(「3장 고르면 3장」)까지 붙여 두 줄이 됐다. 규칙이 한 줄이면 예시가 필요 없다.
               📌 한 줄 = **지금 이 화면에서 필요한 것만.** */}
-          <div style={{
-            paddingLeft: 10, marginBottom: 10,
-            borderLeft: '3px solid var(--danger)', wordBreak: 'keep-all',
-            fontSize: 16.4, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px',
-          }}>
-            사진 1장에 {keyCount(1)}를 써요
-          </div>
+          {/* 🆓🆓 **[창업자 실물 2026-09-15] 무료로 읽기로 왔으면 이 빨간 줄을 «안» 띄운다.**
+              📮 창업자 = *"위에 빨간 얄약도 안띄우기로 했었고"*
+              ⛔⛔ 뿌리 = 이 줄에 **조건이 한 개도 없었다.** 그래서 「그냥 읽기」로 들어와도 떴고,
+                 같은 화면 위쪽 띠는 「열쇠 안 쓰고 읽어서 덜 정확해요」라고 말하고 있었다.
+                 ＝ **한 화면이 서로 반대말을 했다.** 유저는 「그래서 썼다는 거야 만 거야」가 된다.
+              ⭐ 잣대 = `ocrNoVision`(어느 단추로 들어왔나) ＋ `무료판`(읽고 나서 «사실»로 안 것).
+                 둘 다 본다 — 앞엣것은 읽기 «전»에도 알고, 뒤엣것은 열쇠가 0이라 무료가 된 경우를 잡는다. */}
+          {!(ocrNoVision.current || 무료판 || editing?.freeRead) && (
+            <div style={{
+              paddingLeft: 10, marginBottom: 10,
+              borderLeft: '3px solid var(--danger)', wordBreak: 'keep-all',
+              fontSize: 16.4, fontWeight: 900, color: 'var(--danger)', letterSpacing: '-.3px',
+            }}>
+              사진 1장에 {keyCount(1)}를 써요
+            </div>
+          )}
 
           {[
             // ⛔ 「재료 칸에 만드는 법이 섞여 들어왔다면…」을 뺐다(창업자 *"이 안내도 정신이 없어"*).
@@ -1036,41 +1201,81 @@ export default function EditorScreen({ id, prefill }) {
           ))}
         </div>
 
-        {/* 사진 읽는 중 — 칸 채우기 진행 표시
-            ⏳⏳ [2026-08-13 창업자 제보] *"레시피 2장 올릴때 로딩이 좀 걸려. **못기다리고 이상하다 하고 끌수도 있을 듯.**"*
-            ⛔ 옛 판 = 동그라미 하나 돌고 「…40%」 한 줄. **한 장을 다 읽으면 40% 가 0% 로 돌아간다** —
-               숫자가 뒤로 가니 «멈췄다/고장났다»로 읽힌다. 그게 끄고 싶어지는 순간이다.
-            ✅ 셋을 고쳤다 —
-               ① **막대가 앞으로만 간다**(장 수를 반영한 «전체» 진척률 — 1장째 40% 면 2장 중 20%)
-               ② **얼마나 걸리는지 미리 말한다**(여러 장이면 「조금 걸려요」 · 「그대로 두면 돼요」)
-               ③ **꼬르곰이 통통 뛴다** — 그림이 움직이면 «살아 있다»가 보인다(동그라미보다 세다) */}
-        {ocr.busy && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 13px', borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', marginBottom: 12 }}>
-            <img src={uiGomPot} alt="" aria-hidden="true" draggable={false} className="hk-m-tongtong"
-              width={33} height={47} style={{ flex: '0 0 auto', objectFit: 'contain', margin: '-6px 0' }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 16.5, fontWeight: 700 }}>
-                사진에서 글자 읽는 중… {ocr.total > 1 ? `${ocr.total}장 중 ${ocr.page}장째` : `${ocr.pct}%`}
-              </div>
-              {/* 📊 전체 진척률 — 여러 장이면 「앞 장들은 다 끝났다」까지 세어야 막대가 뒤로 안 간다 */}
-              <div style={{ height: 6, borderRadius: 99, background: 'rgba(122,90,58,.16)', overflow: 'hidden', margin: '6px 0 0' }}>
-                <div style={{
-                  height: '100%', borderRadius: 99, background: 'var(--brown)',
-                  width: `${Math.min(100, Math.round(((ocr.page - 1) * 100 + ocr.pct) / Math.max(1, ocr.total)))}%`,
-                  transition: 'width .35s ease',
-                }} />
-              </div>
-              {/* ⏱ 「오래 걸린다」를 «먼저» 말해 준다 — 예고된 기다림은 고장으로 안 읽힌다 */}
-              <div className="t-sub" style={{ fontSize: 15, marginTop: 5, lineHeight: 1.4 }}>
-                {ocr.total > 1
-                  ? <>사진이 {ocr.total}장이라 조금 걸려요 · <b style={{ fontWeight: 800, color: 'var(--brown)' }}>이 화면 그대로 두면 돼요</b></>
-                  : '잠깐만요, 다 읽으면 칸을 채워 드려요'}
+
+        {/* 📣📣 **「지금 뭐 하는 중인지」는 «맨 위»에 둔다** [2026-09-09 창업자 실물 제보]
+            📮 창업자 = *"난 토스트만 봤어. 넘 아래있으니 못본건지 아님 안뜬건지 모르겠다"*
+            ⛔ 옛 자리 = 사진칸(34vh) + 안내상자 «아래»라 폰에서 첫 화면에 안 들어왔다.
+               떠 있었는데 «못 본» 것이다 — 안 뜬 것보다 나쁘다(고쳤다고 착각한다).
+            ⭐ 상단바 바로 밑 = 스크롤을 어디로 하든 처음에 반드시 보이는 자리.
+            🔒 판 = scripts/_repro-다듬는중표시-0909.mjs */}
+          {/* 사진 읽는 중 — 칸 채우기 진행 표시
+              ⏳⏳ [2026-08-13 창업자 제보] *"레시피 2장 올릴때 로딩이 좀 걸려. **못기다리고 이상하다 하고 끌수도 있을 듯.**"*
+              ⛔ 옛 판 = 동그라미 하나 돌고 「…40%」 한 줄. **한 장을 다 읽으면 40% 가 0% 로 돌아간다** —
+                 숫자가 뒤로 가니 «멈췄다/고장났다»로 읽힌다. 그게 끄고 싶어지는 순간이다.
+              ✅ 셋을 고쳤다 —
+                 ① **막대가 앞으로만 간다**(장 수를 반영한 «전체» 진척률 — 1장째 40% 면 2장 중 20%)
+                 ② **얼마나 걸리는지 미리 말한다**(여러 장이면 「조금 걸려요」 · 「그대로 두면 돼요」)
+                 ③ **꼬르곰이 통통 뛴다** — 그림이 움직이면 «살아 있다»가 보인다(동그라미보다 세다) */}
+          {ocr.busy && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 13px', borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', marginBottom: 12 }}>
+              <img src={uiGomPot} alt="" aria-hidden="true" draggable={false} className="hk-m-tongtong"
+                width={33} height={47} style={{ flex: '0 0 auto', objectFit: 'contain', margin: '-6px 0' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 16.5, fontWeight: 700 }}>
+                  사진에서 글자 읽는 중… {ocr.total > 1 ? `${ocr.total}장 중 ${ocr.page}장째` : `${ocr.pct}%`}
+                </div>
+                {/* 📊 전체 진척률 — 여러 장이면 「앞 장들은 다 끝났다」까지 세어야 막대가 뒤로 안 간다 */}
+                <div style={{ height: 6, borderRadius: 99, background: 'rgba(122,90,58,.16)', overflow: 'hidden', margin: '6px 0 0' }}>
+                  <div style={{
+                    height: '100%', borderRadius: 99, background: 'var(--brown)',
+                    width: `${Math.min(100, Math.round(((ocr.page - 1) * 100 + ocr.pct) / Math.max(1, ocr.total)))}%`,
+                    transition: 'width .35s ease',
+                  }} />
+                </div>
+                {/* ⏱ 「오래 걸린다」를 «먼저» 말해 준다 — 예고된 기다림은 고장으로 안 읽힌다 */}
+                {/* ⛔ keep-all — 한글 낱말이 «가운데»서 잘리는 것을 막는다(전수 점검 2026-09-09) */}
+                <div className="t-sub" style={{ fontSize: 15, marginTop: 5, lineHeight: 1.4, wordBreak: 'keep-all' }}>
+                  {ocr.total > 1
+                    ? <>사진이 {ocr.total}장이라 조금 걸려요 · <b style={{ fontWeight: 800, color: 'var(--brown)' }}>이 화면 그대로 두면 돼요</b></>
+                    : '잠깐만요, 다 읽으면 칸을 채워 드려요'}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-
+          )}
+        
+          {/* 🤖🤖 **AI 가 더 다듬는 중 — 끝날 때까지 «안 사라지는» 줄** [2026-09-09 창업자 실물 제보]
+              📮 창업자 = *"ai가 읽는다 안내가 끝나고 어느순간 아무일도 없다가 갑자기돼"* (30초쯤)
+              ⛔ 옛 판 = 토스트 20초 vs 실제 20~60초 → **화면이 죽은 것처럼 보인다.** 그때 앱을 끈다.
+              ⭐ 토스트는 시간이 정해져 있어 못 맞춘다 — «상태»로 띄우고 끝나면 저절로 사라지게 한다.
+              ⛔ 「사진 읽는 중」과 «같이» 뜨지 않는다 — 글자 읽기가 끝난 «뒤»에 다듬기가 시작된다.
+              🔒 판 = scripts/_repro-다듬는중표시-0909.mjs */}
+          {다듬는중 && !ocr.busy && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 13px', borderRadius: 'var(--r-md)', background: 'var(--cream)', color: 'var(--brown)', marginBottom: 12 }}>
+              <img src={uiGomPot} alt="" aria-hidden="true" draggable={false} className="hk-m-tongtong"
+                width={33} height={47} style={{ flex: '0 0 auto', objectFit: 'contain', margin: '-6px 0' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 16.5, fontWeight: 700 }}>AI가 더 다듬는 중이에요…</div>
+                <div className="t-sub" style={{ fontSize: 15, marginTop: 4, lineHeight: 1.4, wordBreak: 'keep-all' }}>
+                  20~60초 걸려요 · <b style={{ fontWeight: 800, color: 'var(--brown)' }}>그동안 아래 칸을 고쳐도 돼요</b>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* 🔚 끝말 — 위 줄이 «사라지는 대신» 이걸로 바뀐다(9초). 창업자 09-13 *"끝난 건지 안 된 건지 몰라"* */}
+          {다듬끝 && !다듬는중 && !ocr.busy && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 13px', borderRadius: 'var(--r-md)', background: 다듬끝.됐나 ? '#EAF3E4' : 'var(--cream)', color: 'var(--brown)', marginBottom: 12 }}>
+              <img src={uiGomPot} alt="" aria-hidden="true" draggable={false}
+                width={33} height={47} style={{ flex: '0 0 auto', objectFit: 'contain', margin: '-6px 0' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 16.5, fontWeight: 700 }}>{다듬끝.됐나 ? 'AI 다듬기 다 됐어요' : '이번엔 AI 다듬기가 안 됐어요'}</div>
+                <div className="t-sub" style={{ fontSize: 15, marginTop: 4, lineHeight: 1.4, wordBreak: 'keep-all' }}>
+                  {다듬끝.됐나 ? '재료와 만드는 법을 고쳐 넣었어요 · 확인하고 저장하면 돼요' : '초안은 그대로 있어요 · 고쳐서 저장해도 되고, 저장한 뒤 「AI로 다시 다듬기」를 눌러도 돼요'}
+                </div>
+              </div>
+            </div>
+          )}
         {/* 사진으로 채우기는 재료·만드는 법 각 칸 옆의 📷 버튼으로 — 썸네일 사진과 헷갈리지 않게 여기엔 두지 않는다 */}
+
         <div className="field">
           <label>제목</label>
           {/* autoFocus 금지 — 화면에 들어오자마자 키보드가 아래 내용을 다 가려버린다. */}
@@ -1152,7 +1357,15 @@ export default function EditorScreen({ id, prefill }) {
         <div className="field">
           <label>폴더</label>
           <div className="hscroll" style={{ padding: 0, margin: 0 }}>
-            {folders.map((c) => (
+            {/* 🌏🌏 [창업자 실물 2026-09-14] 나라를 «뺀다» — 바로 위 「카테고리」 줄과 똑같아서
+                한 화면에 한식·중식·일식·양식·아시안·기타가 «두 번» 떴다.
+                📮 창업자 = "카테고리도 한식 위 아래 두번 중복이야" ·
+                   "제목아래 카테고리랑 테그밑에 폴더가 또있어"
+                ⛔ 그 전엔 «서로 다른 값»도 고를 수 있었다 — 카테고리는 한식인데 폴더는 양식처럼.
+                ⭐ 갈래를 이렇게 나눈다 = 카테고리는 「어느 나라 것인가」 · 폴더는 「어디에 넣어둘까」.
+                ⛔ 저장된 편은 하나도 안 움직인다 — 폴더가 「한식」인 편은 그대로 있고
+                   레시피 탭 한식 칩에도 그대로 뜬다. «고르는 자리»에서만 안 보인다. */}
+            {folders.filter((c) => !나라들.includes(c)).map((c) => (
               <button key={c} className={`pill press ${f.folder === c ? 'active' : ''}`} onClick={() => set('folder', c)}>{c}</button>
             ))}
             <button className="pill press" onClick={() => setNewFolder(true)}>
@@ -1245,6 +1458,9 @@ export default function EditorScreen({ id, prefill }) {
                          ⛔ 없으면 글자만으로 돈다(그래도 규칙 파서보단 낫다).
                       ⛔ 이 단추는 «누른 사람이 원해서» 칸을 갈아끼운다 — 손으로 고친 것도 덮인다.
                          그래서 아래에 그렇게 적어 둔다(모르고 눌러 잃는 일이 없게). */}
+                  {/* 🆓 [2026-09-14] 무료로 읽은 판엔 «안» 보인다 — 누르면 열쇠 0개로 AI 가 돈다.
+                      창업자 확정(2026-08-29 · 재론 금지) = 「열쇠 없이도 AI 정리」를 어디에도 열지 않는다. */}
+                  {!(무료판 || editing?.freeRead) && (
                   <button
                     type="button"
                     className="press"
@@ -1253,6 +1469,7 @@ export default function EditorScreen({ id, prefill }) {
                   >
                     {다듬는중 ? 'AI가 다듬는 중…' : 'AI로 다시 다듬기'}
                   </button>
+                  )}
                 </div>
                 <div style={{ fontSize: 15, color: 'var(--text-sub)', marginTop: 6, lineHeight: 1.5 }}>
                   레시피가 이상하게 담겼을 때 이 글자를 그대로 보내주시면 원인을 찾을 수 있어요.
@@ -1307,13 +1524,25 @@ export default function EditorScreen({ id, prefill }) {
           message={'그냥 닫으면 다음에 이어서 쓸 수 있어요.\n버리면 지금 쓴 내용이 사라져요.'}
           confirmLabel="버리기"
           danger
+          // 🚪🚪 **[창업자 제보 2026-09-13] *"버리기 누르면 변화없음 나가기도 안됨"* · *"저장해야지만 레시피화면으로 가"***
+          //   🍎 같은 날 아이폰 갈래(빌드 15 딸 폰)도 같은 증상을 같은 길(popAll)로 고쳤다 — 합칠 때 코드는 같았고 주석만 겹쳤다.
+          //   ⛔⛔ 뿌리 = `nav.pop()` 은 `history.back()` 인데, **이 물음 시트가 «자기 히스토리 칸»을 하나 쓴다**
+          //      (`useBackHandler.js` 의 `useModalBack` 머리주석 — *"마운트될 때 진짜 히스토리 칸을 하나 쌓고"*).
+          //      → 「버리기」가 부른 back() 이 **그 시트 칸만 먹고** 편집 화면은 그대로 남았다.
+          //      🔢 재현판 `_repro-버리기안나감-0913` = 초안은 «지워지는데» 화면이 «안 나간다»(창업자 증상 그대로).
+          //   ⭐ 저장이 잘 나가던 이유가 답이었다 — 저장은 `nav.popAll()` 을 쓴다.
+          //      그건 **쌓인 화면 칸 ＋ 모달 칸을 «세어서» 한 번에** 되돌린다(App.jsx `popAll`).
+          //   ✅ 그래서 버리기·그냥 닫기도 «같은 문»으로 나간다. 저장 뒤와 가는 곳이 같은 것도 맞다 —
+          //      둘 다 「이 작성은 끝났다」이고, 뒤로가기로 빈 편집기가 다시 나오면 안 된다(popAll 주석 그대로).
+          //   ⛔ `setTimeout`·`requestAnimationFrame` 으로 틈을 주는 땜빵을 쓰지 않는다(절대원칙 34) —
+          //      그건 타이밍에 기대는 것이고, 느린 폰에서 도로 깨진다.
           onConfirm={() => {
             try { localStorage.removeItem(DRAFT_KEY) } catch { /* noop */ }
-            nav.pop()
+            nav.popAll()
             nav.showToast('쓰던 내용을 버렸어요')
           }}
           secondaryLabel="그냥 닫기 (이어서 쓸래요)"
-          onSecondary={() => nav.pop()}
+          onSecondary={() => nav.popAll()}
           onClose={() => setDiscardAsk(false)}
         />
       )}
@@ -1340,16 +1569,34 @@ export default function EditorScreen({ id, prefill }) {
           //    ⭐ 읽는 중 안내(위)와 자르는 장(제목)이 다른 숫자라 둘 다 있어야 헷갈리지 않는다.
           index={ocrCropped.current}
           total={ocrTotal.current}
+          // 🔑 [창업자 확정 2026-09-10] 자르기 단추는 «누르는 마지막 자리»인데 값이 한 자도 없었다.
+          //    ⛔ 창업자가 이 화면을 보고 「이건 열쇠를 쓰는거잖아」로 읽었다 — 안 쓰는 길인데도.
+          //    ⛔⛔ 주석을 «속성 자리»에 JSX 주석으로 넣으면 빌드가 깨진다(DiaryEntrySheet.jsx:122 에 적혀 있다).
+          doneLabel={ocrNoVision.current ? `이 부분만 읽기 · ${KEY_NAME} 안 써요` : `이 부분만 읽기 · ${KEY_NAME} 1${KEY_UNIT}`}
           title={
             ocrTargetRef.current === 'ingredients' ? '재료 사진 자르기'
               : ocrTargetRef.current === 'steps' ? '만드는 법 사진 자르기'
-                : '글자 부분만 남기기'
+                : ocrNoVision.current ? '레시피 부분만 남기기'
+                  : '글자 부분만 남기기'
           }
           hint={
             ocrTargetRef.current === 'ingredients' ? (
               <>이 사진의 글자는 <b style={{ color: '#f0ede7' }}>재료 칸에만</b> 담겨요. 재료 부분만 남겨주세요.</>
             ) : ocrTargetRef.current === 'steps' ? (
               <>이 사진의 글자는 <b style={{ color: '#f0ede7' }}>만드는 법 칸에만</b> 담겨요. 순서 부분만 남겨주세요.</>
+            ) : ocrNoVision.current ? (
+              // 🆓🆓 [창업자 2026-09-14] 무료로 읽을 때는 «잘라내는 것»이 곧 인식률이다 — 그래서 크게 적는다.
+              //   📮 창업자 = "안내가 잘~~보이게" · "제목 재료 만드는법만 나오게 잘라야하지않아"
+              //   ⭐ 왜 열쇠 쪽과 말이 다른가 = 조리 문장에서 재료를 «더 뽑아주는» 것은 AI 만 한다.
+              //      무료는 그걸 못 하니 글을 더 남겨도 득이 없고, 글자만 많아져 흐려진다.
+              //      ＋ 무료 쪽은 긴 변이 1500px 미만이면 최대 3배로 키워 읽는다(ocr.js preprocess)
+              //        → 사진을 걷어낼수록 글자가 그만큼 커져서 들어간다.
+              <>
+                <b style={{ color: '#fff', fontSize: 19 }}>제목 · 재료 · 만드는 법</b>
+                <span style={{ fontSize: 19 }}>만 남겨주세요</span><br />
+                <span style={{ color: '#ffd9a0', fontSize: 16, fontWeight: 700 }}>사진을 잘라낼수록 글자를 더 잘 읽어요</span><br />
+                <span style={{ color: '#cfcac1', fontSize: 14.5 }}>지금은 {KEY_NAME} 없이 읽어요</span>
+              </>
             ) : undefined
           }
           onDone={(img) => { setCropImg(null); setRefs((p) => [...p, img]); setPin('photo'); onCropped(img) }}

@@ -33,7 +33,8 @@ globalThis.fetch = async (url, opt) => {
   마지막몸통 = JSON.parse(opt.body)
   return { ok: true, json: async () => ({ title: '삼치간장조림', ingredients: ['무 1/3개'], steps: ['구워요.'], memo: '' }) }
 }
-globalThis.localStorage = { getItem: () => null, setItem: () => {} }
+// 🔐 [2026-09-08] AI 허락(큰 틀 6-② ⓑ) — 이 판은 «허락한 유저»를 흉내낸다(허락 자체는 _repro-AI동의-0908 이 잰다)
+globalThis.localStorage = { getItem: (k) => (k === 'hankki:ai:consent' ? 'yes' : null), setItem: () => {} }
 
 const { tidyRecipe } = await import(join(앱, 'src/tidy.js'))
 const 긴글 = '삼치간장조림 레시피\n[재료]\n무 1/3개\n비비고 순살 삼치 2팩\n식용유 2스푼\n물 200ml\n[만드는 법]\n팬에 식용유를 두르고 무를 구워주세요.'
@@ -73,7 +74,11 @@ const 티디 = readFileSync(join(앱, 'ocr-proxy/worker-tidy.js'), 'utf8')
 
 // ── ③ 창업자 ↔ 유저 갈라 세기 ────────────────────────────────
 console.log('\n  ── ③ 창업자 ↔ 유저 (창업자 지시 2026-09-01) ──')
-잰다(/async function 통세기\(kv, ymd, founder, 눈\)/.test(티디), '③-1 통세기가 창업자·눈을 받는다')
+// ⛔ 인자를 «글자 그대로» 재지 않는다 — 뒤에 인자가 하나 더 붙으면 뜻은 그대로인데 죽는다.
+//    🔢 2026-09-14 에 실제로 그랬다: 다른 세션이 「까닭」을 더하자 이 칸이 가짜 빨간불을 냈다
+//       (통세기 본문은 여전히 founder·눈을 센다 — 눈으로 열어 확인했다).
+//    ⭐ 그래서 「이 셋을 받는다」까지만 보고 뒤는 열어 둔다. ③-2·③-3 이 «실제로 세는지»를 따로 잰다.
+잰다(/async function 통세기\(kv, ymd, founder, 눈[,)]/.test(티디), '③-1 통세기가 창업자·눈을 받는다')
 잰다(/if \(founder\) await inc\(kv, `tdf:\$\{ymd\}`/.test(티디), '③-2 창업자 몫을 «따로» 센다')
 잰다(/if \(눈\) await inc\(kv, `tv:\$\{ymd\}`/.test(티디), '③-3 «사진까지 본」 편수를 따로 센다')
 잰다(!/await 통세기\(kv, ymd\)(?!,)/.test(티디), '③-4 ⛔옛 호출(인자 둘)이 안 남았다')
@@ -93,13 +98,16 @@ const 에디터 = readFileSync(join(앱, 'src/screens/EditorScreen.jsx'), 'utf8'
 잰다(/const shotAccum = useRef\(''\)/.test(에디터), '④-1 사진을 들 자리가 있다(useRef)')
 잰다(/if \(!shotAccum\.current && typeof img === 'string'\) shotAccum\.current = img/.test(에디터),
   '④-2 자른 «첫 장»만 들고 있는다')
-잰다(/tidyRecipe\(combined, shotAccum\.current\)/.test(에디터), '④-3 정리할 때 사진을 같이 넘긴다')
+// 🆓 [2026-09-14] 세 번째 인자(무료 읽기 표식)가 붙었다 — 재는 것은 «사진을 같이 넘기나»라 그대로다.
+잰다(/tidyRecipe\(combined, shotAccum\.current[,)]/.test(에디터), '④-3 정리할 때 사진을 같이 넘긴다')
 잰다(/shotAccum\.current = ''/.test(에디터), '④-4 ⭐새로 고르면 앞 판 사진을 버린다(옛 사진 ✕ 새 글자 방지)')
 잰다(!/localStorage[\s\S]{0,80}shotAccum/.test(에디터) && !/shotAccum[\s\S]{0,80}localStorage/.test(에디터),
   '④-5 ⛔사진을 localStorage 에 넣지 않는다 (store.jsx:698 — 저장이 통째로 막힌다)')
 
 const 앱제이 = readFileSync(join(앱, 'src/App.jsx'), 'utf8')
-잰다(/tidyRecipe\(text, 장들\[0\]\)/.test(앱제이),
+// ⛔ 여기도 «글자 그대로» 재지 않는다 — 2026-09-14 에 다른 세션이 { 까닭: 'auto' } 를 더하자 죽었다.
+//    ⭐ 재는 것은 「사진(장들[0])이 두 번째 자리에 붙어 있나」 하나다. 뒤 옵션은 열어 둔다.
+잰다(/tidyRecipe\(text, 장들\[0\][,)]/.test(앱제이),
   '④-6 ⭐공유받기(창업자 1순위 길)에도 사진이 붙었다')
 // 🏷 [2026-09-01 저녁 · 창업자 실물] AI 제목이 버려지던 자리 — 잣대를 «한 번만» 정하고 안 흔든다
 //   ⚠️ 정직하게 = 이건 «소스 모양»을 보는 칸이다(공유받기 경로는 브라우저 없이 못 돌린다).
@@ -121,7 +129,7 @@ const 앱제이 = readFileSync(join(앱, 'src/App.jsx'), 'utf8')
 //      **앱 어디서 빠졌는지**를 알 길이 없었다. 앱 안이 조용해서 창업자도 나도 못 봤다.
 //   ⭐ 이 꼬리 한 조각이면 다음 한 번에 답이 나온다(규칙 8 — 시행착오는 코드가 한다).
 console.log('\n  ── ⑤ 사진이 실렸나를 «말해주나» ──')
-globalThis.localStorage = { getItem: () => '열쇠있다', setItem: () => {} }
+globalThis.localStorage = { getItem: (k) => (k === 'hankki:ai:consent' ? 'yes' : '열쇠있다'), setItem: () => {} }   // 🔐 허락 = yes(2026-09-08)
 const { tidyTail: 꼬리 } = await import(join(앱, 'src/tidy.js'))
 globalThis.fetch = async (url, opt) => {
   마지막몸통 = JSON.parse(opt.body)
@@ -138,7 +146,7 @@ const 꼬리3 = 꼬리()
 잰다(/📷너무큼\(/.test(꼬리3), '⑤-3 ⭐너무 커서 뺐으면 «크기까지» 말한다', 꼬리3)
 await tidyRecipe(긴글, 'https://남의주소/사진.jpg')
 잰다(/📷모양아님/.test(꼬리()), '⑤-4 dataURL 이 아니면 「모양아님」')
-globalThis.localStorage = { getItem: () => null, setItem: () => {} }
+globalThis.localStorage = { getItem: (k) => (k === 'hankki:ai:consent' ? 'yes' : null), setItem: () => {} }   // 🔐 허락 = yes(2026-09-08)
 잰다(!/📷/.test(꼬리()), '⑤-5 ⛔열쇠 없는 «유저»에겐 안 보인다')
 // ── ⑥ 🔁 「되다 안 되다」를 줄이는 둘 (2026-09-01 저녁 · 창업자 «1.2 둘다하자») ──
 //   ⭐ 심장 = **network 일 때만 다시 건다.** timeout·5xx 는 워커가 이미 뉴런을 썼으므로 ⛔재시도 금지.

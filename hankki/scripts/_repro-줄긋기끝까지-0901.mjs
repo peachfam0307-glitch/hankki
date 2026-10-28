@@ -67,7 +67,17 @@ const 가져오기 = async () => {
   await p.locator('.nav-item', { hasText: '가져오기' }).first().click()
   await p.waitForTimeout(1600)
 }
-const 목록보기 = () => p.evaluate(() => {
+// ⛔⛔ [2026-09-10] 이 목록은 이제 **접혀서 나온다**(창업자 *"열쇠무료 5개주는거 접기로 접어놔"*).
+//    그래서 재기 «전»에 제목 줄을 눌러 «편다» — 줄긋기는 편 상태에서만 볼 수 있다.
+//    📌 접기는 «첫 화면을 좁히려는 것»이고, 줄긋기 기능은 그대로 살아 있다. 여기서 그걸 확인한다.
+const 펴기 = async () => {
+  const 머리 = p.locator('.earn-head')
+  if (await 머리.count() === 0) return
+  if (await 머리.getAttribute('aria-expanded') === 'true') return
+  await 머리.click()
+  await p.waitForTimeout(400)
+}
+const 목록보기 = async () => { await 펴기(); return p.evaluate(() => {
   const 카드 = document.querySelector('.earn-list')
   if (!카드) return { 카드: false }
   const li = [...카드.querySelectorAll('li')]
@@ -77,7 +87,7 @@ const 목록보기 = () => p.evaluate(() => {
     꼬리: 카드.querySelector('.earn-foot')?.innerText || '',
     알약: (document.querySelector('.imp-key b')?.innerText || ''),
   }
-})
+}) }
 
 console.log('\n🔗 끝에서 끝까지 — 앱 ↔ 진짜 워커\n')
 await p.goto('http://127.0.0.1:4482/hankki/', { waitUntil: 'networkidle' })

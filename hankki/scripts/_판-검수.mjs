@@ -8,7 +8,10 @@ import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
 
 const APP = new URL('..', import.meta.url).pathname
-const OUT = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad'
+// ⛔⛔ [2026-09-13 고침] 여기 «다른 세션의» scratchpad 경로가 박혀 있었다 —
+//    그 세션이 끝나면 판이 엉뚱한 데로 떨어진다(2026-09-12 `_repro-물안담김` 과 같은 사고).
+//    ⭐ 지금 세션의 자리는 환경변수가 알려준다. 없으면 /tmp 로.
+const OUT = process.env.OUT || process.env.CLAUDE_SCRATCHPAD_DIR || '/tmp/claude-0'
 
 // ── 레시피 = 앱이 «화면에 쓰는 바로 그 값» ────────────────────────
 // ⛔⛔ [2026-08-17] 첫 판은 여기서 basics.js 를 «글자로 파싱»했다.
@@ -30,9 +33,25 @@ const 편들 = new Map(레시피들().map((r) => [r.id, r]))
 // 쓰기:  node scripts/_판-검수.mjs 2026-08-24
 //        node scripts/_판-검수.mjs 2026-09-07 2026-09-14 2026-09-21 2026-09-28   ← 한 달치
 //        (열릴 날짜 목록은 `node scripts/release-calendar.mjs --month 2026-09`)
+//
+// 🆔🆔 [2026-09-11] **날짜 말고 «아이디 앞자리»로도 뽑는다** — `--id basic-own-`
+//    ⛔ 왜 넓혔나 = 창업자 저장 레시피 15편은 **`from` 이 없다**(＝바로 열린다).
+//       날짜로만 뽑으면 그런 편은 «영영 검수판을 못 만든다** → 또 새 파일을 짜게 된다.
+//       바로 그게 이 파일이 옛 판(`_판-검수5편-0817.mjs`)을 대신하며 없애려던 일이다.
+//    쓰기:  node scripts/_판-검수.mjs --id basic-own-
+// 📛📛 [2026-09-12] **편 «이름»으로도 뽑는다** — `--편 "팟타이,수육,…"`
+//    ⛔ 왜 또 넓혔나 = 창업자가 「식용유 → 올리브유」처럼 **여기저기 흩어진 편을 콕 집어» 고치라고 할 때가 있다.
+//       날짜도 아이디 앞자리도 그걸 못 묶는다 → 없으면 또 새 판 파일을 짜게 된다(이 파일이 없애려던 일).
+//    쓰기:  node scripts/_판-검수.mjs --편 "팟타이,마늘쫑 비빔밥"
+const 편이름들 = ((process.argv.find((a) => a.startsWith('--편=')) || '').slice(4)
+  || (process.argv.includes('--편') ? process.argv[process.argv.indexOf('--편') + 1] || '' : ''))
+  .split(',').map((x) => x.trim()).filter(Boolean)
 const 날짜들 = process.argv.slice(2).filter((a) => /^\d{4}-\d{2}-\d{2}$/.test(a)).sort()
-if (!날짜들.length) {
-  console.error('⛔ 날짜를 달라 —  node scripts/_판-검수.mjs 2026-08-24 [2026-08-31 …]')
+const id앞 = (process.argv.slice(2).find((a) => a.startsWith('--id=')) || '').slice(5)
+  || (process.argv[process.argv.indexOf('--id') + 1] && process.argv.includes('--id') ? process.argv[process.argv.indexOf('--id') + 1] : '')
+if (!날짜들.length && !id앞 && !편이름들.length) {
+  console.error('⛔ 날짜나 아이디를 달라 —  node scripts/_판-검수.mjs 2026-08-24 [2026-08-31 …]')
+  console.error('                        node scripts/_판-검수.mjs --id basic-own-')
   console.error('   그 달에 열리는 날짜 보기 =  node scripts/release-calendar.mjs --month 2026-09')
   process.exit(1)
 }
@@ -47,11 +66,20 @@ for (const g of gates()) {
 }
 
 const 목록 = 레시피들()
-  .filter((r) => 날짜들.includes(r.from))
+  .filter((r) => (편이름들.length ? 편이름들.includes(r.title) : id앞 ? r.id.startsWith(id앞) : 날짜들.includes(r.from)))
   .map((r) => ({
     id: r.id,
-    줄: 줄이름.get(r.title)?.줄 || r.folder || '레시피',
-    출처: `${r.from} · 그날 저절로 열려`,
+    // ⛔ [2026-09-15] 줄 이름이 «편 이름 나열»이면 쓰지 않는다.
+    //    주간 레시피는 「여름 시원한 것 — 콩국수 · …」 꼴이라 ' — ' 앞만 잘리는데,
+    //    낱개로 넣은 편은 그 꼴이 아니라 **설명이 통째로** 줄 이름 자리에 들어왔다
+    //    (검수판 카드마다 「비프페퍼브리또 · 무스비맛브리또 ⛔검수 안 받은 것 2편」이 겹쳐 떴다).
+    //    ⭐ 잣대 = 「그 줄 안에 이 편의 제목이 들어 있으면」 그건 줄 이름이 아니라 목록이다.
+    줄: (() => {
+      const 후보 = 줄이름.get(r.title)?.줄
+      if (후보 && !후보.includes(r.title)) return 후보
+      return r.folder || '레시피'
+    })(),
+    출처: r.from ? `${r.from} · 그날 저절로 열려` : '처음부터 열려 있다',
     누가: r.review === '창업자' ? '네가 이미 본 것' : '⏳ 아직 검수 전',
     볼것: '재료·양 · 순서 · 시간·인분·난이도',
   }))
@@ -152,6 +180,7 @@ const 카드 = (r, meta, i) => {
     <ol class="st">${r.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
   </section>
 
+  ${r.물어볼것 ? `<section><h3 style="color:#b4451f">❓ 물어볼 것</h3><div class="memo" style="color:#b4451f;font-weight:700">${esc(r.물어볼것)}</div></section>` : ''}
   ${r.memo ? `<section><h3>메모</h3><div class="memo">${r.memo.split('\n').filter(Boolean).map((p) => `<p>${esc(p)}</p>`).join('')}</div></section>` : ''}
 
   <!-- ✍️✍️ [2026-08-18 창업자] **판에서 바로 체크·입력한다.**
@@ -177,11 +206,21 @@ const 카드 = (r, meta, i) => {
 const 그린것 = 목록.map((m, i) => {
   const r = 편들.get(m.id)
   if (!r) throw new Error(`⛔ ${m.id} 를 basics.js 에서 못 찾았다 — 판이 앱과 어긋난다`)
-  if (!날짜들.includes(r.from)) throw new Error(`⛔ ${r.title} 의 from 이 ${r.from} 이다 — 고른 날짜가 아니다`)
-  return { 날: r.from, 줄: m.줄, html: 카드(r, m, i) }
+  // 🔒 판이 앱과 어긋나지 않게 «고른 조건에 맞나»를 다시 본다 — 날짜 모드면 날짜로, 아이디 모드면 아이디로.
+  //   ⛔ 아이디 모드에서 from 을 검사하면 «from 없는 편»이 전부 죽는다(2026-09-11 실제로 막혔다).
+  //   ⛔ 편이름 모드에서 from 을 검사하면 «from 없는 편»이 전부 죽는다 — 아이디 모드와 같은 함정이다(2026-09-12).
+  if (편이름들.length) { if (!편이름들.includes(r.title)) throw new Error(`⛔ ${r.title} 은 고른 편이 아니다`) }
+  else if (id앞) { if (!r.id.startsWith(id앞)) throw new Error(`⛔ ${r.title} 의 id 가 ${r.id} 다 — 고른 아이디가 아니다`) }
+  else if (!날짜들.includes(r.from)) throw new Error(`⛔ ${r.title} 의 from 이 ${r.from} 이다 — 고른 날짜가 아니다`)
+  return { 날: r.from || '처음부터', 줄: m.줄, html: 카드(r, m, i) }
 })
 // 📅 날짜별로 묶는다 — 한 달치를 뽑으면 주차마다 칸이 생긴다
-const 날짜별 = 날짜들.map((d) => ({
+//   ⛔ 아이디 모드면 `날짜들` 이 «비어 있다» → 이 map 이 0바퀴 돌아 **카드가 통째로 사라진다**.
+//      2026-09-11 에 실제로 그래서 15KB 짜리 «뼈대만» 나왔다(9/14 판은 595KB). 눈으로 열어서 잡았다(규칙 21).
+//   ✅ 아이디 모드는 한 칸으로 묶는다.
+//   ✅ 편이름 모드도 마찬가지로 «있는 날»을 그대로 쓴다 (날짜들이 비어 있으니 0바퀴를 돈다)
+const 묶을것 = (id앞 || 편이름들.length) ? [...new Set(그린것.map((x) => x.날))] : 날짜들
+const 날짜별 = 묶을것.map((d) => ({
   날: d,
   줄들: [...new Set(그린것.filter((x) => x.날 === d).map((x) => x.줄))],
   html: 그린것.filter((x) => x.날 === d).map((x) => x.html).join('\n'),
@@ -194,7 +233,7 @@ const 몸통 = 날짜별.map((g) => `
   ${g.html}`).join('\n')
 const 총 = 그린것.length
 
-const 이름 = 날짜들.length === 1 ? 날짜들[0] : `${날짜들[0]} ~ ${날짜들[날짜들.length - 1]}`
+const 이름 = 편이름들.length ? `이름 바꾼 ${그린것.length}편` : id앞 ? `창업자 저장 레시피 ${그린것.length}편` : (날짜들.length === 1 ? 날짜들[0] : `${날짜들[0]} ~ ${날짜들[날짜들.length - 1]}`)
 const html = `<title>레시피 검수판 ${이름}</title>
 <style>
   :root{
@@ -537,8 +576,11 @@ const html = `<title>레시피 검수판 ${이름}</title>
 </script>
 `
 
-const 파일 = `검수판-${날짜들[0]}${날짜들.length > 1 ? `-외${날짜들.length - 1}` : ''}.html`
-writeFileSync(join(OUT, 파일), html)
+const 파일 = 편이름들.length ? `검수판-이름바꾼${그린것.length}편.html` : id앞 ?
+ `검수판-${id앞.replace(/[^a-zA-Z0-9가-힣-]/g, '')}${그린것.length}편.html` : `검수판-${날짜들[0]}${날짜들.length > 1 ? `-외${날짜들.length - 1}` : ''}.html`
+// 🔤 [2026-10-28 창업자 「검수판 깨졌엉」 = 글자 깨짐] 머리에 charset 이 없어 폰이 다른 글자 방식으로 읽었다 → 문서 머리를 붙인다
+const 머리 = /^\s*<!doctype/i.test(html) ? '' : '<!doctype html>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+writeFileSync(join(OUT, 파일), 머리 + html)
 console.log(`✅ 판 완성 — ${(html.length / 1024).toFixed(0)}KB`)
 for (const m of 목록) {
   const r = 편들.get(m.id)

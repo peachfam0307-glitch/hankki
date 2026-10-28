@@ -11,6 +11,7 @@
 //
 // ⛔ 숫자를 여기서 «세지» 않는다 — `getOcrLeft()` 가 서버가 준 값을 그대로 돌려준다.
 import { KEY_NAME, KEY_UNIT } from '../ocr'
+import { 남은열쇠말 } from '../안내말'
 import useKeyLeft from './useKeyLeft'
 import uiKeyOne from '../assets/ui/key_one.png'
 import uiKeyHole from '../assets/ui/key_hole.png'
@@ -32,7 +33,7 @@ export default function KeyBadge() {
       role="img"
       aria-label={운영자
         ? `운영자 모드 · ${KEY_NAME} 무제한`
-        : `무료 ${KEY_NAME} ${left.total}${KEY_UNIT} 남았어요 · 매달 무료 5${KEY_UNIT}`}
+        : `${남은열쇠말(left)} · 매달 무료 5${KEY_UNIT}`}
     >
       <span aria-hidden="true">{운영자 ? '운영자' : `매달 무료 5${KEY_UNIT}`}</span>
       <div className="imp-key-now">

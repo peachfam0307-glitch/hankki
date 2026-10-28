@@ -42,7 +42,10 @@ const 옛버전 = 덩이.filter((d) => /^- \*\*옛 버전\*\*/.test(d[0]))
 const 남길핀 = 덩이.filter((d) => !/^- \*\*옛 버전\*\*/.test(d[0]))
 
 const B = (a) => Buffer.byteLength(a.join('\n'))
-const 첫줄 = (d) => d[0].replace(/^- /, '').replace(/\s+/g, ' ').slice(0, 88)
+// ✂️ [2026-09-15] 88 → 45 자. **색인은 「무엇이 있나」를 «찾는» 자리지 읽는 자리가 아니다.**
+//   🔢 실측 = 107줄 × 88자 = 16,191 B 로 CLAUDE.md 둘째로 큰 절이었다.
+//      45자로 줄이면 절반 아래로 내려가고, 무슨 얘긴지는 그대로 알아본다(전문은 docs/고정메모-핀.md).
+const 첫줄 = (d) => d[0].replace(/^- /, '').replace(/\s+/g, ' ').slice(0, 45)
 
 console.log(`📌 CLAUDE.md ${Buffer.byteLength(원본).toLocaleString()} B · 핀 절 ${시작 + 1}~${끝}행 (${B(몸).toLocaleString()} B)`)
 console.log(`   핀 덩어리 ${덩이.length}개  →  📄 남길 핀 ${남길핀.length}개 (${B(남길핀.flat()).toLocaleString()} B) · 🗄 옛 버전 ${옛버전.length}개 (${B(옛버전.flat()).toLocaleString()} B)`)

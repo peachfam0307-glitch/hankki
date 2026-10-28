@@ -56,7 +56,12 @@
     <img class="logo" src="./icons/icon-512-v7.png" alt="한끼">
     <h1>한끼 받으러 가는 중…</h1>
     <p class="sub">잠시 뒤 Play 스토어가 열려요</p>
-    <a class="btn" id="go" href="https://play.google.com/store/apps/details?id=io.github.peachfam0307_glitch.twa">Play 스토어에서 받기</a>
+    <!-- 🏷️ [2026-09-12] 꼬리표(referrer) 를 달았다 — Play 콘솔이 «이 징검다리로 온 설치»를 따로 세준다.
+         📮 창업자 = *"이게 되는지 알면 인스타로 계속 사람몇명왔다 셀때 나한테 말했어야지"* — 내가 늦었다.
+         ⭐ 형식은 구글 공식 = `&referrer=` 안에 utm_* 를 «URL 인코딩해서» 넣는다(%3D 는 = · %26 은 &).
+            https://support.google.com/analytics/answer/10917952
+         ⛔ 스토어 주소가 바뀌면 src/nudges.js 의 STORE_URL 과 «같이» 고친다. -->
+    <a class="btn" id="go" href="https://play.google.com/store/apps/details?id=io.github.peachfam0307_glitch.twa&referrer=utm_source%3Dhankki_bridge%26utm_medium%3Dinstagram%26utm_campaign%3Dprofile_link">Play 스토어에서 받기</a>
     <!-- ⛔⛔ [창업자 확정 2026-09-08] 「앱 없이 웹으로 먼저 볼래요」 단추를 «지웠다».
          📮 창업자 = *"웹으로 볼래요도 빼"* · *"굳이.. 힘들게 돈까지 써가면서 광고하는데 다운을 받게 해야지.."*
          ⭐ 이 페이지는 «인스타 광고로 온 사람»이 처음 닿는 자리다 — 광고비를 써서 데려온 사람을
@@ -66,11 +71,128 @@
     <p class="note">꼬르곰 · 펭펭과 레꾸해요</p>
   </div>
 <script>
-  // ⛔ `location.href` 대신 `replace` — 뒤로가기를 눌렀을 때 이 페이지로 다시 튕기지 않게.
-  // ⚠️ 인앱 브라우저가 막으면 아무 일도 안 일어난다 → 위 버튼이 그때를 위한 길이다.
-  setTimeout(function () {
-    try { location.replace(document.getElementById('go').href) } catch (e) {}
-  }, 1200)
+  // 📊📊 [2026-09-12] **징검다리 계측** — 여기가 여태 «깜깜»했다.
+  //    광고 → 프로필(83명 셈) → [깜깜] → 징검다리 → [깜깜] → 스토어 → 설치(15명 셈)
+  //    📮 창업자 = *"나는 이런게 되는지도 모르잖아"* — 알려주는 게 내 일이었다. 늦게 넣는다.
+  //
+  //    잰다 = ① bridge      — 이 페이지에 «온» 사람 N
+  //           ② bridge_go   — 스토어로 «간» 사람 M (단추를 눌렀든 자동으로 넘어갔든)
+  //    ⭐ N 과 M 만 있으면 「프로필 왔다고 다 스토어로 가진 않는다」가 숫자가 된다.
+  //
+  //    ⛔ 못 보는 것 = M 중 «실제 설치»는 Play 콘솔이 센다. 사람 단위로 못 이어 붙인다.
+  //       → 그래서 위 단추에 referrer 꼬리표를 따로 달았다(구글이 세준다).
+  //    ✅ [2026-09-21 10:1x] 측정 ID 를 «받기 페이지» 전용 스트림으로 갈랐다 (G-HQ6P8SXVWM · 스트림 15814232639 · 창업자가 콘솔에서 만들었다).
+  //       ⛔ 그 전엔 앱과 같은 ID(G-L20V2VE1CS)라 GA4 「활성·새 사용자」에 안 깐 사람이 섞였다
+  //          (9/21 실측 = GA4 새 13 vs Firebase 가입 1). 이제 앱 스트림 숫자 = 앱에 «들어온» 사람만.
+  //       📌 bridge / bridge_go 는 이제 「받기 페이지」 스트림에서 본다 — 앱 스트림엔 안 뜬다.
+  //    📌 앱(src/stats.js)과 «같은 방식» = page_view 의 page_title 에 이름을 싣는다(웹 스트림이라 그렇다).
+  (function () {
+    var ID = 'G-HQ6P8SXVWM'
+    var 갔다 = false
+    // 🙋‍♀️🙋‍♀️ **우리 기기면 「내부」로 표시해 보낸다** (2026-09-14 · 앱 `src/stats.js:74` 와 «같은 열쇠»)
+    //   ⛔⛔ **절반만 듣는 장치다 — 알고 넣는다.**
+    //      ✅ 듣는 곳 = 크롬·삼성인터넷·우리 앱(TWA) — 같은 오리진이라 앱이 넣어 둔 열쇠를 그대로 읽는다.
+    //      ⛔ 안 듣는 곳 = **인스타 인앱 브라우저** — WebView 저장소가 크롬과 «완전히 따로»라 열쇠가 없다.
+    //         🔎 2026-09-14 리서치 = 인스타 WebView 는 Safari·Chrome 과 쿠키를 공유하지 않고,
+    //            안드로이드에서 각 WebView 는 격리된 저장소를 가진다.
+    //         📌 그리고 인앱 브라우저는 **주소를 못 친다**(창업자가 2026-09-12 에 짚었다)
+    //            → `?founder=` 로 열쇠를 넣을 방법이 아예 없다.
+    //      👉 **그래서 인스타로 들어온 창업자 기록은 여전히 「누른 시각으로 빼고 읽는다」**
+    //         (📄`징검다리-계측-2026-09-12.md` §6 · 그 결정은 그대로 살아 있다).
+    //   ⛔ 이 한 줄로 「창업자가 다 빠진다」고 읽지 말 것. 빠지는 건 크롬·앱 쪽뿐이다.
+    var 우리기기 = false
+    try { 우리기기 = !!localStorage.getItem('hankki:founder') } catch (e) { 우리기기 = false }
+    // 🍎🍎 [2026-09-14] 아이폰·아이패드로 온 사람은 App Store 로 — 지금까지는 Play 단추뿐이라 «못 깔았다».
+    //    앱 ID 6811288851 = App Store Connect 실물(src/nudges.js STORE_URL 과 같은 값 · 바뀌면 «같이» 고친다).
+    //    ⛔ iPadOS 사파리는 UA 가 Mac 으로 나온다 → 터치 되는 MacIntel 도 아이패드로 본다.
+    //    ⛔ 애플 주소엔 Play 식 `referrer=` 꼬리표를 붙이지 «않는다» — 형식이 다르다.
+    //    ✅ [2026-09-16] 애플 형식으로 붙였다 = `pt`(제공업체 토큰) · `ct`(캠페인 이름) · `mt=8`(앱).
+    //       📮 창업자 = *"내일부터 아이폰 릴스할거거든"* → App Store Connect 에서 캠페인을 만들어 토큰을 받았다.
+    //       ⛔⛔ **`pt` 가 없으면 `ct` 를 적어도 「분석 → 획득 → 캠페인」에 «안 뜬다».** 둘 다 있어야 한다.
+    //       ⛔ `ct` 는 영문·숫자·밑줄 40자까지 — 괄호 같은 글자가 섞이면 «다른 캠페인»이 된다.
+    //          (창업자가 준 링크에 `)` 가 섞여 있었다 — 빼고 넣었다.)
+    //       📌 `pt` 는 비밀이 아니다(공개 링크에 그대로 들어간다) — 열쇠처럼 숨길 것이 아니다.
+    //       🔗 공식 = developer.apple.com/help/app-store-connect-analytics/acquisition/campaign-links/
+    //    ⛔ 22 승인 «전»에 이 페이지를 배포하면 아이폰 사람이 빈 스토어 페이지를 본다 → 승인 뒤 「배포해」 때 나간다.
+    try {
+      var ua = navigator.userAgent || ''
+      var 애플 = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+      if (애플) {
+        var b = document.getElementById('go')
+        b.href = 'https://apps.apple.com/app/apple-store/id6811288851?pt=129448125&ct=instagram_reels&mt=8'
+        b.textContent = 'App Store에서 받기'
+      }
+    } catch (e) { /* 못 읽으면 Play 그대로 */ }
+    // 🏷🏷 [2026-09-21] **이 페이지가 받은 꼬리표(utm_*)를 스토어 링크에 «그대로» 넘긴다.**
+    //    📮 창업자 = *"광고로 오는거는 다음 광고부터는 섞이지 않고 잴수있는거야??"*
+    //    ⛔ 그 전엔 Play 추천인이 `profile_link` 로 «고정»이라 GA4 에선 광고/프로필이 갈려도
+    //       **Play 콘솔 설치 수 안에서는 한 덩어리**였다. 아이폰 `ct` 도 `instagram_reels` 고정이었다.
+    //    ✅ 주소에 utm_medium 이 있으면 — Play: referrer 에 medium·campaign·content 를 싣는다(구글 형식 그대로).
+    //       아이폰: ct = instagram_<medium>_<campaign>(영문·숫자·밑줄 40자 · 애플 규칙). 없으면 옛 값 그대로.
+    //    ⛔ 값은 [a-z0-9_] 만 남긴다 — 남이 주소에 이상한 글자를 넣어도 링크가 안 깨진다.
+    try {
+      var q = new URLSearchParams(location.search)
+      var 깨끗 = function (k) { return String(q.get(k) || '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 40) }
+      var med = 깨끗('utm_medium'), cam = 깨끗('utm_campaign'), con = 깨끗('utm_content')
+      if (med) {
+        var b2 = document.getElementById('go')
+        if (애플) {
+          b2.href = 'https://apps.apple.com/app/apple-store/id6811288851?pt=129448125&ct=' + ('instagram_' + med + (cam ? '_' + cam : '')).slice(0, 40) + '&mt=8'
+        } else {
+          var ref = 'utm_source=hankki_bridge&utm_medium=' + med + (cam ? '&utm_campaign=' + cam : '') + (con ? '&utm_content=' + con : '')
+          b2.href = 'https://play.google.com/store/apps/details?id=io.github.peachfam0307_glitch.twa&referrer=' + encodeURIComponent(ref)
+        }
+      }
+    } catch (e) { /* 꼬리표를 못 읽으면 기본 링크 그대로 */ }
+    // 📊 [2026-09-14] 「인스타 링크로 아이폰 유저가 몇 명 왔나」(창업자) — 아이폰이면 이름 뒤에 _ios 를 붙인다.
+    //    bridge / bridge_go = 안드로이드·PC(오늘과 같음) · bridge_ios / bridge_go_ios = 아이폰·아이패드.
+    //    ⭐ 같은 「페이지 및 화면」 표에 «그냥» 뜬다(맞춤 측정기준 없이) · 합치면 전체.
+    function 갈래이름(이름) { return 애플 ? 이름 + '_ios' : 이름 }
+    try {
+      window.dataLayer = window.dataLayer || []
+      window.gtag = function () { window.dataLayer.push(arguments) }
+      gtag('js', new Date())
+      // ⛔ send_page_view: false — gtag 가 «스스로» 보내면 이름이 안 실린다.
+      // 📌 `traffic_type: 'internal'` 은 GA4 가 정한 «그 이름»이다 — ⛔바꾸지 말 것(앱과 같아야 한 필터로 걸린다).
+      gtag('config', ID, 우리기기 ? { send_page_view: false, traffic_type: 'internal' } : { send_page_view: false })
+      gtag('event', 'page_view', { page_title: 갈래이름('bridge') })
+      var s = document.createElement('script')
+      s.async = true
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + ID
+      // ⛔⛔ 여기가 제일 위험한 자리 — gtag 가 «붙기 전»에 스토어로 튕기면 계측이 통째로 날아간다.
+      //    dataLayer 에 쌓아둔 것은 gtag.js 가 내려와야 비로소 밖으로 나간다.
+      //    ⭐ 그래서 «붙은 뒤»에 이동 타이머를 시작한다. 못 붙으면(onerror) 그때도 바로 보낸다.
+      //    ⚠️ 상한 3초 — 인터넷이 느려도 «스토어로 가는 길»을 계측 때문에 막지 않는다.
+      s.onload = 타이머시작
+      s.onerror = 타이머시작
+      document.head.appendChild(s)
+      setTimeout(타이머시작, 3000)
+    } catch (e) { 타이머시작() }
+
+    // ⭐ 「갔다」를 «한 번»만 보낸다 — 단추를 눌렀는데 자동 이동도 걸리면 두 번 세진다.
+    function 갔다고보낸다() {
+      if (갔다) return
+      갔다 = true
+      try { gtag('event', 'page_view', { page_title: 갈래이름('bridge_go') }) } catch (e) {}
+    }
+    try {
+      document.getElementById('go').addEventListener('click', 갔다고보낸다)
+    } catch (e) { /* noop */ }
+
+    // ⛔ `location.href` 대신 `replace` — 뒤로가기를 눌렀을 때 이 페이지로 다시 튕기지 않게.
+    // ⚠️ 인앱 브라우저가 막으면 아무 일도 안 일어난다 → 위 버튼이 그때를 위한 길이다.
+    // ⭐ «한 번»만 건다 — onload·onerror·3초 상한이 셋 다 이 함수를 부른다.
+    var 걸었나 = false
+    function 타이머시작() {
+      if (걸었나) return
+      걸었나 = true
+      setTimeout(function () {
+        갔다고보낸다()
+        try { location.replace(document.getElementById('go').href) } catch (e) {}
+      }, 1200)
+    }
+
+  })()
 </script>
 </body>
 </html>

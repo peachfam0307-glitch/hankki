@@ -7,6 +7,8 @@ import { precacheAndRoute } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { CacheFirst } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
+// 🧊 [2026-09-19] 유통기한 «얹기» — 거울(hankki-shared/pantry-expiry)을 «그리는 순간» 읽어 남은 날을 다시 센다(낡지 않는다)
+import { 거울읽어문장, 거울캐시 } from './pantryExpiry.js'
 
 precacheAndRoute(self.__WB_MANIFEST || [])
 
@@ -137,4 +139,98 @@ async function handleShare(req) {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim())
+})
+
+// 🔔🔔 **폰 알림(웹 푸시)** — 2026-09-19 · 설계 = `docs/알림-설계-2026-09-19.md`
+//
+// 📮 창업자 = *"월,수 레시피 토 장바구니 올라갈때 · 새 꾸미기 오픈 · 유통기한임박 이렇게 알람보내는거 어때"*
+//
+// ⛔⛔ **왜 필요했나 — 우리는 유저를 «부를 길»이 하나도 없었다.**
+//    🔢 실측 2026-09-19 = 푸시 코드 **0줄** · 30일 활성 242명인데 **하루 활성 8명**(3.3%).
+//       즉 «스스로 기억해서» 아이콘을 눌러야만 돌아온다. 한 달에 한 번 여는 앱이 된 게 당연하다.
+//    ⭐ 그래서 「앱이 별로라 안 돌아온다」는 **아직 관측된 적이 없다** — 「부를 길이 없다」만 확인된 사실이다.
+//       이 둘을 «가르는 실험»이 이 코드다.
+//
+// ⛔⛔⛔ **이 파일은 유저 242명 폰에서 «지금 돌고 있다».** 그래서 규칙이 하나 —
+//    **여기 아래 두 리스너만 더한다. 위의 `fetch`·공유받기(share_target)·캐시 규칙은 «한 글자도» 안 건드린다.**
+//    🔢 까닭 = 위 `skipWaiting()`＋`clientsClaim()` 때문에 새 판이 «즉시» 모든 탭을 장악한다.
+//       잘못되면 흰 화면이 뜨고, 유저는 앱을 지워야 복구된다. 우리는 배포 초록불만 보고 나간다.
+//    🔒 지키는 판 = `scripts/_repro-푸시-0919.mjs` (「공유받기가 여전히 돈다」를 같이 본다)
+//
+// 🍎 **아이폰은 이 길로 «못 온다»** — 우리 아이폰 앱은 Capacitor(WKWebView)다.
+//    🔢 근거 = WKWebView 엔 서비스워커·PushManager 가 아예 없다(열람 2026-09-19 · magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide).
+//       iOS 의 Push API 는 「사파리 → 공유 → 홈 화면에 추가」한 PWA 전용이다.
+//    ⭐ 그래서 아이폰은 **2판에서 APNs(@capacitor/push-notifications)**로 간다. 이 리스너는 웹·안드로이드(TWA) 몫이다.
+//    ⛔ 부르는 쪽(앱)에서 `PushManager` 가 없으면 **권한 시트를 아예 안 띄운다** — 거짓 약속을 하지 않는다.
+
+/** 📨 알림 하나를 그린다.
+ *  ⛔ 보내는 쪽이 이상한 걸 보내도 «앱이 멎으면 안 된다» — 못 읽으면 기본 문구로 띄운다(절대원칙 34).
+ *  ⭐ `tag` 를 쓰면 같은 이름의 알림이 «덮어써진다» — 혹시 두 번 와도 폰에는 하나만 남는다.
+ *     (두 번 보내는 것 자체는 워커가 막는다. 이건 «마지막 그물»이다.)
+ */
+// 📨 워커는 «빈 푸시»를 보낸다(암호화 0줄 · worker-push.js 머리 참조) → 문구는 여기서 /today 로 가져온다.
+//    ⛔ 가져오기가 실패해도 «반드시» 하나는 띄운다 — 크롬은 push 를 받고 알림을 안 띄우면 다음 푸시를 조용히 끊는다.
+const PUSH_URL = 'https://hankki-push.annyeong-hankki.workers.dev'
+async function 오늘문구(event) {
+  try { if (event.data) { const v = event.data.json(); if (v && v.본문) return v } } catch (e) { /* 아래로 */ }
+  try {
+    const r = await fetch(PUSH_URL + '/today', { cache: 'no-store' })
+    if (r.ok) return await r.json()
+    if (r.status === 404) return { 없음: true }   // 오늘 일정이 «없다»(＝D-2 따로 알림) — 실패와 다르다
+  } catch (e) { /* 아래로 */ }
+  return {}
+}
+self.addEventListener('push', (event) => {
+  event.waitUntil(Promise.all([오늘문구(event), 거울읽어문장(new Date())]).then(([값, 얹을줄]) => {
+  const 제목 = String(값.제목 || '한끼')
+  // 📅 오늘 문구가 «없는» 날 = D-2 «따로» 알림이다(워커 임박보내기) → 냉장고 줄만 띄운다.
+  //    ⛔ 거울에도 알릴 게 없으면(그새 지웠다·못 읽었다) «안 띄운다» — 「새로운 소식이 있어요」 같은 빈말을 냉장고 대신 띄우지 않는다.
+  //       (크롬은 그럴 때 「백그라운드에서 업데이트됨」을 한 번 대신 띄울 수 있다 — 앱이 날짜를 저장 때마다 맞추므로 드문 일이다)
+  //    ⭐ 「없음」(404)과 「못 가져옴」(그물 끊김)은 다르다 — 못 가져온 날은 전처럼 «반드시» 하나 띄운다(크롬이 다음 푸시를 끊지 않게).
+  const 냉장고만 = !!값.없음
+  if (냉장고만 && !얹을줄) return
+  // 🧊 임박 재료가 있으면 한 줄 «얹는다» — 없거나 못 읽으면 원래 본문 그대로(추가 푸시 0 · 하루 한 번 그대로)
+  //    🧊 [2026-09-26 창업자 확정] 냉장고 줄 앞에 이모지 하나 — 윗줄(🛒🍳📱🎨)과 짝을 맞춘다. 문장 자체(pantryExpiry)는 안 건드린다.
+  const 냉장고줄 = 얹을줄 ? '🧊 ' + 얹을줄 : 얹을줄
+  const 본문 = 냉장고만 ? 냉장고줄 : String(값.본문 || '새로운 소식이 있어요') + (냉장고줄 ? '\n' + 냉장고줄 : '')
+  const 길 = String(값.길 || './')
+  const 표 = 냉장고만 ? 'hankki-exp' : String(값.표 || 'hankki')   // 표가 다르니 같은 날 두 종류가 서로 덮지 않는다
+  return self.registration.showNotification(제목, {
+      body: 본문,
+      // 🖼 아이콘은 매니페스트가 쓰는 «그 파일»이다 — 두 곳에 적지 않는다.
+      icon: new URL('icons/icon-192-v7.png', self.registration.scope).href,
+      // 🍚 [2026-09-26 창업자 캡처 「알림이 네모야」] 상태바 아이콘은 «투명 바탕 ＋ 흰 모양»이라야 한다 — 안드로이드는 색을 버리고
+      //   모양(투명도)만 쓴다. 꽉 찬 앱 아이콘을 넣으면 하얀 네모가 된다. 창업자가 시안 셋 중 「그릇이 더 잘 보이네」로 골랐다.
+      badge: new URL('icons/badge-bowl-96.png', self.registration.scope).href,
+      tag: 표,
+      renotify: false,
+      data: { 길 },
+    })
+  }))
+})
+
+/** 👆 알림을 누르면 — 이미 열려 있는 한끼가 있으면 «그걸» 띄우고, 없으면 새로 연다.
+ *  ⛔ 무조건 새 창을 열면 탭이 쌓인다(유저가 누를 때마다 하나씩).
+ */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  // 📊 [2026-09-22] 「알림을 눌러 들어왔다」를 세려고 주소에 표를 하나 남긴다(`?push=1`).
+  //   ⛔ 서비스워커는 «다른 세상»이라 gtag 도 우리 stats 도 못 쓴다 — 그래서 앱이 켜질 때 읽게 한다(App.jsx).
+  //   🔢 왜 필요한가 = 워커는 「보냈다」까지만 안다. **몇 명이 «열었나»는 이 표가 없으면 영영 못 본다.**
+  //      9/23 첫 발송을 앞두고 만들었다(창업자 「혹시 다른 것들중에 안되는거 있나 좀 찾아봐」).
+  //   🙈 표는 «눌렀다»는 사실 하나뿐이다 — 누가·무엇을 눌렀는지는 안 담는다.
+  const 원길 = new URL((event.notification.data && event.notification.data.길) || './', self.registration.scope)
+  원길.searchParams.set('push', '1')
+  const 길 = 원길.href
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((창들) => {
+      for (const 창 of 창들) {
+        if (창.url.startsWith(self.registration.scope) && 'focus' in 창) {
+          if ('navigate' in 창) { try { 창.navigate(길) } catch (e) { /* 못 옮겨도 띄우기는 한다 */ } }
+          return 창.focus()
+        }
+      }
+      return self.clients.openWindow ? self.clients.openWindow(길) : undefined
+    })
+  )
 })

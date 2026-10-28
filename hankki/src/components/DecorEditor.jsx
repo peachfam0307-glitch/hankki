@@ -4,15 +4,17 @@ import Icon from './Icon'
 import Thumb from './Thumb'
 import DecorLayer from './DecorLayer'
 import { PaperBox, WRITE_SIZES } from './PaperSheet'
+// 🎨 꾸미기를 «재는» 자리 — 📮창업자 2026-09-10 *"꾸미기를 해본사람있어?"* → 잴 눈이 없어서 못 답했다.
+import { 꾸미기열림, 꾸미기저장 } from '../stats.js'
 import { PAPER_RULES, PAPER_SKINS, PAPER_ARTS, paperStyle } from '../data/papers'
 import { seasonRank, isReleased } from '../season'
+import { 이번명절 } from '../data/seasonDecor.js'
 import GiftPackSheet, { giftRows } from './GiftPackSheet'
 import PackBuySheet from './PackBuySheet'
-import { needsGiftPack } from '../nudges'
 import { cropRatio, imageRatio } from '../utils'
 import { 기본표지 } from '../store'
 import { FRAME_WINDOW } from '../data/frameWindows'
-import { StickerArt, stickerRatio, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, TEXT_SIZES, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES } from './Stickers'
+import { StickerArt, stickerRatio, 그릇폭, BOX_GROUPS, BOX_PAD, STICKER_GROUPS, drawerGroups, ownedPacks, recentStickers, pushRecentSticker, KITCHEN_IDS, FRIEND_IDS, PHOTO_IDS, pickableMotions, pickableFx, NOTE_COLORS, NOTE_PATTERNS, NOTE_SHAPES, notePatternStyle, noteRadius, noteClip, noteIsClip, TEXT_COLORS, TEXT_FONTS, chipFamily, TEXT_WEIGHTS, TEXT_SIZES, DECOR_BACKGROUNDS, bgAnim, RECOLORABLE, STICKER_COLORS, TAPE_PATTERNS, HL_COLORS, FRAMES, 열쇠있나 } from './Stickers'
 
 // 📜📜 HStrip — 가로로 «넘치는 칩 줄»에 막대를 **우리가 그려서** 항상 보여준다.
 //   (창업자 2026-08-08 *"스크롤바가 처음부터 안보여서 글자체 저게다처럼보임"* —
@@ -212,6 +214,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // 저장된 표지 상태로 시작하되, 자동저장 초안이 있으면 그걸로 복구(꾸미던 중 날아간 것 되살림).
   const draft = loadDraft(recipe.id)
   const [items, setItemsRaw] = useState(() => (draft?.items || recipe.decor || []).map((d) => ({ ...d })))
+  // 🎨 «꾸미기 서랍을 열었다» 를 한 번 센다(뜰 때 딱 한 번 · 빈 의존성).
+  //   ⭐ 저장(`decor_saved`)과 «따로» 세야 「열었는데 안 붙인 비율」이 나온다.
+  useEffect(() => { try { 꾸미기열림() } catch { /* 통계가 죽어도 꾸미기는 된다 */ } }, [])
   // ↩↩ **실행 취소** (창업자 2026-08-06 — 남들이 «무료 기본»에 두는 것)
   //   ⭐ 왜 필요한가 = 창업자 *"x버튼 있지 않아? 그거랑 다른건가?"* → **다르다.**
   //      X = 그 스티커를 «없앤다»(되살릴 길 0). 실행 취소 = 방금 한 짓을 «무른다».
@@ -441,7 +446,9 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   }, [typing])
   // 🎁 출시기념 팩 안내 — 서랍을 처음 열 때 한 번만. **선물은 받는 자리에서 알려줘야 바로 써본다.**
   //    (`useState` 초기값으로 한 번만 읽는다 — 렌더마다 localStorage 를 두드리지 않게)
-  const [gift, setGift] = useState(() => needsGiftPack())
+  // ⛔ [창업자 2026-10-16 「꾸미기처음열때 팝업은 이제 없애자」] 자동으로 안 띄운다 — 여름 선물 안내가 10월에도 떴다.
+  //    단추(🎁)로 여는 길은 그대로 둔다.
+  const [gift, setGift] = useState(false)
   // 🕗 최근 쓴 것 — **서랍을 여는 «순간» 값으로 고정한다.**
   //    ⛔ 붙일 때마다 다시 읽으면 맨 윗줄이 방금 붙인 것으로 계속 흔들려 «자리»가 안 생긴다.
   //    (음식 아이콘 픽커 v8.81 이 같은 이유로 시트 여는 순간 값으로 굳혔다)
@@ -457,7 +464,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    올라와 안에 꾸며둔 작은 스티커를 다 덮었다(v8.59에서 고친 문제가 여기서 재발).
   //    `hl` = 형광펜. 마테와 «같은 성질»이다 — 넓게 깔리는 띠라, 탭했다고 맨 앞으로 올라오면
   //    그 밑에 붙여둔 스티커에 죄다 색이 입혀진다(multiply 라 비치긴 해도 색은 얹힌다).
-  const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || it.type === 'hl' || (it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('dc_dma') || it.key.startsWith('pf_') || it.key.startsWith('sf_'))))
+  const isBacking = (it) => !!it && (!!FRAMES[it.key] || it.type === 'note' || it.type === 'tape' || it.type === 'hl' || (it.type === 'sticker' && typeof it.key === 'string' && (it.key.startsWith('dc_dma') || it.key.startsWith('pf_') || it.key.startsWith('pb_') || it.key.startsWith('sf_'))))
   // 선택하면 맨 앞으로(배열 끝으로) — 겹칠 때 자연스럽게 위로. 단 배경격은 제자리 유지.
   // ⌨️⌨️ **아이템을 만지면 «종이 본문» 커서를 내려놓는다** (창업자 폰 캡처 2026-08-12 · 재현으로 확정)
   //   ⛔⛔ 폰은 뒤로가기로 «자판만» 닫혀 blur 가 안 온다 → 본문 커서가 남고 `typing` 이 참인 채다.
@@ -524,7 +531,19 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   // 저장 안 한 변경이 있나(취소 시 확인용)
   const isDirty = () => JSON.stringify(items) !== JSON.stringify(recipe.decor || []) ||
     (bg || 'none') !== (recipe.decorBg || 'none') || thumb !== savedThumb
-  const doSave = () => { clearDraft(); onSave(items, bg, thumb) }
+  // 🎨 «붙여서 저장했다» 를 한 번 센다 — ⛔무엇을·어느 레시피인지는 안 보낸다(이름 한 개뿐).
+  //   ⭐ 잣대 = 「붙인 게 하나라도 있거나 속지를 골랐거나 표지를 바꿨나」.
+  //      ⛔ 그냥 열었다 닫은 것(뒤로가기도 저장이다)까지 «꾸몄다»로 세면 숫자가 거짓말이 된다.
+  const doSave = () => {
+    // ⛔⛔ [2026-09-12 고침] 잣대가 「지금 뭐라도 붙어 있나」였다 — 그러면 **이미 꾸민 레시피를
+    //    열었다 뒤로만 눌러도** 「꾸며서 저장했다」로 세진다(뒤로가기 = 저장이다 · 아래 주석).
+    //    items 초기값이 `draft?.items || recipe.decor` 라 전에 붙인 게 이미 들어 있기 때문이다.
+    //    🔢 한 사람이 꾸민 레시피를 열 번 열어 보면 10건 — 「열었는데 안 붙인 비율」이 못 나온다.
+    //    ✅ 잣대를 「**이번에 바뀐 게 있나**」로 바꾼다 — `isDirty()` 가 바로 위에 이미 있었다.
+    //    📮 창업자 = "이상하게 심어놓고 침소봉대하고;; 당황스럽네"
+    if (isDirty()) { try { 꾸미기저장() } catch { /* 통계가 죽어도 저장은 된다 */ } }
+    clearDraft(); onSave(items, bg, thumb)
+  }
   const doExit = () => { clearDraft(); onClose() }
   const handleCancel = () => { if (isDirty()) setExitAsk(true); else doExit() }
   // 🔙🔙 **뒤로가기 = 「저장하고 닫기」. 묻지 않는다.** (창업자 2026-08-12 *"뒤로가기 안됨 … 급짜증난다ㅠ"*)
@@ -672,10 +691,28 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //   ⛔ **알약과 순서는 «한 잣대»로 둔다** — 2026-08-30 에 순서만 내리고 알약을 안 내려서
   //      사흘 동안 9월인데 「출시기념 여름」에 알약이 붙어 있었다. 갈라 쓰면 그 사고가 되돌아온다.
   const giftUp = (x) => !!x.gift && !!x.from && (!x.season || seasonRank(x.season) === 0)
+  // 🔑🎃 [2026-09-20] 창업자 열쇠 — `key열쇠` 가 붙은 묶음은 `?<이름>=1` 을 한 번 연 폰에서만 보인다.
+  //   📮 왜 = 창업자 *"아래꺼 내가 직접 담아보고 싶은데"* — 실물로 담아 보고 정해야 하는데,
+  //      그냥 올리면 «유저도 같이» 본다. 핼러윈은 10/16 에 여는 것이라 아직 보이면 안 된다.
+  //   ⭐ 얼개는 식비 열쇠(ShopScreen.jsx:110)와 같다 — 주소로 켜고 저장소에 남긴다. `?<이름>=0` 으로 끈다.
+  //   ⛔ 저장소를 못 읽는 폰에서는 «안 보이는» 쪽이 맞다 — 식비와 반대다(식비는 이미 공개된 것이라 켠다).
+  //   🔓 [2026-09-21] `열쇠까지` 가 있으면 그 날짜부터는 열쇠 없이 열린다 — 핼러윈 접시가 10/16 에 유저에게 «저절로» 열리게(아이폰은 구운 판이 박혀서 그날 손댈 수 없다).
+  const 열쇠켬 = (x) => {
+    if (!x.key열쇠) return true
+    if (x.열쇠까지 && isReleased(x.열쇠까지)) return true
+    try {
+      const v = new URLSearchParams(location.search).get(x.key열쇠)
+      if (v === '1') localStorage.setItem('hankki:열쇠:' + x.key열쇠, '1')
+      if (v === '0') localStorage.removeItem('hankki:열쇠:' + x.key열쇠)
+      return localStorage.getItem('hankki:열쇠:' + x.key열쇠) === '1'
+    } catch { return false }
+  }
+  const 배경순 = (b) => (b.key열쇠 === '할로윈' && 이번명절() === 'hw') ? 0 : b.key === 'sea' ? 3 : b.anim ? 1 : 2
+  const 명절위 = (x) => !!x.명절 && (x.명절 === 이번명절() || (!!x.key열쇠 && !!x.열쇠까지 && !isReleased(x.열쇠까지)))
   const groupsByTab = (t) => drawerGroups()
     // ⭐ `tabDiary` = 일기 화면에선 «다른 탭»에 둔다 — 꼬르곰 32컷은 레꾸 「글자」 / 일꾸 「기록」.
     //    ⛔ 두 탭에 «동시에» 두면 일꾸에서 글자·기록 양쪽에 같은 게 나온다(실측으로 잡았다).
-    .filter((x) => ((isDiary && x.tabDiary) || x.tab) === t && isReleased(x.from) && (!x.only || x.only === where) && onShelf(x))
+    .filter((x) => ((isDiary && x.tabDiary) || x.tab) === t && isReleased(x.from) && 열쇠켬(x) && (!x.only || x.only === where) && onShelf(x))
     // 🎁 선물끼리는 **새로 온 것이 위**. 창업자 2026-08-29 = *"오픈기념 특별선물로 예쁘게 만들어서 올리자."*
     //    ⛔ 안 넣으면 9/1 새 선물이 「출시기념 여름」(12컷) «아래»에 깔려 굴려야 나온다 — 실물로 봤다.
     //    ⭐ `from` 없는 옛 선물은 빈 문자열이라 저절로 뒤로 간다(비교 한 줄로 끝난다).
@@ -683,7 +720,12 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     //    ⛔ 그전엔 `gift` 가 계절보다 먼저라 9월에도 「출시기념 여름」(12컷)이
     //       **가을 프레임 «위»**에 남았다(실물로 확인).
     //    ⭐ 계절이 안 붙은 선물(가을의 정원 세트 = 출시기념)은 그대로 위 — 계절 물건이 아니다.
-    .sort((a, b) => ((giftUp(b) ? 1 : 0) - (giftUp(a) ? 1 : 0))
+    // 🎃 [창업자 2026-09-29 「할로윈 올라가면 꾸미기는 다 제일 위로, 끝나면 아래로」] 명절 창(seasonDecor.js 명절창) 안이면 그 명절 묶음(`명절`)이 선물보다도 위.
+    //    창이 끝나면 이 줄은 0 이 되고, 계절 없는 묶음과 같이 아래로 간다.
+    // 🔑 [창업자 2026-10-04 「B로 해줘」] 열리기 «전»에 열쇠로 미리 보는 폰(창업자)에서도 그 명절 묶음을 맨 위로 — 10/15 에 서랍 순서를 실물로 보려고.
+    //    ⛔ 유저는 해당 없다(열쇠가 없으면 위 filter 에서 이미 빠진다) · 열쇠까지 날이 지나면 이 갈래는 꺼지고 명절 창만 본다.
+    .sort((a, b) => ((명절위(b) ? 1 : 0) - (명절위(a) ? 1 : 0))
+      || ((giftUp(b) ? 1 : 0) - (giftUp(a) ? 1 : 0))
       || (giftUp(a) && giftUp(b) ? String(b.from || '').localeCompare(String(a.from || '')) : 0)
       || ((b.locked ? 1 : 0) - (a.locked ? 1 : 0))
       || (seasonRank(a.season) - seasonRank(b.season))
@@ -721,13 +763,13 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
     //   같은 그림이 데코에선 «안 써지는 그림», 글자 갈래에선 «글 상자»로 붙는 두 갈래였다 —
     //   창업자 2026-08-08 *"글자안써짐 아래탭에 글자색고르기없음"* (v9.88 「사진 두 길」과 같은 뿌리).
     //   ⛔ 프레임(pf_·벡터)은 밑판이라 제외 — 「글쓰기 프레임」은 글자 갈래에서 붙일 때만 글 상자다.
-    if (BOX_PAD[key] && !FRAMES[key] && !key.startsWith('pf_')) return addBox(key)
+    if (BOX_PAD[key] && !FRAMES[key] && !key.startsWith('pf_') && !key.startsWith('pb_')) return addBox(key)
     const n = items.length
     const isKf = KITCHEN_IDS.has(key)
-    const isFrame = !!FRAMES[key] || (typeof key === 'string' && key.startsWith('pf_'))   // 벡터·PNG 프레임 둘 다
+    const isFrame = !!FRAMES[key] || (typeof key === 'string' && (key.startsWith('pf_') || key.startsWith('pb_')))   // pb_ = 기본 그릇(2026-09-21)   // 벡터·PNG 프레임 둘 다
     const it = {
       id: newDecorId(), type: 'sticker', key,
-      x: isFrame ? 0.5 : 0.5 + ((n % 3) - 1) * 0.06, y: isFrame ? 0.46 : 0.42 + ((n % 4) - 1.5) * 0.05,
+      x: isFrame ? 0.5 : 0.5 + ((n % 3) - 1) * 0.06, y: isFrame ? 0.5 : 0.42 + ((n % 4) - 1.5) * 0.05,   // 그릇은 기본 그릇과 «같은 자리»(가운데)
       // 📏📏 **`rs_v`·`rs_k`(레꾸 캐릭터 32컷)만 0.32** — 창업자 *"근데 글자가 너무 작아?"* (2026-08-12)
       //   ⭐⭐ **`s` 는 «폭» 기준이다**(`DecorLayer` 225줄 `width: ${it.s * 100}%`).
       //      ⛔ 나는 처음에 «긴변» 기준으로 계산해 창업자에게 **11.7px 이라고 잘못 말했다.**
@@ -739,7 +781,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       //      → 0.32 는 0.34 보다 6% 작을 뿐인데 뭉개짐을 확실히 피한다.
       //   📌 더 키우려면 «시트를 뽑을 때 글자를 크게» 하는 수밖에 없다 — 확대는 화질을 못 살린다.
       //   ⚠️ 여기 값을 고치면 `scripts/check-sticker-res.mjs` 의 `defaultScale()` «도» 고칠 것(복사본이다).
-      s: isFrame ? 0.58 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : (key.startsWith('rs_v') || key.startsWith('rs_k')) ? 0.32 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
+      s: isFrame ? 그릇폭 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : (key.startsWith('rs_v') || key.startsWith('rs_k')) ? 0.32 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
       r: isFrame ? 0 : ((n % 5) - 2) * 4,
       // 🐻🐧 친구들(캐릭터)은 붙자마자 통통 움직인다 — 소품·음식은 가만히.
       //    ⚠️ 여기도 `gp_` 접두어로 골랐었다 → 여름·가을 곰펭은 붙여도 모션이 안 박혔다.
@@ -791,7 +833,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
   //    📐 창 위치·크기는 짐작이 아니라 «실측표»(FRAME_WINDOW)를 쓴다.
   //       다시 뽑기 = scripts/frame-windows.mjs · 실측 = 프레임 75개 중 창을 찾은 것 54개
   //       창을 못 잰 프레임(테두리가 열려 있어 바깥과 이어진 것)은 평균값으로 넣고 손잡이로 맞추게 한다.
-  const frameOf = (it) => (it && it.type === 'sticker' && (FRAMES[it.key] || (typeof it.key === 'string' && it.key.startsWith('pf_'))) ? it : null)
+  const frameOf = (it) => (it && it.type === 'sticker' && (FRAMES[it.key] || (typeof it.key === 'string' && (it.key.startsWith('pf_') || it.key.startsWith('pb_')))) ? it : null)
   const selFrame = frameOf(items.find((x) => x.id === sel))
   // 🔗🔗 **프레임 ↔ 속 사진 오가기** (창업자 폰 제보 2026-08-07 *"프레임에 넣은 사진을 줄이는 도구도 없고"*)
   //   ⛔ 사진은 프레임 «뒤»에 깔린다 → 창 안을 탭해도 «프레임»이 잡힌다(재현으로 확인).
@@ -1328,7 +1370,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
             //   ⛔⛔ 이 자리에 `{/* */}` 금지 — `return (` 앞이라 빌드가 죽는다(오늘 네 번째로 밟았다).
             return (
               <div style={{ position: 'relative', width: '100%', aspectRatio: ratio, borderRadius: 18, overflow: 'hidden' }}>
-                <Thumb recipe={{ ...recipe, decorBg: bg, thumb }} ratio={ratio} radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
+                <Thumb recipe={{ ...recipe, decorBg: bg, thumb, decor: items }} ratio={ratio} radius={0} emojiSize="4.5rem" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
                 {layer}
               </div>
             )
@@ -2035,9 +2077,10 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                         `pack` 을 붙여만 놓고 «거르는 곳»을 안 만든 것이다. AAB 굽기 직전에 잡았다.
                         📌 절대원칙 = *"파는건 공유카드로도 안내보내는게 맞지"* (창업자 2026-08-03)
                         📌 배운 것 = **꼬리표를 붙이는 것과 그 꼬리표를 «읽는 것»은 다른 일이다.** */}
-                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden && (!b.pack || ownedPacks().has(b.pack)))
+                    {DECOR_BACKGROUNDS.filter((b) => !b.hidden && (b.pack ? (ownedPacks().has(b.pack) || (b.key열쇠 && 열쇠있나(b.key열쇠))) : 열쇠켬(b)))   // 🔑 팩 배경도 창업자 열쇠로 미리 본다(2026-09-21 핼러윈 밤)
                       .map((b, i) => ({ b, i }))
-                      .sort((x, y) => (y.b.anim ? 1 : 0) - (x.b.anim ? 1 : 0) || x.i - y.i)   // 안정 정렬
+                      // 🎃 [창업자 2026-10-16 「다른 것도 체크」→ 배경 맨 앞이 「여름 물결」이었다] 지금 명절 배경 → 움직이는 것 → 나머지 → 철 지난 여름 물결 맨 뒤
+                      .sort((x, y) => 배경순(x.b) - 배경순(y.b) || x.i - y.i)   // 안정 정렬
                       .map(({ b }) => {
                       const on = bg === b.key
                       const sw = { ...(b.style || { background: 'linear-gradient(135deg,#eef0ec,#e1e5de)' }), ...(b.swatch || {}) }

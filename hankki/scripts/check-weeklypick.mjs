@@ -141,8 +141,12 @@ const 주갈래 = []
 for (let i = 0; i < 26; i++) {
   const ymd = 주더하기(시작, i)
   const picks = pickRotate({ products: PRODUCTS, matched: [], today: ymd })
-  주갈래.push({ ymd, 갈래: new Set(picks.map((p) => p.cat)).size, 몰: new Set(picks.map(몰이름)).size, 개: picks.length })
+  주갈래.push({ ymd, 갈래: new Set(picks.map((p) => p.cat)).size, 몰: new Set(picks.map(몰이름)).size, 개: picks.length, 한살림: picks.filter((p) => p.mall === 'hansalim').length })
 }
+// 🧺 [규칙 · 창업자 2026-10-17 「다음부터 이렇게안되도록 규칙만들어」] 한살림은 한 주에 1개까지 (몰섞기시작 이후)
+const 한살림넘침 = 주갈래.filter((w) => w.한살림 > 1)
+if (한살림넘침.length) no(`한살림이 2개 이상 선 주 ${한살림넘침.length}개 — ${한살림넘침.slice(0, 3).map((w) => `${w.ymd}(${w.한살림})`).join(' ')}`)
+else ok('26주 내내 한살림은 한 주에 1개까지')
 // ⛔ 막는 것 = 갈래 뭉침 하나뿐 (＝창업자가 말한 「섞어서」)
 const 갈래뭉침 = 주갈래.filter((w) => w.개 >= 3 && w.갈래 < 3)
 if (갈래뭉침.length) no(`한 갈래로 뭉친 주가 ${갈래뭉침.length}개 — ${갈래뭉침.slice(0, 3).map((w) => `${w.ymd}(갈래${w.갈래})`).join(' ')}`)

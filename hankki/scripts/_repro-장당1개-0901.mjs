@@ -57,7 +57,7 @@ const 진짜fetch = globalThis.fetch
 globalThis.fetch = async (url) => {
   if (String(url).includes('vision.googleapis.com')) {
     vision부른수++
-    return new Response(JSON.stringify({ responses: [{ fullTextAnnotation: { text: '연근 400g' } }] }), {
+    return new Response(JSON.stringify({ responses: [{ fullTextAnnotation: { text: '연근 400g\\n간장 2큰술\\n1. 팬에 굽는다' /* 📏 12자 이상이어야 «얻었다»로 친다(2026-09-09 빈손 규칙) */ } }] }), {
       status: 200, headers: { 'Content-Type': 'application/json' },
     })
   }
@@ -70,13 +70,20 @@ const APP_TOKEN = 'TESTTOKEN'
 const ORIGIN = 'https://peachfam0307-glitch.github.io'   // ⛔ ALLOWED_ORIGINS 와 같아야 한다
 
 // 진짜 워커를 한 번 부른다
-async function 부르기(kv, { uid = 'u1', batch = '', founder = false } = {}) {
+// 📸📸 **사진마다 «다른» 그림을 보낸다** (2026-09-09 · 지문 장부가 생기면서 꼭 필요해졌다)
+//   ⛔ 그 전엔 모든 칸이 «똑같은» 그림을 보냈다. 이제 서버가 지문을 보고
+//      「이 사진 전에 읽었다」로 판정해 **두 번째부터 안 깎는다** — 그건 맞는 동작이다.
+//      그래서 「3장 = 3개」를 재려면 진짜로 «다른 3장»이어야 한다.
+//   ⭐ 같은 사진을 일부러 두 번 보내는 칸은 `사진` 을 손으로 넘긴다.
+let 사진번호 = 0
+async function 부르기(kv, { uid = 'u1', batch = '', founder = false, 사진 = null } = {}) {
+  const 그림 = 'data:image/png;base64,QUJDRA' + (사진 || ++사진번호)
   const headers = { 'Content-Type': 'application/json', 'x-hankki-token': APP_TOKEN, Origin: ORIGIN }
   if (founder) headers['x-hankki-founder'] = 'FOUNDERKEY'
   const req = new Request('https://hankki-ocr.example/', {
     method: 'POST',
     headers,
-    body: JSON.stringify({ image: 'data:image/png;base64,QUJDRA==', uid, batch }),
+    body: JSON.stringify({ image: 그림, uid, batch }),
   })
   const res = await worker.fetch(req, { VISION_KEY: 'k', APP_TOKEN, FOUNDER_SECRET: 'FOUNDERKEY', OCR_KV: kv })
   return { status: res.status, body: await res.json() }
@@ -141,7 +148,7 @@ const wk = readFileSync(new URL('../ocr-proxy/worker.js', import.meta.url), 'utf
 const wk코드 = wk.replace(/^\s*\/\/.*$/gm, '')
 잰다(!/sameBatch/.test(wk코드), '⑤-1 ⭐`sameBatch` 가 코드에 0곳')
 잰다(!/`b:\$\{uid\}/.test(wk코드), '⑤-2 묶음 표식 키(`b:`)를 안 쓴다')
-잰다(/inc\(kv, `u:\$\{uid\}:\$\{ym\}`/.test(wk코드), '⑤-3 유저 몫이 «조건 없이» 깎인다')
+잰다(/inc\(kv, `u:\$\{(uid|월통)\}:\$\{ym\}`/.test(wk코드), '⑤-3 유저 몫이 «조건 없이» 깎인다')
 
 // ── ⑥ 🔒 화면 문구가 «장당»으로 남아 있나 ──────────────────────
 //   ⭐ 옛 판에서 가져온 칸이다 — 이건 여전히 값을 한다.

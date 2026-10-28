@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -10,6 +10,7 @@ import TabTips from '../components/TabTips'
 //   ✅ 재료는 «재료» 규칙(`guessIngredientIcon`)을 본다 — 그게 못 찾으면 스스로 요리 규칙으로 넘긴다.
 import FoodIcon, { guessIngredientIcon } from '../components/FoodIcon'
 import { POPULAR_SEARCHES, TAG_LIST, INGREDIENT_CHIPS } from '../data/seed'
+import { 검색빈손 } from '../stats'
 
 export default function SearchScreen() {
   const { recipes } = useStore()
@@ -32,6 +33,23 @@ export default function SearchScreen() {
       return hay.includes(k)
     })
   }, [query, recipes])
+
+  // 📊 [2026-09-14] 🔍 「찾았는데 «0건»이었다」
+  //   ⭐ 왜 재나 = 「뭘 찾다 못 찾고 나가나」는 «레시피를 더 만들 근거»가 된다. 지금은 통째로 깜깜하다.
+  //   ⛔⛔ 검색어는 «한 자도» 안 보낸다 — 나가는 건 「0건이었다」는 사실뿐이다(개인정보 규칙 그대로).
+  //   ⛔ 막은 함정 둘 (설계 게이트 2026-09-14)
+  //     ⓐ 글자를 칠 때마다 0건이라 «글자마다» 나간다 → 입력이 멎고 800ms 뒤 한 번만
+  //     ⓑ 한 방문에서 계속 고쳐 치면 수십 건이 된다 → «3회» 상한
+  const 빈손보낸수 = useRef(0)
+  useEffect(() => {
+    if (!query || results.length > 0) return
+    if (빈손보낸수.current >= 3) return
+    const t = setTimeout(() => {
+      빈손보낸수.current += 1
+      try { 검색빈손() } catch { /* 통계가 죽어도 검색은 된다 */ }
+    }, 800)
+    return () => clearTimeout(t)
+  }, [query, results.length])
 
   return (
     <>

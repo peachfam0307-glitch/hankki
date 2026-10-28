@@ -1,5 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo, Fragment } from 'react'
 import { COACH } from '../coach'
+// 🚨 [2026-09-22] 자랑보냄·자랑고름이 «여기 없어서» 레시피 상세에서 보낸 것이 한 번도 안 세어졌다.
+//   🔢 창업자 = *"요 며칠 통계에 레꾸자랑 보낸 사람있어?"* → 장부 15일치 brag_shared **0**.
+//   ⛔ 9/21 에 BragScreen 의 이름 겹침을 고쳤지만 그건 «네 길 중 한 길»이었다. 나머지 셋(여기 둘 · SendNowSheet 하나)은 그대로였다.
+//   📌 detail 은 어제 조회 52로 제일 많이 본 화면이다 — 여기서 보낸 사람이 통째로 빠져 있었다.
+import { 사러나감, 장보기담음, 요리끝냄, 픽펼침, 자랑보냄, 자랑고름, 자랑사진저장, 자랑보내기누름, 자랑창닫음, 기본레시피표시 } from '../stats'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -18,18 +23,20 @@ import KitchenGuideSheet from '../components/KitchenGuideSheet'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
 import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
-import { scaleIngredient } from '../scale'
+import { scaleIngredient, isIngHeader, ingGroup, stripIngGroup } from '../scale'   // 🏷 묶음 잣대 셋은 scale.js 한 곳(요리모드와 공유 · 2026-09-18)
 import { FoodIconSheet } from '../components/FoodIconPicker'
 import { dateLabel, openExternal as openUrl, ingredientName, fitImage } from '../utils'
 import { photoPanStart } from '../photoPan'
 import { shouldAskReviewNow } from '../nudges'
 import ReviewAskSheet from '../components/ReviewAskSheet'
-import { SOURCES } from '../data/seed'
+import { SOURCES, 저장날짜보임 } from '../data/seed'
 // 🔁 AI 정리 실패 만회(아래 「만회한적」 절) — 잣대는 앱이 쓰는 그 모듈 그대로다(절대원칙 30).
-import { tidyRecipe, 실패꼬리 } from '../tidy'
+import { tidyRecipe, 실패꼬리, 동의안함으로끝났나 } from '../tidy'
+import { AI동의받기 } from '../aiConsent'   // 🔐 AI 로 보내기 전 허락(큰 틀 6-② ⓑ)
 import { picksForIngredients, productLink, productMall, curIcon, isHansalim } from '../data/curation'
 
 import { useWakeLock } from '../useWakeLock'
+import { 오래켜둠재기 } from '../use오래켜둠'
 import { useLayerBack } from '../useBackHandler'
 import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import ShareDrawCard, { RecipeCard, 카드표지로, 카드표지토스트 } from '../components/ShareDrawCard'
@@ -37,6 +44,10 @@ import ShareDrawCard, { RecipeCard, 카드표지로, 카드표지토스트 } fro
 import uiGomHeart from '../assets/ui/gom_heart.png'
 // 🐻 엄지척 = **물결 정본**(창업자 2026-08-14 · `gt_01`). 옛 `ui/gom_thumbsup` 은 매끈 곰이었다.
 import uiGomThumb from '../assets/ui/wave/gom_thumbsup.png'
+// 🐧🐻 [창업자 2026-09-15] 단추에 붙일 컷 — *"장보기 담기도 카트같은거 붙이고 … 타이머도 그림을"*
+//   ⛔ 새로 그린 건 없다(규칙 8) · 재료 소제목의 `gom_shop` 과 «겹치지 않는» 컷으로 골랐다
+import pnShoplist from '../assets/ui/wave/pn_shoplist.png'
+import gomPot from '../assets/ui/wave/gom_pot.png'
 import DetailDecor from '../components/DetailDecor'
 import MemoNote from '../components/MemoNote'
 import { hlColor } from '../components/Stickers'
@@ -46,6 +57,7 @@ import { 항목묶어 } from '../stepBreak'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 // 📺 링크 → 앱 안에서 재생할 수 있는 «공식» 임베드 주소 (유튜브·인스타)
 import { embedUrl, SNS표 } from '../embed'
+import avGom from '../assets/avatars/av_gom.png' // 🧑‍🍳 창업자가 «직접 만든» 레시피 뱃지 (made:'창업자' · 2026-09-27)
 
 // 🏷 출처(어디서 왔나) — 주소에서 «읽어» 낸다 (창업자 2026-09-03 *"원본링크에-출처도 붙이자"*)
 //   ⛔ 손으로 적는 칸을 새로 만들지 않는다 — 손으로 적으면 반드시 낡는다(규칙 12ⓑ).
@@ -78,13 +90,18 @@ const SecTitle = ({ children }) => (
 
 // 첫 방문 코치마크 — 숨어 있는 중요 기능을 반짝이며 알려준다(창업자 딸 아이디어 ⭐)
 const COACH_KEY = COACH.detail
+// 🚫🚫 [창업자 확정 2026-09-10] *"상세랑 레시피도 줄여"* — **다섯 → 둘.**
+//    🔢 왜 = 레시피를 «처음 열자마자» 다섯 번을 눌러야 내용을 본다. 첫 사람이 제일 먼저 가는 자리다.
+//    ⭐⭐ 뺀 셋(꾸미기·공유·요리모드)은 **가져오기 화면의 「이거 해보면 열쇠 1개씩」 다섯 줄과 겹친다** —
+//       레꾸 해보기 · 레꾸자랑 보내기 · 요리모드로 한 번 만들어보기가 거기 그대로 있다(EarnList).
+//       ⛔ 같은 말을 두 곳에서 하면 둘 다 안 읽힌다.
+//    ✅ 남긴 둘은 **여기서«만» 할 수 있고 다른 데서 안 알려주는 것**이다.
+//       ⛔ 「편집」도 뺐다 — 연필 아이콘이라 눌러볼 수 있고, 잘못 눌러도 잃는 게 없다.
+//    ⛔ 열쇠(COACH.detail)를 «올리지 않는다** — 줄이는 판이라 이미 본 사람에게 또 띄울 이유가 없다.
 const COACH_STEPS = [
-  { sel: '[data-coach="edit"]', label: '편집', desc: '재료·만드는 법, 언제든 고칠 수 있어요' },
   { sel: '[data-coach="shop"]', label: '재료 장보기 담기', desc: '필요한 재료를 한 번에 장보기 리스트에 담아요. 담은 건 장보기 탭에서 체크하며 사면 편해요' },
   // ⛔ 「주부의 장바구니」 코치 한 칸을 뺐다 — 그 자리(제품 사러가기)를 2026-08-03 에 레시피에서 뺐다.
   //    ⚠️ 없는 자리를 짚는 코치는 **오버레이만 뜨고 아무것도 안 가리킨다**(빈 화면 반짝임).
-  { sel: '[data-coach="share"]', label: '친구와 레시피 공유하기', desc: '재료·만드는 법이 담긴 예쁜 카드로 보내요' },
-  { sel: '[data-coach="decor"]', label: '레시피 꾸미기', desc: '스티커·마스킹테이프·손글씨로 나만의 표지!' },
   // ⛓ [2026-08-29] label 은 «그 버튼에 적힌 글자»와 같아야 한다(v11.02 「책갈피」 교훈 — 한 곳만 바꾸면 말이 갈린다).
   //    ⚠️ desc 에서 「요리모드」를 뺐다 — 이름이 「요리모드 시작」이 되어 한 줄에 같은 말이 두 번 나왔다.
   //       ⛔ 창업자가 시킨 건 «버튼 이름»이고 이건 거기 «딸려온» 것이라 밝혀 둔다.
@@ -93,17 +110,28 @@ const COACH_STEPS = [
 
 // 재료 목록에서 '[양념]'·'[소스]'·'[드레싱]'처럼 대괄호만 있는 줄은 소제목(헤더)으로 그린다.
 // (장보기 담기·인분 환산에서 제외) — 전 레시피 양념/소스 표기 통일용.
-const isIngHeader = (s) => /^\[[^\]]+\]$/.test(String(s).trim())
+// 🏷 isIngHeader · ingGroup · stripIngGroup 는 `src/scale.js` 로 옮겼다(2026-09-18 · 요리모드도 같이 쓴다). 아래 주석은 «왜»를 위해 남긴다.
+// 🏷🏷 [창업자 확정 2026-09-16] 「[양념장]」이 **줄마다 되풀이되면 «맨 처음 한 번»만** 보여준다.
+//   📮 창업자 = *"양념장 육수 앞에 제목 다 중복 뭐야"* → *"제일 앞에 하나만 붙이자 중복빼고 … 제일 처음 한번만"*
+//   🔢 레시피 «데이터»가 원래 줄마다 붙은 꼴이다(`src/data/basics.js:2291` = `'[해산물 튀김] 세몰리나 1컵'`).
+//      ⛔ **데이터는 한 글자도 안 고친다** — 화면에서만 접는다(같은 줄을 요리모드·장보기도 쓴다).
+//   ⭐ «바로 앞 줄과 같을 때»만 뗀다 — 묶음이 바뀌면 그 첫 줄에 다시 붙어 경계가 보인다.
 
 // 🛒 주부의 장바구니 픽 — 몇 칸까지 펼쳐 두나 (창업자 2026-08-15 *"4칸 넘어가면 접을 수 있게"*)
-const PICK_FOLD = 4
+// ⛔ [2026-09-16] 「4칸까지만」 접기를 창업자가 뒤집었다 — 이 값은 이제 안 쓴다(지우지 않고 자취만 남긴다)
 
 export default function RecipeDetailScreen({ id }) {
   const { recipes, toggleFavorite, cook, removeRecipe, addShopItems, addShopItem, diary, addDiary, removeDiary, updateDiary, updateRecipe } = useStore()
   const nav = useNav()
   useWakeLock() // 레시피를 보며 요리할 때 화면이 꺼지지 않게
+  // ⏱ 📊 [2026-09-14] 5분 넘게 «앞에 두고» 있었나 — 「보면서 만든 사람」
+  //   📮 창업자 = *"요리모드도 그렇지만 레시피상세에서 5분넘게 켜두는 것도 보고 만드는 거야"*
+  //   ⛔ 요리모드만 세면 반을 놓친다 — `cook_done` 때 밟은 구멍과 «같은 모양»이다.
+  오래켜둠재기('detail')
   const [pending, setPending] = useState(null) // 📮 다 만들었는데 허가가 끊긴 표지 — 「지금 보내기」
   const [timer, setTimer] = useState(false)
+  const [주인장말, set주인장말] = useState(false) // 🧑‍🍳 꼬르곰 뱃지 말풍선 (2026-09-27)
+  useEffect(() => { if (!주인장말) return; const t = setTimeout(() => set주인장말(false), 1000); return () => clearTimeout(t) }, [주인장말])
   // 🖼 유튜브 미리보기 그림이 안 올 때 — 그 칸을 통째로 감춘다(깨진 네모 금지)
   const [썸네일깨짐, set썸네일깨짐] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
@@ -127,7 +155,10 @@ export default function RecipeDetailScreen({ id }) {
   //   ⛔ 참·거짓이 아니라 «글자»를 담는 이유 = 자리마다 머리글이 달라야 한다.
   //      「N번째 한 끼예요」를 공유 직후에 띄우면 **거짓말**이 된다(요리를 안 했을 수 있다).
   const [askReview, setAskReview] = useState(null)
-  const 자랑보냄 = useRef(false)
+  // 🔴 [2026-09-22] 이 ref 이름이 계측 함수 «자랑보냄»과 같으면 컴포넌트 안에서 ref 가 이겨서
+  //    계측이 조용히 죽는다 — BragScreen 이 2026-09-21 에 정확히 그 사고였다(brag_shared 영영 0).
+  //    ✅ 그래서 이름을 가른다. 🛡 check-계측겹침 이 같은 사고를 다시 막는다.
+  const 보냈나 = useRef(false)
   // 인라인 오버레이(꾸미기) — 뒤로가기로 닫기.
   // (타이머·삭제확인·기록·가이드 시트는 각자 자체 처리)
   // 🔙 꾸미다가 뒤로가기 → **바로 닫지 않고 물어본다** (창업자 2026-07-30
@@ -148,7 +179,28 @@ export default function RecipeDetailScreen({ id }) {
   const baseServings = r?.servings || 0
   const [servings, setServings] = useState(baseServings || 1)
   const ratio = baseServings ? servings / baseServings : 1
-  const [picksOpen, setPicksOpen] = useState(false) // 🛒 픽카드 접기 — 4칸까지만 보이고 나머지는 「더 보기」
+
+  // 🧺 [창업자 확정 2026-09-15 · A안] 「주부의 장바구니」 상자를 «통째로» 접는다 — 평소엔 알약 한 줄.
+  //   📮 창업자 = *"큐레이션이 되게 제한적이야. 다 올리면 레시피보는데 방해되서 3-4개정도만 올렸거든"*
+  //      ＋ *"또 계속 반복되니까"* ＋ *"작게 주부의 장바구니 탭으로 바로 가기를 그냥 만들까"*
+  //      → 시안 넷을 보고 **②문구 ＋ A알약**으로 확정 (*"그래 a로 가자"*)
+  //   🔢 왜 = 이 상자가 화면 위에서 **750px** 아래(화면 844px)라 `detail` 체류 **10초** 안에 «안 보인다».
+  //      그래서 `buy_pick_detail` 이 2026-09-15 에 **0건**이었다.
+  //   ⛔ 카드를 «없애지» 않는다 — 누르면 지금 그대로 카드·사러가기·「이 재료 다 담기」가 다 나온다.
+  const [pickBoxOpen, setPickBoxOpen] = useState(false)
+  // ☑️ [창업자 2026-09-15] 재료 체크 — **«끈 것»만 담아 둔다.** 기본은 다 켜짐이라 빈 Set 이 곧 「전부」다.
+  //   ⭐ 이렇게 두면 인분을 바꾸거나 레시피가 갱신돼도 «새 재료가 저절로 켜진» 상태가 된다.
+  //      (켠 것을 담으면 새 재료가 꺼진 채로 들어와 「담기 눌렀는데 빠졌다」가 난다)
+  const [켠것, set켠것] = useState(() => new Set())
+  // 🛒 «켠 것»만 골라 둔다 — 소제목(`[양념]`)은 애초에 재료가 아니라 빠진다.
+  //   ⛔ 분량은 떼고 이름만 (창업자 *"그냥 두부 양파를 사지"*) — 담는 쪽과 세는 쪽이 어긋나면 안 되니 한 자리에서 만든다.
+  const 담을재료 = useMemo(
+    () => (r?.ingredients || [])
+      .map((ing, i) => ({ ing, i }))
+      .filter(({ ing, i }) => !isIngHeader(ing) && 켠것.has(i))
+      .map(({ ing }) => ingredientName(stripIngGroup(ing))),
+    [r?.ingredients, 켠것],
+  )
   // ⛔⛔ 훅은 «전부» 아래 `if (!r)` 보다 위에 있어야 한다 — 밑에 두면 레시피를 지우는 순간
   //    early return 이 걸려 훅 개수가 줄고 React 가 트리째 죽는다(빈 화면).
   //    2026-08-03 창업자 제보 *"홍콩식가지볶음 지웠더니 먹통됨"* 의 정체가 이거였다.
@@ -196,11 +248,14 @@ export default function RecipeDetailScreen({ id }) {
   const 다시다듬기 = async () => {
     const 원문 = String(r?.rawText || '')
     if (다시중 || 원문.length < 40) return
+    // 🔐 허락 «먼저»(대기창보다 앞) — 직접 눌렀으니 「사용 안 함」이었어도 다시 묻는다(큰 틀 6-② ⓑ)
+    if (!(await AI동의받기({ 다시묻기: true }))) return
     set다시중(true); set창닫음(false)
     nav.showToast('AI가 다듬는 중이에요 · 다 되면 레시피에 저절로 올라가요', 6000)
     // 👁 사진이 손에 있으면 같이 보낸다(`tidy.js` 가 한 번 더 거른다) — 보관함 단추와 «같은 말»
     const 사진 = typeof r.image === 'string' && r.image.startsWith('data:image/') ? r.image : ''
-    const ai = await tidyRecipe(원문, 사진)
+    // 🙋‍♀️ user = 유저가 「다시 해보기」 «단추를 눌렀다» (2026-09-14)
+    const ai = await tidyRecipe(원문, 사진, { 무료: !!r.freeRead, 까닭: 'user' })
     set다시중(false)
     if (!ai) {
       // ⛔ 표를 2 로 «둔다» — 단추는 아래 조건이 1·2 둘 다 보여주므로 사라지지 않는다
@@ -216,15 +271,22 @@ export default function RecipeDetailScreen({ id }) {
   const 만회한적 = useRef('')
   useEffect(() => {
     if (!r || r.tidyFail !== 1) return
+    // 🆓 [2026-09-14] 무료로 읽은 편은 «만회하지 않는다» — 그게 열쇠 0개로 AI 가 도는 뒷문이다.
+    //   ⛔ 편집 화면이 표시를 안 남기므로 보통은 여기 안 오지만, 옛 편·동기화로 들어올 수 있어 한 번 더 막는다.
+    //   📄 근거 = 창업자 확정 2026-08-29(재론 금지) · docs/_archive/2026-08/AI다듬기-만들기전-리서치-2026-08-28.md
+    if (r.freeRead) return
     const 원문 = String(r.rawText || '')
     if (원문.length < 40) return          // 원문이 없으면 만회할 재료가 없다
     if (만회한적.current === r.id) return // ⛔ 이 화면에 머무는 동안 두 번 돌지 않게
     만회한적.current = r.id
     let 살아있나 = true
     ;(async () => {
-      const ai = await tidyRecipe(원문)
+      // 🤖 auto = 앱이 «저절로» 만회한다 — 유저는 레시피를 열었을 뿐이다 (2026-09-14)
+      //   ⛔⛔ 이걸 「사람이 AI 를 썼다」로 세면 유료 판단이 통째로 틀어진다. 여기가 그 자리다.
+      const ai = await tidyRecipe(원문, '', { 무료: !!r.freeRead, 까닭: 'auto' })
       if (!살아있나) return
-      if (!ai) { updateRecipe(r.id, { tidyFail: 2 }); return }
+      // 🙅 [2026-09-13] 동의를 안 한 사람에겐 만회할 게 없다 — 실패 표시를 «지운다»(실패로 적으면 보관함이 「안 됐어요」라고 거짓말한다)
+      if (!ai) { updateRecipe(r.id, { tidyFail: 동의안함으로끝났나() ? 0 : 2 }); return }
       // ⭐ 얹는 규칙은 `retidy.js` 의 `만회값()` «한 곳» — 임시보관함 「AI로 다듬기」 단추와 «같은 말»(2026-09-05).
       //   규칙 전문(보관함이면 통째로 · 졸업한 편은 빈 칸만 · 제목은 유저 것 지킴 · 아이콘 다시 · 올리기만)은 그 파일에.
       const { 바꿀것, 바뀐게있나 } = 만회값(r, 원문, ai)
@@ -243,6 +305,8 @@ export default function RecipeDetailScreen({ id }) {
   //      랜덤 카드(ShareDrawCard)가 v9.63부터 쓰던 방식 — 검증된 처방을 표지에도 붙인다.
   // 🔤 글꼴 꾸러미 미리 데우기 — 캡처보다 «먼저» 끝나 있어야 캡처가 빨라진다(fontEmbed.js)
   useEffect(() => { warmFontCSS() }, [])
+  // ⭐ [창업자 2026-09-27] 인기 레시피 — «기본 레시피»를 열면 번호만 센다(유저가 쓴 레시피는 stats.js 가 걸러 안 보낸다)
+  useEffect(() => { if (id) 기본레시피표시(id, 'view') }, [id])
 
   const prepRef = useRef(null)
   useEffect(() => {
@@ -317,6 +381,11 @@ export default function RecipeDetailScreen({ id }) {
     const entry = { id: newId(), recipeId: r.id, title: r.title, source: r.source, at: Date.now(), rating: 0, note: '', photo: 표지사진 }
     addDiary(entry)
     cook(r.id)
+    // 📊 [2026-09-12] ⛔⛔ 여기가 «빠져 있었다» — 「만들었어요」 문은 두 곳인데 요리모드 쪽만 셌다.
+    //    📮 창업자 = *"요리를 만들었어요를 안누르면 카운트가 안되는거잖아?"* → 물어봐서 찾았다.
+    //    ⭐ 위 `if (existing) return` 뒤라서, 하루 두 번 눌러도 «한 번»만 센다(중복 방지가 이미 있다).
+    //    ⚠️ 이걸 고쳐도 「그냥 보고 부엌에서 요리한 사람」은 여전히 못 잰다 — 앱이 부엌을 못 본다.
+    try { 요리끝냄() } catch { /* noop */ }
     nav.showToast(표지사진 ? '만들었어요! 표지 사진도 일기에 담았어요' : '만들었어요! 한끼 일기에 남겼어요')
     // 🚪 리뷰 문 — 「한 끼 해냈다」 (창업자 확정 2026-09-03)
     //   ⛔⛔ 이건 **창업자 2026-08-06 확정(「토스트만, 시트 안 뜬다」)을 «뒤집은» 것**이다.
@@ -395,6 +464,7 @@ export default function RecipeDetailScreen({ id }) {
   const hasRecipe = !!((r.ingredients || []).length || (r.steps || []).length)
   const doShareCover = async () => {
     // ⛔ 시트를 닫기 «전에» 미리 캡처를 손에 쥔다 — 닫으면 useEffect 정리가 prepRef 를 비운다
+    try { 자랑보내기누름() } catch { /* 통계가 죽어도 자랑은 된다 */ }   // 📊 [2026-09-24]
     const prepared = prepRef.current
     setCoverBusy(true) // 로딩 오버레이 + 숨은 레시피카드 마운트 유지
     setShareSheet(false)
@@ -410,17 +480,21 @@ export default function RecipeDetailScreen({ id }) {
       if (res && res.pending) 띄울시트 = res.pending   // 📮 허가가 끊겼다 → 한 번 더 누를 기회를 준다
       // 📱 표지가 나갔고 레시피가 한 장 남았다 → 「레시피도 보내기」를 한 번 더 청한다(창업자 "ㄴ으로 하자")
       else if (res && res.shared === true && res.다음) 띄울시트 = { ...res.다음, 이어보내기: true }
-      else if (res && res.ok && res.shared === false) nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요')
+      else if (res && res.취소) { try { 자랑창닫음() } catch { /* noop */ } }   // 🙅 [2026-09-24] 닫은 것 — ⛔「사진으로 저장했어요」라고 말하지 않는다
+      else if (res && res.ok && res.shared === false) { try { 자랑사진저장() } catch { /* noop */ } nav.showToast('공유가 안 되는 폰이라 사진으로 저장했어요') }
       else if (res && res.ok === false) nav.showToast('카드를 만들지 못했어요. 잠시 뒤 다시 눌러주세요')
       // 🗣 「꾸민 표지 그대로」 공유도 리뷰를 청한다 — BragScreen `sendCover` 와 «같은 구멍»이었다
       //   (창업자 폰 제보 2026-08-28 = *"레꾸자랑은 내가 아예 못봤어"*). 자세한 경위는 그쪽 주석에.
-      if (res && res.shared === true) 자랑보냄.current = true
+      // 📊 [2026-09-22] brag_shared — ⛔BragScreen 의 sendCover 와 «같은 조건»이다(shared === true 일 때만).
+      //   취소(AbortError)·사진 저장 폴백은 shared:false 라 여기 안 들어온다(shareCover.js:232·235·244).
+      if (res && res.shared === true) { try { 자랑보냄() } catch { /* 통계가 죽어도 자랑은 된다 */ } }
+      if (res && res.shared === true) 보냈나.current = true
     } finally {
       setCoverBusy(false)
       if (띄울시트) setPending(띄울시트) // 📱 리뷰는 이 시트의 `onClose` 가 청한다(아래)
       else {
-        if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-        자랑보냄.current = false
+        if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+        보냈나.current = false
       }
     }
   }
@@ -438,14 +512,22 @@ export default function RecipeDetailScreen({ id }) {
   //      → 아무 표시도 안 붙인다. 창업자 확인 2026-08-10.
   // ⛔ 재료와 메모를 «갈라서» 넘긴다 — 한 자루에 섞으면 메모의 설명 문장에서 광고가 걸린다
   //    (2026-08-31 「누룽지」 사고 — `curation.js` `picksForIngredients` 주석 참고)
-  const pantryPicks = picksForIngredients(r?.ingredients || [], r?.memo || '')
+  // 🧺 [창업자 확정 2026-09-16] **재료에 걸리는 큐레이션을 «전부»** — 📮 *"그냥 다 넣자. 접었다 폈다 하는거니까"*
+  const pantryPicks = picksForIngredients(r?.ingredients || [], r?.memo || '', { 전부: true })
   // 🔽 4칸까지만 보이고 나머지는 접는다(창업자 2026-08-15 *"너무 길면 좀 그래"*)
-  const shownPicks = picksOpen ? pantryPicks : pantryPicks.slice(0, PICK_FOLD)
+  // 🧺 [창업자 확정 2026-09-16] **그 레시피에 걸리는 픽을 «전부» 보여준다.**
+  //   📮 *"이제 ＋로 볼수있으니까 재료에 들어가는 우리 모든 큐레이션 넣어도 될 것 같아"* · *"그 레시피의 재료에 들어가는"*
+  //   ⭐ 까닭 = 상자 자체가 알약(＋)으로 접혀 있다. **상자 안에서 또 접을 이유가 없어졌다.**
+  //   ⛔ 옛 판정(2026-08-15 *"4칸 넘어가면 접을 수 있게"*)을 «창업자가» 뒤집은 것이다 — 내 판단이 아니다.
+  const shownPicks = pantryPicks
   // ⭐ 「다 담기」는 접혀 있어도 «전부» 담는다 — 「다」라고 써 놓고 보이는 것만 담으면 거짓말이 된다.
   //    담고 나서 뜨는 토스트가 개수를 말해주니 유저도 몇 개 담겼는지 안다.
   const addAllPicks = () => {
     // ⛔ 한살림은 `noBuy` 를 같이 담는다 — 안 그러면 장보기 리스트에서 쿠팡·네이버 검색으로 샌다
     pantryPicks.forEach((p) => addShopItem({ name: p.name, url: productLink(p), ...(isHansalim(p) ? { noBuy: true } : {}) }))
+    // 📊 [2026-09-12] 담았다 — ⛔ forEach «바깥»이다. 안에 넣으면 픽이 6개일 때 6건이 되어 부푼다.
+    //    「다 담기」는 사람이 한 번 누른 «한 번»이다.
+    장보기담음()
     nav.showToast(`장바구니 재료 ${pantryPicks.length}개를 장보기에 담았어요`)
   }
   // 구매처 배지 — 장보기 화면 `mallLabel()` 과 «같은 규칙»이라야 한다(한쪽만 고치면 앞뒤가 안 맞는다)
@@ -476,13 +558,13 @@ export default function RecipeDetailScreen({ id }) {
              (창업자 = *"리뷰 안떠..ㅠㅠ"*). 자세한 경위는 `SendNowSheet.jsx` 머리 주석에. */}
       <SendNowSheet
         pending={pending}
-        onShared={() => { 자랑보냄.current = true }}
+        onShared={() => { if (!pending?.이어보내기) { try { 자랑보냄('표지') } catch { /* 통계가 죽어도 자랑은 된다 */ } } 보냈나.current = true }}   // ⛔ 이어보내기(레시피 두 번째 장)는 같은 자랑이라 안 센다
         onClose={(다음) => {
           // 📱 [2026-08-28 ⓑ] 표지가 나갔고 레시피가 남았으면 **한 장 더**를 먼저 청한다. 리뷰는 그다음.
           if (다음) { setPending({ ...다음, 이어보내기: true }); return }
           setPending(null)
-          if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-          자랑보냄.current = false
+          if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+          보냈나.current = false
         }}
       />
 
@@ -511,7 +593,7 @@ export default function RecipeDetailScreen({ id }) {
               ⏳ **그림은 아직 북마크 아이콘이다** — 목록은 요리사모자 클립으로 갔다.
                  말은 같은데 그림이 달라 「같은 기능인 줄 모른다」가 될 수 있다 → 창업자 판정 대기.
                  ⛔ 창업자가 지목한 건 「칩」이라 여기까지 그림을 넓히지 않았다. */}
-          <button className="bar-btn" onClick={() => toggleFavorite(r.id)} aria-label={FAV_NAME}>
+          <button className="bar-btn" onClick={() => { if (!r.favorite) 기본레시피표시(r.id, 'fav_on'); toggleFavorite(r.id) }} aria-label={FAV_NAME}>
             <Icon name="bookmark" size={20} color={r.favorite ? '#c2703f' : 'currentColor'} style={{ fill: r.favorite ? '#c2703f' : 'none' }} />
           </button>
           {/* 삭제 — 예전엔 '⋯ 더보기' 뒤에 숨겨뒀는데 메뉴 안에 삭제 하나뿐이라
@@ -622,6 +704,34 @@ export default function RecipeDetailScreen({ id }) {
         {/* 즐겨찾기는 상단 오버레이 북마크 하나로 통일 (중복 버튼 정리) */}
         <div className="h-title" style={{ fontSize: 25, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {r.title}
+          {/* 🧑‍🍳 창업자가 «직접 만든» 레시피 = 요리사 모자 꼬르곰 얼굴 (창업자 2026-09-27 「꼬르곰 얼굴만 · 귀엽게」)
+              ⛔ 글자는 안 붙인다 — 이름까지 달면 길다(창업자). 누르면 「한끼 주인장 레시피예요」(창업자 2026-09-27 「주인장으로 하자」). */}
+          {/* 💬 누르면 꼬르곰 옆에 말풍선 (창업자 「귀엽게 말풍선」 · 「작게 1초만 · 뱃지옆에」) — 1초 뒤 저절로 사라진다 */}
+          {r.made === '창업자' && (
+            <span style={{ position: 'relative', display: 'inline-flex', flex: '0 0 auto' }}>
+            {주인장말 && (
+              // ↔ 뱃지 «옆» — 오른쪽 자리가 모자라면(긴 제목) 왼쪽으로 연다. 화면 밖으로 안 나가게.
+              <span className="founder-bubble" style={{
+                position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+                ...(주인장말 === '왼' ? { right: 'calc(100% + 9px)' } : { left: 'calc(100% + 9px)' }),
+                whiteSpace: 'nowrap', fontSize: 12.5, fontWeight: 700, color: '#6b4a24', lineHeight: 1.2,
+                background: '#fff4e0', border: '1.5px solid #ecd2a8', borderRadius: 14, padding: '5px 10px',
+                boxShadow: '0 2px 8px rgba(120,80,30,.16)', zIndex: 5, animation: 'fadeIn .2s ease-out',
+              }}>
+                한끼 주인장 레시피예요
+                <span style={{ position: 'absolute', top: '50%', width: 9, height: 9, background: '#fff4e0',
+                  ...(주인장말 === '왼'
+                    ? { left: '100%', borderTop: '1.5px solid #ecd2a8', borderRight: '1.5px solid #ecd2a8', transform: 'translate(-5px,-50%) rotate(45deg)' }
+                    : { right: '100%', borderBottom: '1.5px solid #ecd2a8', borderLeft: '1.5px solid #ecd2a8', transform: 'translate(5px,-50%) rotate(45deg)' }) }} />
+              </span>
+            )}
+            <img src={avGom} alt="한끼 주인장 레시피" className="founder-badge press" onClick={(e) => { const b = e.currentTarget.getBoundingClientRect(); set주인장말(b.right + 175 > window.innerWidth ? '왼' : '오') }} style={{ cursor: 'pointer',
+              width: 34, height: 34, flex: '0 0 auto', padding: 3, borderRadius: 999,
+              background: '#fff4e0', border: '1.5px solid #ecd2a8', transform: 'rotate(-8deg)',
+              boxShadow: '0 2px 6px rgba(120,80,30,.15)',
+            }} />
+            </span>
+          )}
           {/* 🏷 **「샘플」** — 창업자가 직접 꾸민 표지가 붙은 딱 한 편(콩국수)에만 뜬다.
               📮 창업자 2026-08-13 *"샘플이라고(삭제가능) 명시하고"* — 일기 샘플과 **같은 모양·같은 잉크색**을 쓴다.
                  ⛔ 두 곳에서 다르게 생기면 「다른 것」으로 읽힌다.
@@ -657,8 +767,9 @@ export default function RecipeDetailScreen({ id }) {
         <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
           <SourceBadge source={r.source} size={16} showLabel={false} />
           <span className="t-sub" style={{ marginLeft: 2 }}>{SOURCES[r.source]?.line || '링크에서 가져옴'}</span>
-          {/* 저장 날짜 — 자동 기록(savedAt) */}
-          {r.savedAt && <span className="t-sub">· {dateLabel(r.savedAt)} 저장</span>}
+          {/* 📅 저장 날짜 — ⛔«유저가 저장한 것»만. 기본 레시피는 저장한 적이 없다(창업자 확정 2026-09-12).
+              판정은 seed.js 의 저장날짜보임 한 곳에서 — 여기서 따로 재지 않는다. */}
+          {저장날짜보임(r) && <span className="t-sub">· {dateLabel(r.savedAt)} 저장</span>}
         </div>
 
         {info.length > 0 && (
@@ -849,7 +960,10 @@ export default function RecipeDetailScreen({ id }) {
                             : 어디}
                         </div>
                         <div className="t-sub" style={{ fontSize: 13, marginTop: 2, fontWeight: 400 }}>
-                          {움직이나 ? '만드는 손이 헷갈릴 때 보면 쉬워요' : '원작자가 올린 글을 그대로 볼 수 있어요'}
+                          {/* 📝 [창업자 확정 2026-09-23 00:0x · 후보 넷 중 ①] 「만드는 손이 헷갈릴 때 보면 쉬워요」 → 이 문장으로.
+                              📮 창업자 = *"이말 이상해 바꾸자"* — 맞는 지적이다. 「손이 헷갈린다」가 되어 주어가 어색했다(헷갈리는 건 사람이다).
+                              ⛔ 아래 줄(사진·글일 때)은 «그대로 둔다» — 창업자 = *"위에 한 줄만"*. */}
+                          {움직이나 ? '순서가 헷갈리면 영상으로 확인해요' : '원작자가 올린 글을 그대로 볼 수 있어요'}
                         </div>
                       </>
                     )
@@ -865,7 +979,8 @@ export default function RecipeDetailScreen({ id }) {
             ⭐ 자리 = **재료 «바로 위»**. 유저가 「덜 읽혔네」를 느끼는 곳이 바로 여기다.
             ⛔ 「고장」이라고 쓰지 않는다 — 단추 하나로 되는 일이다(보관함 줄과 «같은 말»).
             ⛔ 원문이 40자 미만이면 아예 안 보인다 — 다듬을 재료가 없어 눌러도 헛돈다(뉴런도 0). */}
-        {(r.tidyFail === 1 || r.tidyFail === 2) && String(r.rawText || '').length >= 40 && (
+        {/* 🆓 [2026-09-14] 무료로 읽은 편엔 «안» 보인다 — 누르면 열쇠 0개로 AI 가 돈다(창업자 확정 2026-08-29) */}
+        {!r.freeRead && (r.tidyFail === 1 || r.tidyFail === 2) && String(r.rawText || '').length >= 40 && (
           <button
             className="press" onClick={다시다듬기} disabled={다시중}
             style={{ width: '100%', marginTop: 14, padding: '12px 14px', borderRadius: 14, background: 'var(--cream)', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}
@@ -901,21 +1016,6 @@ export default function RecipeDetailScreen({ id }) {
                   계량·손질
                 </button>
               </div>
-              <button
-                className="mini-buy press"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
-                data-coach="shop"
-                onClick={() => {
-                  // 🛒 **분량은 떼고 «이름»만 담는다** — 창업자 *"그냥 두부 양파를 사지. 해물가루육수 1봉을 사진 않잖아"*
-                  //   ⛔ 그래서 `scaleIngredient`(인분 환산)도 여기선 안 쓴다 — 어차피 분량을 뗄 것이라
-                  //      환산해 봐야 그 숫자가 버려진다. 인분 환산은 «재료 목록 화면»이 하는 일이다.
-                  addShopItems(r.ingredients.filter((ing) => !isIngHeader(ing)).map((ing) => ingredientName(ing)))
-                  nav.showToast('재료를 장보기 리스트에 담았어요')
-                }}
-              >
-                <Icon name="cart" size={13} />
-                장보기 담기
-              </button>
             </div>
             {baseServings > 0 && (
               <div className="serv-row">
@@ -938,25 +1038,118 @@ export default function RecipeDetailScreen({ id }) {
               {latestEntry?.note && (
                 <MemoNote recipeId={r.id} 횟수={cookedN} 붙임 onClick={() => setLogEntry(latestEntry)} />
               )}
+              {/* ☑️ [창업자 2026-09-15] *"재료에 체크박스를 둬서 필요한 것만 장보기 담기할수는 없나?"*
+                  ＋ *"지금은 전체를 다 담고 직접 지워야 하잖아"*
+                 ⭐ **기본은 «다 꺼짐»** (창업자 2026-09-16 고침) — 필요한 것만 직접 체크한다.
+                 ⛔ 저장하지 않는다 — 이 화면에 있는 동안만이다(요리모드 체크와 같다). */}
               {r.ingredients.map((ing, i) => (
                 isIngHeader(ing)
                   ? <div key={i} className="ing-head">{ing.trim().replace(/^\[|\]$/g, '')}</div>
-                  : <div key={i} className="ing">{scaleIngredient(ing, ratio)}</div>
+                  : (
+                  <Fragment key={i}>
+                  {/* 🏷 [창업자 확정 2026-09-16] 묶음이 «시작하는» 줄 위에 소제목을 «혼자 한 줄»로 띄운다.
+                      📮 창업자 = *"육수를 혼자 한줄을 차지하게 하면 안돼?"*
+                      ⭐ 그러면 재료 줄에서는 대괄호가 «전부» 떨어져 글이 깔끔해진다.
+                      ⛔ 데이터는 한 글자도 안 고친다 — `basics.js` 는 줄마다 `[육수]` 가 붙은 꼴 그대로다. */}
+                  {ingGroup(ing) && ingGroup(ing) !== (i > 0 ? ingGroup(r.ingredients[i - 1]) : null) && (
+                    <div className="ing-head">{ingGroup(ing)}</div>
+                  )}
+                    <button
+                      key={i} type="button" className="ing press"
+                      aria-pressed={켠것.has(i)}
+                      onClick={() => set켠것((옛) => { const 새 = new Set(옛); if (새.has(i)) 새.delete(i); else 새.add(i); return 새 })}
+                      style={{ display: 'flex', alignItems: 'center', width: '100%', textAlign: 'left', background: 'none', border: 'none' }}
+                    >
+                      {/* ☑️☑️ [창업자 확정 2026-09-16] **기본은 «다 꺼짐». 직접 체크한 것만 담는다.**
+                          📮 *"체크는 되어있으면 안되지"* ＋ *"그냥 보이고 앞에 체크표시를 직접해야하는거고"*
+                          ⛔⛔ **2026-09-15 에 내가 «기본 다 켜짐»으로 «내 맘대로» 정해서 내보냈다 — 창업자가 시킨 적 없다.**
+                             📮 *"누가 이렇게 넣으래 니맘대로"* · *"확인받으면 그대로 가. 마음대로 수정해서 올리기 금지"*
+                          ⭐ 안 켠 자리엔 **연한 빈 네모**를 둔다 — 📮 *"체크빼면 아무것도 안남아 체크박스 연하게 꼭 넣어"*
+                             (아무것도 없으면 «누를 수 있는 자리»인 줄 모른다)
+                          ⛔ 켜짐은 네모 없이 ✓ 만 — 창업자 2026-09-15 확정(*"파란색 창말고 그냥 체크만"*). */}
+                      <span style={{ flex: '0 0 auto', width: 21, height: 21, marginRight: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 7, border: 켠것.has(i) ? 'none' : '2px solid var(--line)' }}>
+                        {켠것.has(i) && <Icon name="check" size={20} color="var(--brown)" stroke={3.6} />}
+                      </span>
+                      {/* ⛔⛔ 안 켠 줄을 «흐리게 하지 않는다» — 📮 창업자 = *"재료를 보고 요리를 해야하니까"*.
+                          체크는 「장보기에 담을 것」을 고르는 것이지 「재료를 지우는 것」이 아니다. */}
+                      {/* 🏷 묶음 이름은 «위 소제목 줄»이 맡는다 — 여기선 늘 뗀다 */}
+                      <span style={{ flex: 1, minWidth: 0 }}>{stripIngGroup(scaleIngredient(ing, ratio))}</span>
+                    </button>
+                  </Fragment>
+                  )
               ))}
+              {/* 🛒 [창업자 확정 2026-09-15 · A안] 담기 단추는 **재료 목록 «끝»**이다.
+                  🔢 실측(`_probe-알약자리-0915.mjs`) — 옛 자리(재료 소제목 옆) 693px · 재료 끝 1174~1492px
+                     → 체크를 다 하면 손가락은 «목록 끝»인데 단추는 **최대 799px 위**였다(화면 한 판).
+                  🎨 바탕 = `--brown` 에 흰색을 22% 섞은 값 — 📮 *"담기 색이 너무 진해보이는데 조금 연하게"* (78% 확정).
+                     ⛔ 색값을 박지 않는다 — 테마마다 `--brown` 이 다르다(살구는 군고구마 #8a4a26).
+                  🐧 그림 = `pn_shoplist` — 재료 소제목의 곰(`gom_shop`)과 «겹치지 않는» 컷을 골랐다. */}
+              <button
+                className="press"
+                data-coach="shop"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', marginTop: 16, padding: 15, borderRadius: 16, background: 'color-mix(in srgb, var(--brown) 78%, #fff)', color: '#fff', fontWeight: 800, fontSize: 17, border: 'none' }}
+                onClick={() => {
+                  // 🛒 **분량은 떼고 «이름»만 담는다** — 창업자 *"그냥 두부 양파를 사지. 해물가루육수 1봉을 사진 않잖아"*
+                  //   ⛔ 그래서 `scaleIngredient`(인분 환산)도 여기선 안 쓴다 — 어차피 분량을 뗄 것이라
+                  //      환산해 봐야 그 숫자가 버려진다. 인분 환산은 «재료 목록 화면»이 하는 일이다.
+                  // ☑️ [창업자 확정 2026-09-15] **체크한 것만** 담는다 — *"지금은 전체를 다 담고 직접 지워야 하잖아"*
+                  if (담을재료.length === 0) { nav.showToast('담을 재료를 체크해 주세요'); return }
+                  addShopItems(담을재료)
+                  // 📊 [2026-09-12] 담았다 — 재료가 몇 개든 «한 번» 누른 것이다.
+                  장보기담음()
+                  nav.showToast(`재료 ${담을재료.length}개를 장보기 리스트에 담았어요`)
+                }}
+              >
+                {/* 🛒 [창업자 2026-09-16] 장보기 담기 = **카트**, 주부의 장바구니 = **펭**. 둘을 맞바꿨다. */}
+                <Icon name="cart" size={24} color="#fff" />
+                {/* 0개일 땐 «개수를 안 쓴다» — 📮 창업자 = *"0개 담기가 아니라 장보기담기로 바꿔야하고"* */}
+                {담을재료.length > 0 ? `${담을재료.length}개 담기` : '장보기 담기'}
+              </button>
               {/* ⛔ float 는 부모가 높이를 안 잡는다 — 재료가 메모지보다 짧으면 다음 절이 겹친다 */}
               {latestEntry?.note && <div style={{ clear: 'both' }} />}
             </div>
           </>
         )}
 
+        {/* 🧺 [창업자 확정 2026-09-15 · A안] 평소엔 «알약 한 줄» — 누르면 지금 상자가 그대로 펼쳐진다.
+            ⛔ 유니코드 이모지를 쓰지 않는다(절대원칙) — 왼쪽은 우리 `cart` 아이콘, 오른쪽은 채운 원 안의 ＋.
+            ⭐ 색·모양을 「장보기 담기」(`.mini-buy` = 알약·크림·brown)와 «같은 결»로 맞췄다 —
+               📮 창업자 = *"장보기 담기고 이거랑 같은 색이나 알약으로 튀게"*
+               그래야 「이것도 누르는 것」이 저절로 읽힌다. */}
+        {pantryPicks.length > 0 && !pickBoxOpen && (
+          <button
+            className="press"
+            onClick={() => { setPickBoxOpen(true); try { 픽펼침() } catch { /* 통계가 죽어도 펼쳐진다 */ } }}
+            aria-label="이 레시피에 쓴 제품 보기"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', marginTop: 20, padding: '12px 14px 12px 16px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontWeight: 800, fontSize: 16 }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+              {/* 🐧 [창업자 2026-09-16] 장보기 담기와 그림을 «맞바꿨다» — 여기가 펭이다 */}
+              <img src={pnShoplist} alt="" aria-hidden="true" draggable={false} style={{ height: 28, width: 'auto', flex: '0 0 auto' }} />
+              이 레시피에 쓴 제품 보기 ({pantryPicks.length})
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 19, fontWeight: 700, lineHeight: 1, flex: '0 0 auto' }}>+</span>
+          </button>
+        )}
         {/* 🛒 주부의 장바구니 픽 — 이 레시피가 쓴 제품을 바로 사러가기(재료 바로 밑 · 수익 연결) */}
-        {pantryPicks.length > 0 && (
+        {pantryPicks.length > 0 && pickBoxOpen && (
           <div data-coach="pantry" className="card" style={{ marginTop: 20, padding: 14, background: 'var(--cream)', border: '1.5px solid var(--cream-deep)' }}>
             {/* 🔠 [2026-08-22 창업자] *"주부의 장바구니에서하고 재품하고 너무따닥따닥붙어있어"* · *"줄간도 너무 붙어있어"* */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 19, fontWeight: 800, color: 'var(--brown)', marginBottom: 14 }}>
-              <Icon name="cart" size={19} color="var(--brown)" />
-              주부의 장바구니에서 고른 재료
-            </div>
+            {/* ⛔⛔ [창업자 2026-09-16] **펼쳤으면 «접는 길»도 있어야 한다** — 📮 *"＋ 눌렀잖아 다시 닫기 하는게 없어"*
+                2026-09-15 에 A안(알약 → 펼침)을 넣으면서 내가 «여는 쪽»만 넣고 닫는 쪽을 빠뜨렸다.
+                ⭐ 제목 줄 통째를 단추로 만든다 — 알약을 누르던 손가락이 그대로 여기를 누르게 된다.
+                ⛔ 접을 때는 «안» 센다(`픽펼침()` 은 펼칠 때만) — 한 사람이 여닫으면 숫자가 부푼다. */}
+            <button
+              type="button" className="press"
+              onClick={() => setPickBoxOpen(false)}
+              aria-expanded="true" aria-label="이 레시피에 쓴 제품 접기"
+              style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', marginBottom: 14, padding: 0, background: 'none', border: 'none', fontSize: 19, fontWeight: 800, color: 'var(--brown)', textAlign: 'left' }}
+            >
+              <img src={pnShoplist} alt="" aria-hidden="true" draggable={false} style={{ height: 26, width: 'auto', flex: '0 0 auto' }} />
+              <span style={{ flex: 1, minWidth: 0 }}>주부의 장바구니에서 고른 재료</span>
+              {/* 🔽 여는 알약의 ＋ 와 «짝»이 되는 − (같은 크기·같은 색이라 한 쌍으로 읽힌다) */}
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 19, fontWeight: 700, lineHeight: 1, flex: '0 0 auto' }}>−</span>
+            </button>
             {shownPicks.map((p) => (
               <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 15, padding: '13px 0', borderTop: '1px solid rgba(0,0,0,.05)' }}>
                 {curIcon(p.icon) && <img src={curIcon(p.icon)} alt="" draggable={false} style={{ width: 42, height: 42, objectFit: 'contain', flex: '0 0 auto' }} />}
@@ -978,7 +1171,7 @@ export default function RecipeDetailScreen({ id }) {
                 {/* ⛔ 한살림은 사러가기를 안 그린다 (창업자 2026-08-17 *"링크안달면되고"*) */}
                 {isHansalim(p)
                   ? <span style={{ flex: '0 0 auto', fontSize: 16, fontWeight: 700, color: 'var(--text-sub)' }}>매장에서</span>
-                  : <button className="press" onClick={() => openUrl(productLink(p))} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 15.5 }}>사러가기</button>}
+                  : <button className="press" onClick={() => { 사러나감('pick_detail'); openUrl(productLink(p)) }} style={{ flex: '0 0 auto', padding: '6px 13px', borderRadius: 10, background: 'var(--cream-deep)', color: 'var(--brown)', fontWeight: 800, fontSize: 15.5 }}>사러가기</button>}
               </div>
             ))}
             {/* 🔽🔼 [2026-08-15] 창업자 *"4칸 넘어가면 접을 수 있게 해줘. 너무 길면 좀 그래."*
@@ -987,12 +1180,7 @@ export default function RecipeDetailScreen({ id }) {
                 ⭐ 문구·화살표는 장보기 화면(`ShopScreen`)의 「더보기 / 접기」와 «같은 모양»으로.
                    ⛔ 거기서 냈던 사고를 되풀이하지 않는다 — **펼친 뒤에도 같은 자리에 「접기」를 그린다.**
                 ⭐ 개수를 밝힌다(「3개 더보기」) — 이 카드가 고친 게 «몇 개인지 안 밝힌 것»이라 숨기면 앞뒤가 안 맞는다. */}
-            {pantryPicks.length > PICK_FOLD && (
-              <button className="press" onClick={() => setPicksOpen((v) => !v)} aria-label={picksOpen ? '장바구니 재료 접기' : '장바구니 재료 더 보기'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%', marginTop: 2, padding: '9px 0', borderTop: '1px solid rgba(0,0,0,.05)', color: 'var(--brown)', fontWeight: 800, fontSize: 15.5 }}>
-                {picksOpen ? '접기' : `${pantryPicks.length - PICK_FOLD}개 더보기`}
-                <Icon name={picksOpen ? 'chevron-up' : 'chevron-down'} size={13} color="var(--brown)" />
-              </button>
-            )}
+            {/* ⛔ [창업자 2026-09-16] 「N개 더보기」를 뺐다 — 상자 자체가 알약(＋)으로 접히니 두 겹이 된다. */}
             <button className="press" onClick={addAllPicks} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', marginTop: 11, padding: '11px 0', borderRadius: 12, background: 'var(--brown)', color: '#fff', fontWeight: 800, fontSize: 16 }}>
               <Icon name="cart" size={16} color="#fff" />
               이 재료 다 담기
@@ -1009,12 +1197,18 @@ export default function RecipeDetailScreen({ id }) {
 
         {r.steps?.length > 0 && (
           <>
-            <div className="sec-head" style={{ marginTop: 26, marginBottom: 6 }}>
+            {/* 📐 [창업자 2026-09-15] 틈 26 → **40**. 📮 *"만드는법을 아래로 살짝만 내리자 알약이랑 너무 붙어있으니까 답답해보여"*
+                (바로 위가 「이 레시피에 쓴 제품 보기」 알약이다) */}
+            <div className="sec-head" style={{ marginTop: 40, marginBottom: 6 }}>
               <div className="sec-title-row" style={{ display: 'flex', alignItems: 'center' }}>
                 <DetailDecor where="head-만드는법" />
                 <SecTitle>만드는 법</SecTitle>
               </div>
-              <button className="mini-buy press" onClick={() => setTimer(true)}>타이머</button>
+              {/* 🐻 냄비 곰 — ⛔ 그림을 단추 «아래»에 따로 두면 오른쪽 아래 「위로 가기」 화살표와 겹친다(눈으로 봤다) */}
+              <button className="mini-buy press" onClick={() => setTimer(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <img src={gomPot} alt="" aria-hidden="true" draggable={false} style={{ height: 26, width: 'auto', flex: '0 0 auto' }} />
+                타이머
+              </button>
             </div>
             <div>
               {/* ※ [2026-09-01 창업자 판정 ⓐ] 「※」로 시작하던 줄은 «걸음»이 아니라 앞 걸음의 «곁말»이다.
@@ -1053,7 +1247,7 @@ export default function RecipeDetailScreen({ id }) {
         {r.memo && (
           <>
             <div className="h-section" style={{ marginTop: 26, marginBottom: 8 }}>메모</div>
-            <div className="card" style={{ padding: 14, fontSize: 16, lineHeight: 1.6, color: 'var(--text)', background: 'var(--cream)', border: 'none', whiteSpace: 'pre-line' }}>
+            <div className="card" style={{ padding: 14, fontSize: 16, lineHeight: 1.6, color: 'var(--text)', background: 'var(--cream)', border: 'none', whiteSpace: 'pre-line', wordBreak: 'keep-all', textWrap: 'pretty' }}>
               {r.memo}
             </div>
           </>
@@ -1198,7 +1392,7 @@ export default function RecipeDetailScreen({ id }) {
             <div className="sheet" onClick={(e) => e.stopPropagation()}>
               <div style={{ fontSize: 18.5, fontWeight: 800, textAlign: 'center', color: 'var(--text)' }}>친구랑 공유하기</div>
               <div style={{ fontSize: 15.5, color: 'var(--text-sub)', textAlign: 'center', margin: '4px 0 16px' }}>예쁜 카드로 카톡·인스타에 톡 보내요</div>
-              <button className="press" onClick={() => { setShareSheet(false); setDrawOpen(true) }}
+              <button className="press" onClick={() => { try { 자랑고름() } catch { /* noop */ } setShareSheet(false); setDrawOpen(true) }}
                 style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', padding: '15px 16px', borderRadius: 16, background: 'var(--cream)', border: 'none', marginBottom: 10, textAlign: 'left' }}>
                 <img src={uiGomThumb} alt="" draggable={false} style={{ width: 44, height: 44, objectFit: 'contain', flex: '0 0 auto' }} />
                 <span><span style={{ fontSize: 17.5, fontWeight: 800, color: 'var(--text)' }}>랜덤 카드 뽑기</span><br /><span style={{ fontSize: 15.5, color: 'var(--text-sub)' }}>꼬르곰·펭펭이 매번 다르게 · 안 꾸며도 예쁘게</span></span>
@@ -1217,12 +1411,13 @@ export default function RecipeDetailScreen({ id }) {
         <Portal>
           <ShareDrawCard
             recipe={r}
-            onShared={() => { 자랑보냄.current = true }}
+            onShared={() => { try { 자랑보냄('랜덤') } catch { /* 통계가 죽어도 자랑은 된다 */ } 보냈나.current = true }}
+            onTap={자랑보내기누름} onCancel={자랑창닫음} onSavedFallback={자랑사진저장}
             onClose={() => {
               setDrawOpen(false)
               // 🎴 보낸 사람에게만 · 카드를 «닫는» 순간에(시트 위에 시트가 되지 않게)
-              if (자랑보냄.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
-              자랑보냄.current = false
+              if (보냈나.current && shouldAskReviewNow()) setAskReview('레꾸 자랑 보냈어요')
+              보냈나.current = false
             }}
             onSaveCover={(img) => { const 말 = 카드표지토스트(r); updateRecipe(r.id, 카드표지로(img)); nav.showToast(말) }}
           />

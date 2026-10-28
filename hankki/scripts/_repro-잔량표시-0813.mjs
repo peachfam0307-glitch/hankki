@@ -49,7 +49,8 @@ function getOcrLeft() {
 
 // 🔑 ⭐ 이름은 «앱에서 읽는다» — 2026-08-24 「AI 스캔 N회」→「레시피열쇠 N개」로 갈 때
 //    이 판이 통째로 죽어서 드러났다(게이트가 «맞게» 걸린 것이다). 다음엔 안 죽게 여기서 뽑는다.
-const OCR봉 = readFileSync(new URL('../src/ocr.js', import.meta.url), 'utf8')
+// ⭐ 이름·단위는 src/열쇠이름.js 한 곳에 있다 — ocr.js 가 그대로 다시 내보낸다 [2026-09-09]
+const OCR봉 = readFileSync(new URL('../src/열쇠이름.js', import.meta.url), 'utf8')
 const 뽑기 = (이름) => {
   const m = OCR봉.match(new RegExp(`export const ${이름} = '([^']+)'`))
   if (!m) { console.log(`⛔ src/ocr.js 에서 ${이름} 을 못 찾았다`); process.exit(1) }
@@ -159,6 +160,8 @@ const wk = readFileSync(new URL('../ocr-proxy/worker.js', import.meta.url), 'utf
 //   ✅ 잣대를 «옮긴다» — 두 파일을 이어 붙여 본다. 부품이 어디 있든 문구가 있으면 통과한다.
 const impOnly = readFileSync(new URL('../src/screens/ImportScreen.jsx', import.meta.url), 'utf8')
 const imp = [impOnly, readFileSync(new URL('../src/components/KeyBadge.jsx', import.meta.url), 'utf8')].join('\n')
+// 🔑 잔량 문장이 «만들어지는» 한 곳 [2026-09-09]
+const 말터 = readFileSync(new URL('../src/안내말.js', import.meta.url), 'utf8')
 
 // 🔒 화면 문구도 잠근다 — 위 badge()/calm() 은 «옮겨 적은 것»이라 화면만 바뀌면 거짓 초록이 된다.
 //
@@ -177,7 +180,9 @@ const imp = [impOnly, readFileSync(new URL('../src/components/KeyBadge.jsx', imp
 //    부품(`KeyBadge`)에선 운영자면 다른 말을 하므로 삼항연산자가 끼어 그 모양이 깨진다.
 //    ✅ 지키려는 것은 «모양»이 아니라 **「남았어요」체로 읽어 주나** 다 — 그것만 본다.
 chk('🔒 잔량을 「~남았어요」체로 읽어 준다(창업자 지시 · 「남음」 금지)',
-  /남았어요/.test(imp) && /aria-label=/.test(imp) && /무료 \$\{KEY_NAME\}/.test(imp), 'true')
+  //   ⭐ [2026-09-09] 말은 이제 안내말.js «한 곳»에서 온다 — 화면이 또 짓지 않는다.
+  //      그래서 「화면에 그 글자가 있나」가 아니라 «그 한 곳이 그렇게 말하나»를 본다.
+  /남았어요/.test(말터) && /aria-label=/.test(imp) && /남은열쇠말\(/.test(imp), 'true')
 // ✍️ [창업자 2026-08-29] 문구를 창업자가 «직접» 줄였다 — 잣대도 같이 옮긴다.
 //    📮 *"초록박스-레시피열쇠를 다쓰면 기본인식으로. 다음줄 그래도 무료로 계속 쓸 수 있어요."*
 //    ⛔ 「바뀌어요」·「계속 무료로」는 앞판 글자다. 게이트가 «맞게» 걸려서 알았다.

@@ -36,6 +36,9 @@ import { THEMES } from '../theme'
 //    📌 `weekly.js`·`basics.js` 에도 같은 공식이 있었다 — 셋 다 고쳤다(창업자 폰 캡처로 잡음).
 // ⭐⭐ [2026-08-17] 공식을 여기서 «없앴다» — `src/today.js` 한 곳에만 둔다(창업자 절대원칙).
 import { todayKST } from '../today.js'   // ⛔ re-export 만 하면 이 파일 안에서 못 쓴다
+// 📣 [2026-09-17] «배포로 바뀐 것» — 버전마다 유저 한 줄. 손으로 적는 자리가 아니라 안 적으면 배포가 죽는다(check-changelog).
+import { updateLines, UPDATE_KIND } from './changelog'
+export { UPDATE_KIND }
 export { todayKST }
 
 const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000)
@@ -68,8 +71,10 @@ function gates() {
   const drawer = STICKER_GROUPS
     .filter((g) => g.from && g.items?.length)
     .map((g) => ({
-      when: g.from, kind: '꾸미기', title: g.label, count: g.items.length,
-      peek: drawable(g.items).slice(0, PEEK), tab: g.tab, season: g.season,
+      // 🎃 [2026-10-16] 핼러윈 묶음은 from 이 2026-01-01(열쇠로 미리 보던 것)이고 «모두에게 열린 날»은 `열쇠까지`다 → 늦은 쪽을 쓴다
+      //    ⛔ 안 그러면 10/16 에 열린 핼러윈 꾸미기가 「방금 열렸어요」에 한 줄도 안 뜬다(창업자 「다른 것도 고칠거 있나」 때 찍어서 잡음)
+      when: (g.열쇠까지 && g.열쇠까지 > g.from) ? g.열쇠까지 : g.from, kind: '꾸미기', title: g.label, count: g.items.length,
+      peek: drawable(g.items).slice(0, PEEK), tab: g.tab, season: g.season, 명절: g.명절,
       // 🎁 `gift`·`giftLabel` 은 서랍이 쓰는 «그 필드»를 그대로 읽는다(⛔이름을 따로 적지 않는다).
       // 💬 `hint` = 서랍에 뜨는 «쓰는 법» 한 줄. 창업자 2026-08-30 = *"접시 사용법도 아래 적어줘"*
       //    ⭐ 문구를 여기 새로 쓰지 «않는다» — 서랍과 안내가 갈리면 둘 중 하나가 낡는다.
@@ -202,7 +207,7 @@ export function headline(items = []) {
   }
 
   const seasons = [...new Set(items.map((i) => i.season).filter(Boolean))]
-  const ko = seasons.length === 1 ? SEASON_KO[seasons[0]] : null
+  const ko = items.some((i) => i.명절 === 'hw') ? '핼러윈' : seasons.length === 1 ? SEASON_KO[seasons[0]] : null
   const debut = NEW_FRIENDS.find((f) => items.some((i) => (i.title || '').includes(f))) || null
   // 🎁 그달 선물 — 여럿이면 «새로 온 것» 하나만 짚는다(둘을 나란히 놓으면 특별해 보이지 않는다).
   const gift = items.filter((i) => i.gift).sort((a, b) => String(b.when).localeCompare(String(a.when)))[0] || null
@@ -310,7 +315,8 @@ export function foldPacks(opened = []) {
 
   const 한줄 = (kind, gs) => {
     const seasons = [...new Set(gs.map((g) => g.season).filter(Boolean))]
-    const ko = seasons.length === 1 ? SEASON_KO[seasons[0]] : null
+    // 🎃 명절 묶음(핼러윈)이 섞이면 명절 이름이 앞선다 — 2026-10-16 「가을이 왔어요」 안에 핼러윈 꾸미기가 묻혔다
+    const ko = gs.some((g) => g.명절 === 'hw') ? '핼러윈' : seasons.length === 1 ? SEASON_KO[seasons[0]] : null
     return {
       when: gs[0].when, kind,
       // 🏷 제목이 배지와 같은 말을 되풀이하지 않게 «갈래마다 다르게» 짓는다
@@ -413,7 +419,27 @@ export function whatsNew(today = todayKST()) {
   // 🍑 앱에서 열린 것(배경 등)은 장바구니 «앞» — 장바구니가 맨 아래라는 창업자 확정을 안 깬다
   //    (게이트 `_repro-소식장바구니-0829` 가 「장바구니가 맨 아래인가」를 실제로 잰다)
   opened.push(...appOpened(today))
+  // 📣 [2026-09-17] 업데이트 줄 — 여러 판이 한꺼번에 뜨면 「방금 열렸어요」가 도배되니(하루 3~4판 · 소급 12줄)
+  //    **한 카드로 접는다**: 「앱이 달라졌어요 · 업데이트 N종」 ＋ 안에 날짜순 목록(`lines`).
+  //    ⛔ 알림 층엔 안 올린다(아래 openedAlert) — 살구 배경과 같은 층. 배포마다 홈 「새로」가 켜지면 아무도 안 본다.
+  {
+    const 줄 = updateLines(today, FRESH_DAYS)
+    // 📌 [창업자 2026-09-17] 소식엔 **최신 한 줄만** — 나머지는 「설정 → 업데이트 내역」(UpdateLogSheet)이 전부 보여준다.
+    if (줄.length) opened.push({ when: 줄[0].when, kind: UPDATE_KIND, title: '앱이 달라졌어요', count: 줄.length, lines: [{ when: 줄[0].when, v: 줄[0].v, text: 줄[0].user }], why: '지난 것은 설정 → 업데이트 내역에서 봐요' })
+  }
   opened.push(...cartOpened(today))
+
+  // 🗓 [2026-09-24] **최신순으로 세운다** — 창업자 = *"가장 최근에 올라가는 소식은 제일 위에 적어야하지않을까"*
+  //   ⛔ 그 전엔 이번 주 레시피·우리집레시피를 날짜와 상관없이 `unshift` 로 맨 위에 붙였다 →
+  //      월요일에 열린 두 줄이 수요일 「앱이 달라졌어요」보다 위에 섰다(09-24 화면 실측).
+  //   ⭐ 같은 날이면 원래 차례 그대로(정렬은 안정) — 그래서 같은 날엔 우리집이 여전히 제철보다 앞이다.
+  //   🛒 장바구니는 «맨 아래» 그대로 — 창업자 확정(위 🛒 주석 · 게이트 _repro-소식장바구니-0829).
+  const 최신순 = [
+    ...opened.filter((o) => o.kind !== CART_KIND).sort((a, b) => b.when.localeCompare(a.when)),
+    ...opened.filter((o) => o.kind === CART_KIND),
+  ]
+  opened.length = 0
+  opened.push(...최신순)
 
   return {
     today,
@@ -424,7 +450,7 @@ export function whatsNew(today = todayKST()) {
     //   ⛔ 팝업도 마찬가지다 — 9/1 꾸미기로 한 번 뜬 팝업이 9/5 장바구니 때문에 **또** 뜬다
     //      (`newsSignature` 가 달라져서). 같은 소식을 두 번 보여주는 셈이다.
     //   🍑 배경도 «소식 페이지에만» — 창업자가 「안내에 남겨야해」라고 콕 집었다(위 `APP_FEATURES` 주석)
-    openedAlert: opened.filter((o) => o.kind !== CART_KIND && o.kind !== APP_KIND),
+    openedAlert: opened.filter((o) => o.kind !== CART_KIND && o.kind !== APP_KIND && o.kind !== UPDATE_KIND),
     upcoming: upcoming.length ? { when, dday: days(today, when), items: upcoming } : null,
   }
 }

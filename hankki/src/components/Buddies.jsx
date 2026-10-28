@@ -508,7 +508,10 @@ const OURS = Object.fromEntries(
 export const BUDDY_GROUPS = [
   {
     key: 'ours',
-    label: '우리 애들',
+    // ⛔⛔ [절대원칙 · 창업자 2026-09-12 · «두 번째» 지적] 「우리 애들」이라고 쓰지 않는다 — 「한끼 친구들」이다.
+    //    📮 *"우리애들이라는 말빼고"* → *"한끼친구들로 해야지 - 우리애들은 없애고"*
+    //    「우리 애들」은 만드는 쪽 말투다 — 유저는 「우리」가 누구인지 모른다. 전문 = CLAUDE.md
+    label: '한끼 친구들',
     items: [
       { id: 'av_gom', name: '꼬르곰' },
       { id: 'av_peng', name: '펭펭' },
@@ -517,46 +520,68 @@ export const BUDDY_GROUPS = [
       { id: 'av_gecko', name: '꼬비' },
     ],
   },
+  // 🧑‍🍳 [2026-09-12 창업자 제공] 같은 5인의 «상반신» 컷 — 옷·소품까지 보인다.
+  //    📮 창업자 *"애들컷은 프로필용이야"* ＋ *"프로필설정에 친구들 컷 추가해주고"* ＋ *"기존꺼에 추가하라는거야"*
+  //    ⛔ 위 'ours'(얼굴 컷)를 «대체»하지 않는다 — 둘 다 고를 수 있게 나란히 둔다.
+  //    ⭐ 56px 원에 실제로 그려 눈으로 확인했다(얼굴이 작아 보일까 걱정했는데 상반신이라 충분히 알아본다).
+  {
+    key: 'ours_full',
+    label: '한끼 친구들 · 옷 입은 컷',
+    items: [
+      { id: 'av_gom_full', name: '꼬르곰' },
+      { id: 'av_peng_full', name: '펭펭' },
+      { id: 'av_capy_full', name: '카롱' },
+      { id: 'av_fox_full', name: '뾰미' },
+      { id: 'av_gecko_full', name: '꼬비' },
+    ],
+  },
   {
     key: 'origin',
     label: '오리지널',
     items: [
-      // ⚠️ 우리 5인(위 'ours')과 이름이 겹치면 안 된다 — 옛 '곰곰 셰프'·'펭펭 셰프'는
+      // ⚠️ 한끼 친구들 5인(위 'ours')과 이름이 겹치면 안 된다 — 옛 '곰곰 셰프'·'펭펭 셰프'는
       //    진짜 꼬르곰·펭펭이 바로 위에 붙으면서 같은 화면에 이름이 두 번 나왔다(창업자 결정 2026-07-29).
-      { id: 'bear', name: '곰돌이 셰프' },
-      { id: 'rabbit', name: '토토 셰프' }, // 당근을 든다
-      { id: 'catpot', name: '냄비 냥이' }, // 까만콩 눈 + 예쁜 냄비
-      { id: 'chick', name: '삐약 셰프' },
-      { id: 'dog', name: '몽몽 셰프' },
-      { id: 'gecko', name: '호두 셰프' }, // 크레스티드 게코 — 꼬리 있음
-      { id: 'hamster', name: '햄찌 셰프' },
-      { id: 'penguin', name: '펭귄 셰프' }, // 여름 친구 — 튜브 두른 펭귄
+      // ✂️ [2026-09-12] 「셰프」를 다 뗐다 — 📮 창업자 *"오리지널 글씨겹치는거 확인해줘. 셰프 다빼고 이름만 적자."*
+      //    ⛔ 뿌리 = 칸이 60px 고정인데 이름표가 nowrap 이라, 「곰돌이 셰프」(6글자)가 칸을 넘어
+      //       옆 이름과 «붙어» 보였다(창업자 캡처 = 「곰돌이 셰프토토 셰프」).
+      //    ⭐ 「셰프」를 떼면 가장 긴 이름이 3글자라 칸 안에 든다.
+      { id: 'bear', name: '곰돌이' },
+      { id: 'rabbit', name: '토토' }, // 당근을 든다
+      { id: 'catpot', name: '냄비냥이' }, // 까만콩 눈 + 예쁜 냄비
+      { id: 'chick', name: '삐약' },
+      { id: 'dog', name: '몽몽' },
+      { id: 'gecko', name: '호두' }, // 크레스티드 게코 — 꼬리 있음
+      { id: 'hamster', name: '햄찌' },
+      { id: 'penguin', name: '펭귄' }, // 여름 친구 — 튜브 두른 펭귄
     ],
   },
   {
     key: 'line',
     label: '라인',
     items: [
-      { id: 'lbear', name: '곰 셰프' },
-      { id: 'lchick', name: '병아리 셰프' },
-      { id: 'lcat', name: '냥이 셰프' },
-      { id: 'lgecko', name: '호두 셰프' }, // '호두 라인' → 다른 라인 친구들처럼 'OO 셰프'로 통일
-      { id: 'lrabbit', name: '토끼 셰프' },
-      { id: 'ldog', name: '강아지 셰프' },
-      { id: 'lhamster', name: '햄찌 셰프' },
+      // ✂️ [2026-09-12] 여기도 「셰프」를 뗐다 — 창업자는 오리지널만 짚었지만 «재보니» 이 일곱이 전부 칸을 넘쳤다
+      //    (병아리 셰프 80px · 나머지 65px > 칸 60px). _shot-프로필친구들-0912 가 실제로 잡아냈다.
+      { id: 'lbear', name: '곰' },
+      { id: 'lchick', name: '병아리' },
+      { id: 'lcat', name: '냥이' },
+      { id: 'lgecko', name: '호두' },
+      { id: 'lrabbit', name: '토끼' },
+      { id: 'ldog', name: '강아지' },
+      { id: 'lhamster', name: '햄찌' },
     ],
   },
   {
     key: 'candy',
     label: '캔디',
     items: [
-      { id: 'fchick', name: '삐약 셰프' },
-      { id: 'fbear', name: '꿀곰 셰프' },
-      { id: 'frabbit', name: '깡총 셰프' },
-      { id: 'fcat', name: '나비 셰프' },
-      { id: 'fdog', name: '몽실 셰프' },
-      { id: 'fgecko', name: '호두 셰프' },
-      { id: 'fhamster', name: '볼통 셰프' },
+      // ✂️ [2026-09-12] 캔디도 같은 이유로 「셰프」를 뗐다 (일곱 다 65px > 칸 60px 였다)
+      { id: 'fchick', name: '삐약' },
+      { id: 'fbear', name: '꿀곰' },
+      { id: 'frabbit', name: '깡총' },
+      { id: 'fcat', name: '나비' },
+      { id: 'fdog', name: '몽실' },
+      { id: 'fgecko', name: '호두' },
+      { id: 'fhamster', name: '볼통' },
     ],
   },
 ]

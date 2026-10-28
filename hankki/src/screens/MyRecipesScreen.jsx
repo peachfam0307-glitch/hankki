@@ -1,7 +1,10 @@
 import { Fragment, useMemo, useRef, useState } from 'react'
 import { COACH } from '../coach'
 import { useStore } from '../store'
+import Portal from '../components/Portal'
 import { useNav } from '../App'
+import { 저장날짜보임, 내것인가, 정렬값 } from '../data/seed'
+import { 나라들, 종류들, 종류고르기, 옛폴더이름 } from '../data/종류'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import TabTips from '../components/TabTips'
@@ -46,7 +49,7 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
 import pengNyam from '../assets/ui/wave/peng_nyam1.png' // 🐧 펭펭(한 술) — 한끼 일기 상단
 // 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
-import { FAV_NAME, FAV_ADD, FAV_REMOVE } from '../favName'
+import { FAV_NAME, FAV_ADD, FAV_REMOVE, MINE_NAME } from '../favName'
 // 🔖 핀의 «종»도 한 곳에서만 온다(`src/favPin.js` · 2026-09-08 두 종 확정)
 import { isPinned, pinName, pinOf, nextPin, FAV_PINS } from '../favPin'
 // 🔖 하트 핀(최애) — 창업자가 2026-09-08 에 «클립 골격으로» 새로 뽑아 준 컷(`cp02`)
@@ -54,6 +57,8 @@ import { isPinned, pinName, pinOf, nextPin, FAV_PINS } from '../favPin'
 import idxHeart from '../assets/ui/idx_heart.png'
 // 🖼 일기 사진이 「큰 창고」에 있으면 쪽지(`idb://…`)다 — 달력·앨범도 꺼내서 그려야 한다
 import StoredImg from '../photoView'
+import SeasonHeadCut from '../components/SeasonHeadCut.jsx'
+import { 기본레시피표시 } from '../stats'
 
 // 레시피 탭 첫 방문 코치마크 — 모아보기·요리 기록 세그먼트 안내
 const MYRECIPES_COACH_KEY = COACH.myrecipes
@@ -77,7 +82,15 @@ const DIARY_COACH_STEPS = [
 // 카테고리와 연결된 기본 폴더 — 삭제 불가(사용자가 만든 폴더만 지울 수 있게)
 // ⛔⛔ 여기와 `theme.js` 의 `CATEGORIES` 는 «같이» 고쳐야 한다 — 하나만 고치면
 //    칩엔 있는데 폴더가 «지워지는» 갈래가 생긴다. 2026-09-03 에 중식을 넣으며 둘 다 고쳤다.
-const DEFAULT_FOLDERS = new Set(['한식', '중식', '양식', '일식', '간식', '아시안'])
+const DEFAULT_FOLDERS = new Set([...나라들, ...종류들])
+
+// 🍚🌏 **한 편이 «나라 칩»과 «종류 칩»에 둘 다 든다** (창업자 확정 2026-09-14 *"중복이어야 맞아"*)
+//   ⛔⛔ 그 전엔 `(r.folder || r.category)` 였다 — **folder 가 있으면 category 가 «버려졌다».**
+//      그래서 간장게장(갈래 한식·폴더 반찬)이 **한식 칩에서 사라졌다.**
+//      📌 실측 2026-09-14 = 새로 까는 사람 화면엔 반찬 칩도 없어서 «어느 칩에서도» 안 나왔다.
+//   ⭐ 이제 셋 중 하나만 맞으면 든다 — ①나라(category) ②유저가 옮긴 폴더(folder) ③종류(계산).
+//      📌 ②를 남겨 두는 이유 = 유저가 «자기가 만든 폴더»로 옮긴 편을 잃으면 안 된다.
+const 여기드나 = (r, 칩) => r.category === 칩 || r.folder === 칩 || 종류고르기(r) === 칩
 
 const dayKey = (ts) => {
   const d = new Date(ts)
@@ -197,7 +210,7 @@ function CookCalendar({ entries, diaryDays, selected, onSelect, onOpenDay, iconF
 //    *"맨 아래 바에 한끼일기도 넣자. 일기쓰려면 레시피에서 한끼일기 또 들어가야 하니까"*)
 //    ⚠️ App 이 key 를 달리 줘서 «다시 마운트»되게 한다 — 안 그러면 초기값이 안 먹는다.
 export default function MyRecipesScreen({ initView = 'grid' }) {
-  const { recipes, folders, addFolder, removeFolder, removeRecipe, diary, removeDiary, setFavPin } = useStore()
+  const { recipes, folders, addFolder, removeFolder, removeRecipe, updateRecipe, diary, removeDiary, setFavPin } = useStore()
   const nav = useNav()
   const [view, setView] = useState(initView) // grid | log | folders
   const [coach, setCoach] = useState(() => needsCoach(MYRECIPES_COACH_KEY))
@@ -260,6 +273,19 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   const lpEnd = () => clearTimeout(lpTimer.current)
   const [newFolder, setNewFolder] = useState(false)
   const [delFolder, setDelFolder] = useState(null) // 삭제할 사용자 폴더 이름
+  // 📁 [창업자 2026-09-23] 고른 편을 «목록에서 바로» 폴더로 옮긴다 — 상세→편집으로 안 들어간다
+  const [folderAsk, setFolderAsk] = useState(false)
+  const [새폴더로옮김, set새폴더로옮김] = useState(false) // 「+ 새 폴더」로 만든 뒤 «그 폴더로» 옮긴다
+  // 📁 고른 편을 한 폴더로 옮긴다 — ⭐한 번에 모아서 부른다(200편을 골라도 한 편씩 200번 돌지 않게)
+  //   ⛔ 한끼 레시피도 «같이» 옮긴다(창업자 확정 2026-09-23 = *"같이 옮길수있게 하자"*).
+  //      폴더만 바뀔 뿐 번호는 그대로라 「내 것」 칩에는 안 들어간다 — 두 축이 안 섞인다.
+  const 폴더로옮긴다 = (이름) => {
+    const 개수 = sel.size
+    sel.forEach((id) => updateRecipe(id, { folder: 이름 }))
+    setFolderAsk(false); set새폴더로옮김(false)
+    setSel(new Set()); setEdit(false)
+    nav.showToast(`${개수}개를 「${이름}」으로 옮겼어요`)
+  }
 
   // 한마디 청하기 — 기록 시트를 닫는 순간. 상세 화면과 «같은 자리»다.
   // ⭐ 기록을 제일 많이 여닫는 곳이 여기라, 상세에만 걸면 사실상 아무한테도 안 물어보게 된다.
@@ -267,7 +293,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
 
   // 뒤로가기 처리는 모달(요리기록 시트 등)까지 포함해 아래(상태 선언 뒤)에서 한 번에 등록한다.
 
-  const sorted = useMemo(() => recipes.filter((r) => r.status === 'sorted').sort((a, b) => b.savedAt - a.savedAt), [recipes])
+  const sorted = useMemo(() => recipes.filter((r) => r.status === 'sorted').sort((a, b) => 정렬값(b) - 정렬값(a)), [recipes])
   // 스마트 폴더 — ★즐겨찾기 / 🍳자주 해먹는. 실제 폴더와 안 겹치게 '__' 접두 키를 쓴다.
   // 🔖🔖 [2026-09-08 창업자 확정] 핀이 **두 종**이다 — 요리사모자＝해볼 것 · 하트＝최애.
   //   ⭐ 세는 잣대는 `favPin.js` «한 곳»에서 온다(`isPinned`) — 여기서 `r.favPin === 'heart'` 로 직접 적으면
@@ -289,6 +315,8 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   //   ⭐⭐ 잣대는 «한 곳»에 둔다 — 칩 개수 · 거르기 · 썸네일 ▶ 표 셋이 같은 자를 쓴다.
   //      ⛔ 같은 식을 세 군데 적으면 하나만 고쳤을 때 「칩엔 3편인데 ▶ 는 5개」처럼 갈린다.
   const SNS수 = useMemo(() => sorted.filter(SNS인가).length, [sorted])
+  // 👤 「내 것」 = 유저가 자기 손으로 담은 편 (잣대는 data/seed.js 한 곳 — 여기서 다시 판정하지 않는다)
+  const 내것수 = useMemo(() => sorted.filter(내것인가).length, [sorted])
   // 🔖🔖 [2026-08-18] 책갈피가 카드 «위로 14px» 나가므로 그만큼 자리를 비운다.
   //   ⛔ 안 비웠더니 **맨 윗줄 책갈피가 필터 칩 줄에 가렸다**(실측 = 큰 2건 · 작은 3건).
   //   ⭐ 줄 사이도 같은 이유로 벌린다 — 아랫줄 책갈피가 «윗줄 이름표 «글자»»를 덮었다.
@@ -324,11 +352,82 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       //   ⭐ 잣대는 «한 곳»에서 온다(`isPinned`) — 종이 늘어도 이 줄은 안 고친다.
       : folder === '__pinned' ? sorted.filter((r) => FAV_PINS.some((종) => isPinned(r, 종.key)))
       : folder === '__often' ? sorted.filter((r) => (r.cooked || 0) > 0).sort((a, b) => (b.cooked || 0) - (a.cooked || 0))
+      : folder === '__mine' ? sorted.filter(내것인가)
       : folder === '__sns' ? sorted.filter(SNS인가)
-      : sorted.filter((r) => (r.folder || r.category) === folder)
-  const countIn = (name) => sorted.filter((r) => (r.folder || r.category) === name).length
+      : sorted.filter((r) => 여기드나(r, folder))
+  const countIn = (name) => sorted.filter((r) => 여기드나(r, name)).length
   // ⛔ 새 칩 열쇠()를 여기 «안» 넣으면 「폴더 삭제」 단추가 뜬다 — 폴더가 아닌데 폴더로 읽힌다
-  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__heart' && folder !== '__pinned' && folder !== '__often' && folder !== '__sns' && !DEFAULT_FOLDERS.has(folder)
+  // 🧺 **칩 목록은 «정해진 것»이다** — 나라 다섯 ＋ 종류 여섯 ＋ 유저가 «직접 만든» 폴더.
+  //   ⛔⛔ 그 전엔 `folders` 를 그대로 그렸다. 그 목록은 레시피에 적힌 folder 로 «저절로» 불어나서
+  //      아무도 정한 적 없는 「국·탕·찌개」 칩이 2편짜리로 생겨 있었다(실측 2026-09-14).
+  //   ⭐ 유저가 만든 폴더는 남긴다 — 옛 이름(국물·국·탕)으로 옮겨 둔 편을 잃으면 안 된다.
+  // 📁↔ [2026-09-24] 칩 줄 «그 자리에서» 순서 바꾸기 (창업자 시안 E · *"편집으로 그줄의 칩을 앞뒤로 움직이면서 원하는 위치 조정"*)
+  //   · 칩을 꾹 → 그 줄이 편집 상태 · 고른 칩 양옆에 ◀ ▶ · 다른 칩을 톡 = 그 칩을 고름 · ［완료］로 끝
+  //   ⛔ 시안 A(긴 목록 시트)는 «너무 복잡» · D(맨 앞으로만)는 «편집이 아니다» — 창업자 판정
+  //   💾 폰에만 적는다(localStorage) — 칩 순서는 «보기 설정»이라 잃어도 레시피는 그대로다.
+  //   ⭐ 저장값은 «이름 순서»뿐 — 새로 생긴 폴더는 원래 자리(끝)에 붙고, 지운 폴더는 조용히 빠진다.
+  //   ⛔ 열쇠(?폴더앞=1) 뒤 — 유저 눈에 새로 보이는 것은 아이폰과 같이 연다(절대원칙 2026-09-18)
+  const 순서칸 = 'hankki:folder:순서'
+  const [칩순서, set칩순서] = useState(() => { try { const v = JSON.parse(localStorage.getItem(순서칸) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } })
+  const [칩편집, set칩편집] = useState(null)   // 고른 칩 이름 · null = 편집 아님
+  const 폴더앞켜짐 = true   // 🔓 열쇠(?폴더앞=1)는 2026-09-25 뗐다 — 아이폰 1.0.8 승인 날 (창업자 「승인됐어 갤럭시 배포해」)
+  const 칩목록 = useMemo(() => {
+    // 🍚🍚 [창업자 확정 2026-09-14] **종류가 나라보다 «앞»이다.**
+    //   📮 창업자 = *"나라보다는 반찬 국 이런 카테고리가 요리하기 더 편하지 않을까..
+    //      레시피 모아보기에도 밥 면 이게 나라보다 먼저나와야하지않을까 싶네"*
+    //   🔢 실측이 그 말을 받쳐준다(우리 201편):
+    //      · 나라 = 한식 154편(**77%**) · 양식 23 · 일식 9 · 기타 7 · 중식 6 · 아시안 2
+    //        → 나라 칩은 사실상 「한식」 하나다. 눌러도 거의 안 걸러지고, 중식·아시안은 빈 서랍에 가깝다.
+    //      · 종류 = 반찬 102 · 국 30 · 밥 23 · 면 23 · 간식 13 · 샐러드 7 · 소스 3
+    //        → 고르게 갈린다. **거르는 값이 훨씬 크다.**
+    //   ⛔ 나라를 «없애지» 않았다 — 뒤로 물릴 뿐이다(양식 23편은 쓸모가 있다).
+    //   ⚠️ 정직하게 = 「나라 칩을 실제로 누가 쓰나」는 재본 적이 없다(칩 누름을 안 센다).
+    //      확실한 것은 「한식이 77%라 거르는 값이 작다」 하나뿐이고, 그 위에서 정했다.
+    const 정해진것 = [...종류들, ...나라들]
+    // ⛔ 폰에만 남은 «옛 폴더»는 뺀다 (창업자 2026-09-14 "그럼 다 빼야지" · data/종류.js 의 옛폴더이름)
+    //   ⭐ 칩에서만 빠진다 — 그 폴더에 든 편은 나라 칩·종류 칩·「전체」에 그대로 뜬다(아래 여기드나).
+    const 유저것 = (folders || []).filter((f) => !정해진것.includes(f) && !옛폴더이름.includes(f))
+    const 기본 = [...정해진것, ...유저것]
+    if (!폴더앞켜짐) return 기본
+    const 앞 = 칩순서.filter((n) => 기본.includes(n))   // 지운 폴더는 조용히 빠진다
+    return [...앞, ...기본.filter((n) => !앞.includes(n))]
+  }, [folders, 칩순서, 폴더앞켜짐])
+  // 📁↔ 윗줄 칩 — 조건·그림은 옛 JSX 그대로(0편이면 안 띄움 · 「모두」 = 둘 다 꽂혔을 때만)
+  const 윗칩순서칸 = 'hankki:folder:순서위'
+  const [윗칩순서, set윗칩순서] = useState(() => { try { const v = JSON.parse(localStorage.getItem(윗칩순서칸) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } })
+  const 윗칩기본 = [
+    내것수 > 0 && { id: '__mine', name: MINE_NAME, n: 내것수, 그림: <Icon name="edit" size={13} /> },
+    favCount > 0 && { id: '__fav', name: FAV_NAME, n: favCount, 그림: <img src={idxChef} alt="" className="pill-chef" /> },
+    heartCount > 0 && { id: '__heart', name: pinName('heart'), n: heartCount, 그림: <Icon name="heart" size={13} style={{ fill: 'currentColor' }} /> },
+    favCount > 0 && heartCount > 0 && { id: '__pinned', name: '모두', n: pinnedCount, 그림: <><img src={idxChef} alt="" className="pill-chef" /><Icon name="heart" size={13} style={{ fill: 'currentColor', marginLeft: -3 }} /></> },
+    SNS수 > 0 && { id: '__sns', name: 'SNS', n: SNS수, 그림: <Icon name="play" size={13} /> },
+    oftenCount > 0 && { id: '__often', name: '자주', n: oftenCount, 그림: null },
+  ].filter(Boolean)
+  const 윗칩목록 = (() => {
+    if (!폴더앞켜짐) return 윗칩기본
+    const 앞 = 윗칩순서.map((id) => 윗칩기본.find((k) => k.id === id)).filter(Boolean)
+    return [...앞, ...윗칩기본.filter((k) => !윗칩순서.includes(k.id))]
+  })()
+  const 윗칩옮기기 = (id, 쪽) => {
+    const 지금 = 윗칩목록.map((k) => k.id)
+    const i = 지금.indexOf(id), j = i + 쪽
+    if (i < 0 || j < 0 || j >= 지금.length) return
+    ;[지금[i], 지금[j]] = [지금[j], 지금[i]]
+    set윗칩순서(지금)
+    try { localStorage.setItem(윗칩순서칸, JSON.stringify(지금)) } catch { /* noop */ }
+    requestAnimationFrame(() => { try { document.querySelector('[data-chip-edit="1"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) } catch { /* noop */ } })
+  }
+  const 칩옮기기 = (c, 쪽) => {
+    const 지금 = [...칩목록]
+    const i = 지금.indexOf(c), j = i + 쪽
+    if (i < 0 || j < 0 || j >= 지금.length) return
+    ;[지금[i], 지금[j]] = [지금[j], 지금[i]]
+    set칩순서(지금)
+    try { localStorage.setItem(순서칸, JSON.stringify(지금)) } catch { /* noop */ }
+    // 👀 옮긴 칩이 줄 밖으로 밀려 안 보이면 따라가 준다(옆으로 넘기는 줄이라 끝에선 금방 가려진다)
+    requestAnimationFrame(() => { try { document.querySelector('[data-chip-edit="1"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) } catch { /* noop */ } })
+  }
+  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__heart' && folder !== '__pinned' && folder !== '__often' && folder !== '__sns' && folder !== '__mine' && !DEFAULT_FOLDERS.has(folder)
 
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
   // 📔📔 **요리 기록과 다이어리를 가른다** — 둘 다 `diary` 배열에 살고 `kind` 로만 구분된다.
@@ -542,10 +641,13 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             {/* 🐧 [2026-08-13 창업자 제보] *"레시피, 한끼일기탭은 «같은 모양» 꼬르곰이"* ＋ *"펭펭이든 친구들이든 우리애들"*
                 ⭐ 한 화면인데 제목만 갈리니 **같은 곰이 두 탭에 그대로** 있었다 → 일기일 땐 펭펭이 한 술 뜬다(냠냠).
                    일기 = «먹은 것을 적는 자리» 라 숟가락 든 컷이 맞다. */}
+            {/* 🎑🎃 명절엔 이 자리가 명절 컷으로 «바뀐다»(SeasonHeadCut). 철이 아니면 아래 기본 컷 그대로. */}
             {view === 'log' ? (
-              <img src={pengNyam} alt="" draggable={false} width={34} height={44} className="hk-m-nyam" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-5px 0' }} />
+              <SeasonHeadCut 탭="log" 기본={pengNyam} 폭={34} 높이={44} 여백={-5} 모션="hk-m-nyam"
+                style={{ transformOrigin: 'bottom center' }} />
             ) : (
-              <img src={gomHeader} alt="" draggable={false} width={42} height={42} className="hk-m-sway" style={{ display: 'block', objectFit: 'contain', transformOrigin: 'bottom center', margin: '-4px 0' }} />
+              <SeasonHeadCut 탭="rec" 기본={gomHeader} 폭={42} 높이={42} 여백={-4} 모션="hk-m-sway"
+                style={{ transformOrigin: 'bottom center' }} />
             )}
             {/* 🏷 제목은 «지금 보고 있는 것»을 말한다 — 「일기」 탭으로 들어왔는데 머리글이
                 「레시피」면 어디에 있는지 헷갈린다(검수판에서 드러났다). */}
@@ -813,55 +915,39 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       {view === 'grid' && (
         <>
           {/* 찾는 중엔 폴더 칩을 감춘다 — 어느 폴더에 넣었는지 기억나면 애초에 안 찾는다 */}
+          {/* 📏 [2026-09-15 아이패드 실측] 칩 줄 둘을 `.pad` 로 감싼다 — `.hscroll` 은 「20px 여백 안에서
+              −20px 로 빠져나가는」 모양이라 여백 없는 `.screen` 바로 밑에 두면 첫 칸이 화면 왼쪽 끝에 딱 붙고
+              끝 칸은 오른쪽 끝에서 잘린다(폰도 같았고 패드에서 눈에 띄었다). 아래 목록(`.pad`)과 같은 여백으로 맞춘다. */}
+          <div className="pad">
           <div className="hscroll" style={{ marginBottom: 8, display: query ? 'none' : undefined }}>
             <button className={`pill press ${folder === '전체' ? 'active' : ''}`} onClick={() => setFolder('전체')}>전체 {sorted.length}</button>
-            {/* ⭐ [2026-08-17 창업자 *"바꿔"*] 유니코드 글자 `★` → 우리 별 아이콘.
-                ⛔ 앱에서 유니코드 별을 쓰던 곳이 둘이었다(앨범 배지 · 이 칩) — 이걸로 0이 된다.
-                ⚠️ `currentColor` 로 둔다 — 칩은 눌리면 글자색이 바뀌는데(`.pill.active`)
-                   색을 박으면 별만 안 따라가서 «그때만» 어긋난다. `.pill` 이 이미 flex 라 정렬은 그대로.
-                🔖🔖 **[2026-08-18 창업자 확정] 별 → 요리사모자 · 「즐겨찾기」 → 「책갈피」**
-                   📮 *"아니면 **즐겨찾기 버튼 앞에 요리사모자를 넣어봐.**"* → 갈래 여섯을 찍어 **② 모자＋글자** 확정
-                   📮 이름 = *"3번가자"*(책갈피). 그 앞에 창업자가 «my pick» 을 냈는데 실측으로 접었다 —
-                      ⑴「픽」은 장보기의 **「이번 주 픽」(제품)**으로 이미 쓰인다(＋레시피 메모 여러 편)
-                      ⑵**화면에 보이는 영어 낱말이 0개**라 유일한 영어가 된다(창업자 스스로 *"혼자영어인가ㅋ"*)
-                   ⭐⭐ **칩의 모자 = 카드의 모자** → 「이 모자가 책갈피구나」를 유저가 저절로 배운다.
-                      「모아보기 단추」를 새로 만들 필요가 없다 — 이 자리가 이미 그것이다.
-                   ⭐ 별점을 접고 인덱스로 갔는데 **별(★)이 여기 남아 있었다.** 이걸로 0이 된다.
-                   ⚠️ 이름은 여섯 곳을 «같이» 바꿨다(여기 · 사용법 · 설정 메뉴 · 설정 통계 · 모아보기 화면 제목·빈칸).
-                      ⛓ CLAUDE.md 「같은 기능은 탭이 달라도 같은 이름」 — 한 곳만 바꾸면 말이 갈라진다.
-                ⛔⛔ 이 주석은 `{favCount > 0 && (` **«바깥»**에 둔다 — 그 괄호 안은 «표현식» 자리라
-                   JSX 주석을 넣으면 객체 리터럴로 파싱돼 **빌드가 죽는다**(오늘 실제로 죽였다 · CLAUDE.md 함정). */}
-            {favCount > 0 && (
-              <button className={`pill press ${folder === '__fav' ? 'active' : ''}`} onClick={() => setFolder('__fav')}>
-                <img src={idxChef} alt="" className="pill-chef" />
-                {FAV_NAME} {favCount}
-              </button>
-            )}
-            {heartCount > 0 && (
-              <button className={`pill press ${folder === '__heart' ? 'active' : ''}`} onClick={() => setFolder('__heart')}>
-                <Icon name="heart" size={13} style={{ fill: 'currentColor' }} />
-                {pinName('heart')} {heartCount}
-              </button>
-            )}
-            {/* 📌📌 [2026-09-08 창업자] *"해볼것 최애 같이 보이는 칩 만들어줘"*
-                ⭐ 두 종이 «다 꽂혀 있을 때만» 뜬다 — 하나뿐이면 그 칩과 «같은 목록»이라 칩만 늘어난다.
-                ⭐ 모자와 하트를 나란히 그린다 — 글자를 안 읽어도 「둘을 합친 것」이 그림으로 읽힌다. */}
-            {favCount > 0 && heartCount > 0 && (
-              <button className={`pill press ${folder === '__pinned' ? 'active' : ''}`} onClick={() => setFolder('__pinned')}>
-                <img src={idxChef} alt="" className="pill-chef" />
-                <Icon name="heart" size={13} style={{ fill: 'currentColor', marginLeft: -3 }} />
-                모두 {pinnedCount}
-              </button>
-            )}
-            {SNS수 > 0 && (
-              <button className={`pill press ${folder === '__sns' ? 'active' : ''}`} onClick={() => setFolder('__sns')}>
-                <Icon name="play" size={13} />
-                SNS {SNS수}
-              </button>
-            )}
-            {oftenCount > 0 && (
-              <button className={`pill press ${folder === '__often' ? 'active' : ''}`} onClick={() => setFolder('__often')}>자주 {oftenCount}</button>
-            )}
+            {/* 👤👤 [창업자 확정 2026-09-23] 「내 것」 — 유저가 «자기 손으로» 담은 편 (직접 쓴 것 ＋ 가져온 것 전부)
+                📮 한끼연구소 폼 = *"제가쓴 레시피는 따로 폴더나 그런것도 만들어주세요 헷갈려요"*
+                📮 창업자 = *"내가 가져온 것 내가쓴건 전부. 따로 하나 만들어야 할 것 같아"*
+                📌📌 [자리 · 창업자 2026-09-23 밤] *"내것이 제일 앞쪽에 있으면 좋겠는데.. 내말반영이 안됐구나"*
+                   ⛔ 첫 판은 SNS 칩 «바로 앞»에 뒀다(해볼 것·최애·모두 «뒤») — 꽂은 편이 있는 사람은
+                      칩 셋을 지나야 자기 것이 나왔다. **이 화면에 온 까닭이 「내가 담은 것」인데 제일 멀리 있었다.**
+                   ✅ 「전체」 «바로 다음»으로 올린다 — 큰 묶음(전체 → 내 것) 다음에 꽂은 것·출처가 온다.
+                ⛔ 0편이면 안 띄운다 — 다른 칩과 같은 규칙(빈 칩은 「내 건 왜 없지」가 된다). */}
+            {/* 📁↔ [2026-09-24] 윗줄도 «그 자리에서» 순서를 바꾼다 — 창업자 *"윗줄도 돼? sns내것 최애 그 줄"*
+                ⭐ 칩 여섯을 «목록»(윗칩기본)으로 모아 아랫줄과 같은 규칙(꾹 → 양옆 화살표 → 완료)으로 그린다. 「전체」는 늘 맨 앞.
+                ⛔ 조건·그림은 옛 JSX 를 한 글자도 안 바꾸고 옮겼다 — 「내 것」 자리·모자 아이콘·모두 칩 조건·0편이면 안 띄움의 경위는 git 이력(2026-08-17~09-23)에. */}
+            {윗칩목록.map((k, i) => (
+              칩편집 === k.id ? (
+                <span key={k.id} data-chip-edit="1" className="pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, padding: '0 4px', background: 'color-mix(in srgb, #e0703a 14%, var(--cream))', boxShadow: 'inset 0 0 0 2px #e0703a' }}>
+                  <button className="press" aria-label={`${k.name} 앞으로`} disabled={i === 0} onClick={() => 윗칩옮기기(k.id, -1)} style={{ padding: '6px 8px', opacity: i === 0 ? 0.3 : 1 }}><Icon name="chevron-left" size={18} color="var(--brown)" stroke={2.4} /></button>
+                  <span style={{ fontWeight: 800 }}>{k.name}</span>
+                  <button className="press" aria-label={`${k.name} 뒤로`} disabled={i === 윗칩목록.length - 1} onClick={() => 윗칩옮기기(k.id, 1)} style={{ padding: '6px 8px', opacity: i === 윗칩목록.length - 1 ? 0.3 : 1 }}><Icon name="chevron-right" size={18} color="var(--brown)" stroke={2.4} /></button>
+                </span>
+              ) : (
+                <button key={k.id} className={`pill press ${!칩편집 && folder === k.id ? 'active' : ''}`}
+                  {...(폴더앞켜짐 && !칩편집 ? hold(() => set칩편집(k.id)) : {})}
+                  style={칩편집 ? { borderStyle: 'dashed' } : undefined}
+                  onClick={() => { if (lpFired.current) { lpFired.current = false; return } if (칩편집) set칩편집(k.id); else setFolder(k.id) }}>
+                  {k.그림}{k.name}{칩편집 ? '' : ` ${k.n}`}
+                </button>
+              )
+            ))}
           </div>
           {/* 📂📂 [2026-09-08 창업자 확정] **칩 줄을 «두 줄»로 가른다.**
               📮 *"종류서랍은(필터줄) 2줄로 가도 좋을 것 같아"*
@@ -873,11 +959,31 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               ⛔ 한 줄에 접어 넣지(wrap) 않는다 — 폴더가 몇 개냐에 따라 줄 수가 들쭉날쭉해져
                  아래 목록이 위아래로 튄다. 각 줄은 «그 줄 안에서» 옆으로 넘긴다(`.hscroll`).
               ⭐ 「전체」는 윗줄에 둔다 — 어느 줄을 보든 돌아올 자리라 제일 왼쪽 첫 칸이 맞다. */}
+          {/* ↔ 편집 중엔 줄 «위»에 안내 ＋ ［완료］ — 줄 끝에 두면 옆으로 한참 밀어야 보인다(09-24 실물 캡처로 잡음) */}
+          {칩편집 && !query && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 8px', fontSize: 15, color: 'var(--text-sub)' }}>
+              <span style={{ flex: 1 }}>칩 양옆 화살표로 옮겨요 · 다른 칩을 누르면 그 칩을 옮겨요</span>
+              <button className="pill press" style={{ background: 'var(--brown)', color: '#fff', fontWeight: 800, flex: '0 0 auto' }} onClick={() => { set칩편집(null); nav.showToast('칩 순서를 바꿨어요') }}>완료</button>
+            </div>
+          )}
           <div className="hscroll" style={{ marginBottom: 8, display: query ? 'none' : undefined }}>
-            {folders.map((c) => (
-              <button key={c} className={`pill press ${folder === c ? 'active' : ''}`} onClick={() => setFolder(c)}>{c} {countIn(c)}</button>
+            {칩목록.map((c, i) => (
+              칩편집 === c ? (
+                // ↔ 고른 칩 — 양옆 화살표로 한 칸씩. 끝에 닿으면 그쪽 화살표는 흐리게(눌러도 안 움직인다)
+                <span key={c} data-chip-edit="1" className="pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, padding: '0 4px', background: 'color-mix(in srgb, #e0703a 14%, var(--cream))', boxShadow: 'inset 0 0 0 2px #e0703a' }}>
+                  <button className="press" aria-label={`${c} 앞으로`} disabled={i === 0} onClick={() => 칩옮기기(c, -1)} style={{ padding: '6px 8px', opacity: i === 0 ? 0.3 : 1 }}><Icon name="chevron-left" size={18} color="var(--brown)" stroke={2.4} /></button>
+                  <span style={{ fontWeight: 800 }}>{c}</span>
+                  <button className="press" aria-label={`${c} 뒤로`} disabled={i === 칩목록.length - 1} onClick={() => 칩옮기기(c, 1)} style={{ padding: '6px 8px', opacity: i === 칩목록.length - 1 ? 0.3 : 1 }}><Icon name="chevron-right" size={18} color="var(--brown)" stroke={2.4} /></button>
+                </span>
+              ) : (
+                <button key={c} className={`pill press ${!칩편집 && folder === c ? 'active' : ''}`}
+                  {...(폴더앞켜짐 && !칩편집 ? hold(() => set칩편집(c)) : {})}
+                  style={칩편집 ? { borderStyle: 'dashed' } : undefined}
+                  onClick={() => { if (lpFired.current) { lpFired.current = false; return } if (칩편집) set칩편집(c); else setFolder(c) }}>{c}{칩편집 ? '' : ` ${countIn(c)}`}</button>
+              )
             ))}
-            <button className="pill press" style={{ borderStyle: 'dashed', color: 'var(--text-sub)' }} onClick={() => setNewFolder(true)}>＋ 폴더</button>
+            {!칩편집 && <button className="pill press" style={{ borderStyle: 'dashed', color: 'var(--text-sub)' }} onClick={() => setNewFolder(true)}>＋ 폴더</button>}
+          </div>
           </div>
           <div className="pad">
             {/* 사용자가 만든 폴더는 여기서 바로 삭제(폴더·태그 탭을 없애 모아보기로 흡수) */}
@@ -976,7 +1082,9 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                           )}
                         </div>
                         <div className="name" style={gridSize === 'small' ? { fontSize: 15, marginTop: 5 } : undefined}>{r.title}</div>
-                        {gridSize === 'big' && <div className="date">{dateLabel(r.savedAt)}</div>}
+                        {/* 📅 ⛔기본 레시피는 저장 날짜를 안 보여준다 — 유저가 저장한 적이 없다(창업자 확정 2026-09-12 「a」).
+                            그 전엔 줄 세우려고 쓴 바닥값 2020-01-01 이 그대로 찍혀 목록이 거의 다 「2020.01.01」이었다. */}
+                        {gridSize === 'big' && 저장날짜보임(r) && <div className="date">{dateLabel(r.savedAt)}</div>}
                       </button>
                       {/* 🔖🔖 [2026-08-17 창업자] **북마크를 목록에서 «바로» 누른다.**
                           📮 *"근데 그 북마크는 **나도 한번도 안썼어 번거로워서. 레시피에 들어가서 눌러야 하니까**"*
@@ -1002,6 +1110,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                             ev.stopPropagation()
                             const 다음 = nextPin(r)
                             setFavPin(r.id, 다음)
+                            if (다음) 기본레시피표시(r.id, 다음)   // ⭐ 인기 레시피 — 기본 레시피만 번호로 센다(창업자 2026-09-27)
                             set방금바꾼(r.id)
                             nav.showToast?.(다음 ? `${pinName(다음)}에 넣었어요` : `${pinName(pinOf(r))}에서 뺐어요`)
                           }}
@@ -1082,14 +1191,30 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       {/* 모아보기 편집 모드 하단 바 */}
       {edit && view === 'grid' && (
         <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(var(--nav-h) + 14px + var(--safe-bottom))', zIndex: 40, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
-          <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, padding: '9px 12px 9px 18px', boxShadow: '0 8px 26px rgba(60,45,30,0.22)' }}>
-            <span style={{ fontSize: 16.5, fontWeight: 800, color: 'var(--text)' }}>
-              {sel.size > 0 ? `${sel.size}개 선택` : '카드를 눌러 선택'}
+          <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 7, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 999, padding: '9px 10px 9px 14px', maxWidth: 'calc(100vw - 20px)', boxShadow: '0 8px 26px rgba(60,45,30,0.22)' }}>
+            {/* ⛔ 글자가 «접히지» 않게 한다 — 2026-09-23 에 ［폴더］를 더했더니 바가 두 줄로 찌그러졌다(실물로 봤다).
+                ⭐ 360px 폰이 기준이다. 접히면 단추 자리가 위아래로 흔들려 잘못 누르기 쉬워진다. */}
+            <span style={{ fontSize: 16.5, fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+              {sel.size > 0 ? `${sel.size}개` : '카드를 눌러 선택'}
             </span>
-            <button className="press" style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 8px' }}
+            <button className="press" style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-sub)', padding: '6px 6px', whiteSpace: 'nowrap' }}
               onClick={() => setSel(sel.size === list.length ? new Set() : new Set(list.map((r) => r.id)))}>
               {sel.size === list.length && list.length > 0 ? '전체 해제' : '전체 선택'}
+              {/* ⚠️ 이 말은 그대로 둔다 — 줄이려면 창업자가 정한다(앱 글자는 창업자 것) */}
             </button>
+            {/* 📁📁 [창업자 2026-09-23] **고른 편을 폴더로 «바로» 옮긴다.**
+                📮 한끼연구소 폼 = *"제가쓴 레시피는 따로 폴더나 그런것도 만들어주세요 헷갈려요"*
+                ⛔ 그 전엔 **상세 → 편집 → 폴더 → 저장** 넉 단계였다(EditorScreen.jsx:1352).
+                   2026-08-17 에 «같은 뿌리»로 즐겨찾기·표지사진을 고치면서 이것만 남겨뒀다.
+                ⭐ 새 화면도 새 제스처도 안 만든다 — **이미 있는 고르기 모드에 단추 하나.**
+                   게다가 여러 편을 «한 번에» 옮긴다.
+                ⛔ 삭제와 «붙여 두지» 않는다 — 옮기려다 지우면 되돌릴 수 없다. 사이에 가름선을 둔다. */}
+            <button className="press" disabled={sel.size === 0}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 999, background: sel.size ? 'var(--cream)' : 'transparent', color: sel.size ? 'var(--text)' : 'var(--text-sub)', fontSize: 16.5, fontWeight: 800, opacity: sel.size ? 1 : 0.5 }}
+              onClick={() => sel.size && setFolderAsk(true)}>
+              <Icon name="folder" size={15} /> 폴더
+            </button>
+            <span style={{ width: 1, alignSelf: 'stretch', background: 'var(--line)', margin: '2px 2px' }} />
             <button className="press" disabled={sel.size === 0}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 999, background: sel.size ? 'var(--danger)' : 'var(--cream)', color: sel.size ? '#fff' : 'var(--text-sub)', fontSize: 16.5, fontWeight: 800 }}
               onClick={() => sel.size && setDelSelAsk(true)}>
@@ -1097,6 +1222,30 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* 📁📁 폴더 고르기 — 「어디로 들어가나」를 «눈으로 고른다»(창업자 2026-09-23 *"어떤 폴더로 들어가는데?"*)
+          ⭐ 목록 = 종류 여섯 ＋ 유저가 «직접 만든» 폴더 ＋ ［＋ 새 폴더］
+          ⛔ 나라(한식·양식…)는 «안» 넣는다 — 편집 화면이 2026-09-14 에 같은 이유로 뺐다
+             (📮 창업자 = *"카테고리도 한식 위 아래 두번 중복이야"*). 갈래를 여기서 다시 갈라놓지 않는다.
+          ⭐ 폴더가 하나도 없는 사람도 막히지 않는다 — 시트 안에서 바로 만든다. */}
+      {folderAsk && (
+        <Portal>
+          <div className="sheet-mask" onClick={() => setFolderAsk(false)}>
+            <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 22 }}>
+              <div className="emoji-sheet-head">
+                <span>{sel.size}개를 어디로 옮길까요?</span>
+                <button className="press" onClick={() => setFolderAsk(false)} style={{ color: 'var(--text-sub)', fontSize: 16, fontWeight: 600 }}>닫기</button>
+              </div>
+              <div style={{ padding: '4px 16px 0', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {[...종류들, ...(folders || []).filter((f) => !종류들.includes(f) && !나라들.includes(f) && !옛폴더이름.includes(f))].map((c) => (
+                  <button key={c} className="pill press" onClick={() => 폴더로옮긴다(c)}>{c}</button>
+                ))}
+                <button className="pill press" onClick={() => { setFolderAsk(false); set새폴더로옮김(true); setNewFolder(true) }}>+ 새 폴더</button>
+              </div>
+            </div>
+          </div>
+        </Portal>
       )}
 
       {delSelAsk && (
@@ -1119,7 +1268,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
         <PromptSheet
           title="새 폴더"
           fields={[{ key: 'name', label: '폴더 이름', placeholder: '예) 자주 만드는' }]}
-          onSubmit={({ name }) => { const nm = name.trim(); if (nm) addFolder(nm) }}
+          onSubmit={({ name }) => { const nm = name.trim(); if (!nm) return; addFolder(nm); if (새폴더로옮김) 폴더로옮긴다(nm) }}
           onClose={() => setNewFolder(false)}
         />
       )}

@@ -54,6 +54,37 @@ const TIMEOUT_MS = 60000
 
 // 🔢 마지막 결과 — 앱이 「AI가 정리했어요」를 보여줄 때 쓴다
 let _마지막 = null
+
+// 🧺🧺 **[2026-09-10 · 창업자 실물 녹화] 지금 돌고 있는 «번호표»를 밖에서 볼 수 있게 한다.**
+//   📮 창업자 = 20초에 다른 앱으로 나갔고 42초에 돌아오니 「AI 다듬기가 안 됐어요」
+//   ⛔⛔ 뿌리 = 번호가 이 파일 «안»에만(const) 있었다. 폰이 앱을 얼리면 물어보는 루프가 죽고,
+//      깨어나도 **물어볼 번호가 없어서** 선반에 놓인 답을 통째로 버렸다.
+//      📌 창은 「앱을 닫아도 계속 다듬어요」라고 약속하는데 **못 지키고 있었다.**
+//   ⭐ 그래서 번호를 밖(레시피 한 줄)에 적어 두게 «알려준다». 적는 건 부르는 쪽이 한다.
+let _번호알림 = null
+export function 번호알림받기(fn) { _번호알림 = fn }
+
+// 📒📒 **[2026-09-10 · 창업자 요청] 「최근 AI 다듬기 다섯 번」을 남긴다 — ⛔창업자 폰에만 보인다.**
+//
+//   📮 창업자 = *"갈색띠가 안떠 성공해도"* ＋ *"계속남게할순없어?"*
+//   ⛔⛔ 왜 안 보였나 = 띠는 최대 4.8초다. 게다가 성공이 «나가 있는 동안» 나면 떴다 사라져
+//      **볼 수가 없다.** 오늘 아침 창업자가 겪은 게 정확히 그것이다.
+//   ⭐ 그래서 «지나가는 말»이 아니라 «쌓이는 기록»으로 바꾼다 — 설정 맨 아래에서 언제든 다시 본다.
+//   ⭐⭐ 이게 있으면 아직 못 푼 「왜 2분을 넘겼나」도 저절로 풀린다 — 걸린 시간이 쌓이니까.
+//   ⛔ 개인정보를 안 남긴다 — 레시피 «글자»는 한 자도 안 적는다(모델·걸린 시간·까닭만).
+const 기록칸 = 'hankki:tidylog'
+const 기록수 = 5
+function 기록하기(v) {
+  try {
+    if (!tidyFounder()) return                      // ⛔ 창업자 폰이 아니면 아예 안 쌓는다
+    const 줄 = { 때: Date.now(), ok: !!(v && v.ok), why: (v && v.why) || '', model: (v && v.model) || '', ms: (v && v.ms) || 0 }
+    const 옛 = JSON.parse(localStorage.getItem(기록칸) || '[]')
+    localStorage.setItem(기록칸, JSON.stringify([줄, ...(Array.isArray(옛) ? 옛 : [])].slice(0, 기록수)))
+  } catch { /* 기록이 말썽이어도 다듬기는 계속 */ }
+}
+export function 다듬기기록() {
+  try { const v = JSON.parse(localStorage.getItem(기록칸) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] }
+}
 // 📷 마지막 판에서 «사진을 실었나» — 창업자 화면에만 붙는다(`tidyTail`)
 let _사진 = ''
 
@@ -102,7 +133,60 @@ async function 선반기다리기(번호, headers) {
   return null                         // 2분 안에 안 왔다 — 워커는 계속 일하고 있다
 }
 
-export async function tidyRecipe(text, 사진) {
+// 🤖🔐 [2026-09-08 · 큰 틀 6-② ⓑ] 보내기 «전에» 허락 — 애플 5.1.2(i) "obtain explicit permission before doing so"
+import { AI동의받기 } from './aiConsent.js'
+
+// 🧺🧺 **선반에 놓인 답을 «집어온다»** — 앱이 깨어났을 때 부른다 [2026-09-10]
+//   ⭐ AI 를 «안» 부른다 — 워커가 이미 만들어 둔 답을 가져올 뿐이라 뉴런 0.
+//   ⛔ 기다리지 않는다. 한 번 물어보고 없으면 그냥 없는 것이다(그때는 지금처럼 「한 번 더」가 뜬다).
+//   ⭐ 돌려주는 값 셋 = 답(있으면) · '아직'(워커가 일하는 중) · null(선반이 비었다 = 1시간 지났거나 실패)
+export async function 선반집기(번호) {
+  if (!TIDY_URL || !번호) return null
+  try {
+    const resp = await fetch(TIDY_URL + '?job=' + encodeURIComponent(번호), {
+      method: 'GET', headers: { 'x-hankki-token': APP_TOKEN },
+    })
+    if (!resp.ok) return '아직'                       // ⛔ 한 번 안 됐다고 「없다」로 단정하지 않는다
+    const 답 = await resp.json()
+    if (!답) return '아직'
+    if (답.상태 === '하는중') return '아직'
+    if (답.상태 === '됐음') return 답.몸 || null
+    return null                                        // '없음'(만료) · '실패'
+  } catch { return '아직' }                            // 인터넷이 잠깐 끊긴 것 — 없다고 말하지 않는다
+}
+
+// 📒 **기록은 «한 겹 감싸서» 남긴다** — `_마지막` 이 정해지는 자리가 열 곳이라
+//    하나씩 고치면 «반드시» 빠뜨린다. 어느 길로 끝나든 여기를 지나간다. [2026-09-10]
+// 🙅 [2026-09-13] 마지막 판이 「유저가 AI 를 안 쓰기로 한 것」인가 — 실패와 «갈라» 읽으려고 연다.
+//    배포 검수에서 잡힘: 동의 시트에서 「사용 안 함」을 고르면 null 이 돌아와 App·상세 화면이 tidyFail 로 적고
+//    「AI 다듬기가 안 됐어요 · 한 번 더」라고 «거짓» 안내를 했다. 안 쓴 것은 실패가 아니다.
+export function 동의안함으로끝났나() { return !!(_마지막 && _마지막.why === '동의안함') }
+
+// 🆓🆓 **[창업자 확정 2026-08-29 · 재론 금지] 갈래는 «둘»뿐이다 — 그 문을 여기 한 곳에 둔다.**
+//   📮 창업자 원문 = *"열쇠1개-중국AI회사가 읽어주고, 정리해줌. 열쇠다 쓰면 읽고 정리하는 것 tesseract얘가 함.
+//      불편해진 유저는 AI열쇠를 삼. 이 두가지만 있는거야."*
+//   📄 근거 = docs/_archive/2026-08/AI다듬기-만들기전-리서치-2026-08-28.md
+//      ⛔ 「열쇠 없이도 AI 정리」를 어디에도 열지 않는다 — 열면 그 순간 열쇠가 안 팔린다.
+//      📌 심장 = 「열쇠 값어치가 반쪽이면 안 된다」.
+//
+//   ⛔⛔ [2026-09-14 창업자 제보 «열쇠쓰기를 안했는데 ai가 읽는거 되는거 고쳐야해»]
+//      「그냥 읽기」는 그 확정 «뒤»에 생겼고, 그때 AI 다듬기를 어떻게 할지는 «정한 적이 없어»
+//      기존 흐름이 그대로 이어졌다 → 열쇠 0개인데 AI 정리가 됐다. 확정이 없애라고 한 «중간 조합»이다.
+//
+//   ⭐⭐ **막는 자리를 여기 «하나»로 둔다** — 부르는 곳이 넷(편집 화면·App·레시피 상세·임시보관함)이라
+//      호출부마다 막으면 한 곳만 빠져도 조용히 새어 나간다(워커가 둘이라 구멍도 둘이었던 것과 같은 교훈).
+//   🔒 재현판 = scripts/_repro-무료면AI없다-0914.mjs
+export async function tidyRecipe(text, 사진, opts = {}) {
+  if (opts && opts.무료) { _마지막 = { ok: false, why: '무료읽기' }; return null }
+  const 잰때 = Date.now()
+  // 🙋‍♀️ 「누가 시켰나」 — 부르는 쪽이 `{ 까닭: 'user' }` 또는 `'auto'` 를 준다 (2026-09-14)
+  //   ⛔ 안 주면 '모름' 이다 — «막지 않는다». 옛 자리를 못 찾아도 앱은 그대로 돌아야 한다.
+  const 답 = await 다듬기속(text, 사진, ['user', 'auto'].includes(opts && opts.까닭) ? opts.까닭 : '모름')
+  기록하기({ ...(_마지막 || {}), ms: (_마지막 && _마지막.ms) || (Date.now() - 잰때) })
+  return 답
+}
+
+async function 다듬기속(text, 사진, 까닭 = '모름') {
   _마지막 = null
   _사진 = ''
   const t = String(text || '').trim()
@@ -111,11 +195,20 @@ export async function tidyRecipe(text, 사진) {
   if (!t) { _마지막 = { ok: false, why: '글자없음' }; return null }
   // ⛔ 너무 짧으면 AI 를 부를 값어치가 없다(＋우리 무료 통을 아낀다)
   if (t.length < 40) { _마지막 = { ok: false, why: '짧음' }; return null }
+  // 🔐 허락이 없으면 «한 바이트도» 안 나간다 — 시트가 없는 자리면 못 물은 것이라 역시 안 보낸다(재현판 ②)
+  if (!(await AI동의받기())) { _마지막 = { ok: false, why: '동의안함' }; return null }
 
+  // 🔓👀 [2026-09-10] 유저 눈이면 운영자 열쇠를 «안 싣는다» — ocr.js 와 같은 잣대다.
+  //   ⛔ 워커가 둘이라(hankki-ocr · hankki-tidy) 같은 구멍이 두 곳에 나 있었다.
   const headers = { 'Content-Type': 'application/json', 'x-hankki-token': APP_TOKEN }
   try {
-    const f = localStorage.getItem('hankki:founder')
-    if (f) headers['x-hankki-founder'] = f
+    if (!유저눈인가()) {
+      const f = localStorage.getItem('hankki:founder')
+      // ⛔⛔ [2026-09-10] ASCII 밖 글자가 있으면 fetch 가 «통째로» 죽는다(HTTP 헤더는 ISO-8859-1).
+      //    그러면 AI 다듬기가 **아무 말 없이 영원히** 안 된다 — network 로 오해돼 재시도만 돈다.
+      //    📌 ocr.js 에만 방패를 달고 여기는 빼먹었었다(적대적 검토가 잡았다). 워커가 둘이면 구멍도 둘이다.
+      if (f && /^[\x20-\x7e]+$/.test(f)) headers['x-hankki-founder'] = f
+    }
   } catch { /* noop */ }
 
   // 👁 사진은 «있을 때만» 싣는다. ⛔모양이 다르거나 너무 크면 조용히 빼고 «글자만» 보낸다.
@@ -173,7 +266,8 @@ export async function tidyRecipe(text, 사진) {
   //
   //   ⚠️ 정직하게 = `network` 가 「요청은 갔는데 응답만 못 받은 것」일 수도 있다. 그때는 한 번 더 먹는다.
   //      그래도 **최대 1회**라 손해가 유한하고, 유저가 얻는 건 「되다 안 되다」가 줄어드는 것이다.
-  const 한판 = async () => {
+  //   ⛔ 재시도는 «같은 사람의 같은 한 번»이다 — 까닭을 retry 로 바꿔 따로 센다(사람 수가 안 부풀게).
+  const 한판 = async (이번까닭 = 까닭) => {
     const resp = await fetch(TIDY_URL, {
       method: 'POST',
       headers,
@@ -187,6 +281,21 @@ export async function tidyRecipe(text, 사진) {
         budgetMs: Math.max(0, (선반간격 * 선반횟수) - (Date.now() - 보낸때)),
         // 🧺 번호표 — 이걸 주면 워커가 «맡고» 번호를 돌려준다(옛 워커는 이 칸을 그냥 무시한다)
         job: 번호,
+        // 🙋‍♀️🙋‍♀️ **「누가 시켰나」** (2026-09-14) — 📮창업자 = *"이것도 확실히 잴수있는 걸 만들어야해..."*
+        //
+        // ⛔⛔ 왜 필요한가 = 다듬기는 **사람이 안 눌러도 «저절로» 돈다**
+        //    (`RecipeDetailScreen.jsx:243` 이 레시피를 열 때 실패한 편을 만회한다 · `retidy.js` 주석).
+        //    그래서 「오늘 16건」이 **사람이 쓴 것인지 앱이 돈 것인지 못 가른다.**
+        //    👉 **유료를 켤지·값을 얼마로 할지가 이 숫자에 달려 있는데 지금은 근거가 없다.**
+        //
+        // 갈래 넷 (⛔늘리지 말 것 — 자유 글자를 보내면 워커의 KV 키가 유저 수만큼 늘어난다)
+        //   `user`  = 사람이 «단추를 눌렀다»   (보관함 「AI로 다듬기」 · 상세 「다시 해보기」)
+        //   `auto`  = 앱이 «저절로» 돌았다     (공유받기 직후 · 레시피 열 때 만회)
+        //   `retry` = 위 한 판이 network 로 죽어 «한 번 더» 부른 것 (⛔사람 수가 부풀지 않게 따로 센다)
+        //   `모름`  = 옛 앱이 보낸 것 (워커가 그렇게 접는다)
+        //
+        // ⛔ 옛 워커는 이 칸을 «그냥 무시»한다 — 앱만 나가도 나빠지지 않는다(budgetMs 와 같은 성질).
+        까닭: 이번까닭,
       }),
       signal: ac ? ac.signal : undefined,
     })
@@ -211,6 +320,8 @@ export async function tidyRecipe(text, 사진) {
       r = await 한판()
       // 🧺 워커가 「맡았다」고 하면 — 여기서부터는 «기다리는 게 아니라 물어보는» 것이다
       if (r.data && r.data.맡음 && r.data.job) {
+        // 🧺 워커가 맡았다 = 이제 번호가 «진짜»다. 밖에 적어 둔다(앱이 얼어도 살아남게)
+        try { if (_번호알림) _번호알림(r.data.job) } catch { /* 적는 쪽이 말썽이어도 다듬기는 계속 */ }
         const 받은것 = await 선반기다리기(r.data.job, headers)
         if (받은것) { r = { data: 받은것 } } else { _마지막 = { ok: false, why: '안옴' }; return null }
       }
@@ -218,7 +329,7 @@ export async function tidyRecipe(text, 사진) {
       // 끊긴 것(AbortError)은 «시간»이 다한 것이라 다시 걸어도 또 끊긴다 — 그대로 포기
       if (e && e.name === 'AbortError') throw e
       await new Promise((r2) => setTimeout(r2, 1200))   // 잠깐 쉬고 한 번만 더
-      r = await 한판()                                    // 여기서 또 죽으면 아래 catch 가 받는다
+      r = await 한판('retry')                             // 여기서 또 죽으면 아래 catch 가 받는다
     }
     if (r.실패) {
       // 429 = 그날 통이 찼다 · 502 = AI 가 이상한 답 → 둘 다 «조용히» 규칙 파서로
@@ -327,8 +438,35 @@ function 계량줄옮기기 (메모, 걸음들) {
   return [있던것, ...옮길것].filter(Boolean).join('\n')
 }
 
-export function mergeTidy(r, ai) {
+// 🐛🐛 [2026-10-25 · 창업자 두부참치조림] **AI 걸음은 «원문에 근거가 있을 때만» 받는다.**
+//   📮 창업자 = *"인스타캡쳐(원본) 만드는법이 없었어 지어낸 것 같아"* — 원문엔 재료·양념장뿐인데
+//      앱에 만드는 법이 들어갔다. 막는 게 워커 지시문 「지어내지 마라」(worker-tidy.js) «하나»뿐이었다.
+//   ⭐ 잣대 = 걸음의 글자 두 개짜리 조각 중 원문에 있는 비율. ⛔재료 줄은 원문에서 «빼고» 잰다 —
+//      지어낸 걸음도 재료 이름(두부·양파)은 쓰니까, 그걸 세면 다 통과한다.
+//   🔢 실측(`_repro-지어낸걸음-1025.mjs`) = 지어낸 걸음 0.00~0.33 · 진짜 걸음 0.67~1.00 → 문턱 0.5
+//   ⛔ 원문을 못 받으면(옛 호출) «예전 그대로» 둔다 — 근거 없이 버리지 않는다.
+const 낱글 = (s) => String(s || '').toLowerCase().replace(/[^0-9a-z가-힣]/g, '')
+const 두글자 = (s) => { const t = 낱글(s); const o = []; for (let i = 0; i + 1 < t.length; i++) o.push(t.slice(i, i + 2)); return o }
+export const 근거문턱 = 0.5
+
+export function 걸음근거 (걸음, 원문, 재료들 = []) {
+  const 재료셋 = new Set((재료들 || []).map(낱글).filter(Boolean))
+  const 남은 = String(원문 || '').split('\n').filter((줄) => !재료셋.has(낱글(줄))).join('\n')
+  const 판 = new Set(두글자(남은))
+  // 「~요」 조각은 안 센다 — 해요체로 바꾼 말끝이라 원문 어디에나 걸린다
+  const 조각 = 두글자(걸음).filter((b) => !b.includes('요'))
+  if (!조각.length) return 1
+  return 조각.filter((b) => 판.has(b)).length / 조각.length
+}
+
+export function 원문걸음만 (걸음들, 원문, 재료들 = []) {
+  if (!Array.isArray(걸음들) || !String(원문 || '').trim()) return 걸음들
+  return 걸음들.filter((s) => 걸음근거(s, 원문, 재료들) >= 근거문턱)
+}
+
+export function mergeTidy(r, ai, 원문 = '') {
   if (!ai) return r
+  ai = { ...ai, steps: 원문걸음만(ai.steps, 원문, [...(r.ingredients || []), ...(ai.ingredients || [])]) }
   return {
     ...r,
     // 🏷 AI 가 제목을 못 주면 **규칙 파서 제목이 살아난다** — 창업자 짬뽕밥에서 이 자리가 값을 했다
@@ -371,7 +509,48 @@ export function mergeTidy(r, ai) {
  *   운영자 통로(`hankki:founder`)가 이미 있으니 그걸 그대로 쓴다.
  *   ⛔ 유저에게 `http_429`·`timeout` 같은 말을 보이지 않는다.
  */
+// 👀👀 [창업자 확정 2026-09-10] **「유저 눈으로 보기」 스위치**
+//
+// 📮 창업자 = *"이게 나랑 유저랑 보이는 화면이 다르니까 테스트하기가 너무 어렵네"*
+//
+// ⛔⛔ 2026-09-10 에 실제로 이걸로 하루를 태웠다 — 창업자 폰에서 「사진 고르기」 단추가 «하나»만 떠서
+//    세 번을 버그로 의심했고, 그때마다 코드를 세 파일씩 따라가 확인해야 했다.
+//    진짜는 **창업자가 무제한이라 그런 것**이었고, 시크릿 모드에서는 멀쩡히 두 갈래가 떴다.
+//
+// ⭐ 스위치를 켜면 **이 한 함수가 false 를 돌려준다** → 무제한 표시·운영자 배지·다듬기 기록이
+//    전부 «일반 유저»처럼 굴어서, 창업자 폰이 그대로 「유저 눈」이 된다.
+//    📌 표식을 새로 만들되 «판정하는 자리»는 늘리지 않았다 — 여기 한 곳이 뿌리다.
+//
+// ⭐⭐ **[2026-09-10 저녁 · 바뀌었다] 이제 진짜로 깎인다** (창업자 = "a로가")
+//    ⛔ 처음엔 「표시만 바꾼다 · 서버 헤더는 그대로」로 뒀는데, 그러면 **스위치가 반쪽만 돌았다** —
+//       ⑴ 워커가 계속 「창업자」로 세고(계기판 42가 그래서 커졌다)
+//       ⑵ 서버가 「무제한」이라 답해 **선택 창이 안 뜨는 그 버그가 그대로 남았다**.
+//       📌 「보이는 것」과 「깎이는 것」을 안 가르려던 뜻이었는데, 정작 그 둘이 갈려 있었다.
+//    ✅ 지금은 유저 눈이면 **두 워커 모두**(hankki-ocr · hankki-tidy) 운영자 헤더를 «안 보낸다».
+//       → 개인 한도를 진짜로 받고, 계기판의 「창업자」에도 안 실린다.
+//    ⚠️⚠️ 그래서 **유저 눈으로 테스트하면 창업자 열쇠가 «진짜로 · 영구히» 줄어든다**(월 5장).
+//       ⛔ 스위치를 끄면 «표시»는 무제한으로 돌아오지만 **쓴 수는 안 돌아온다** —
+//          워커가 「남은 수」가 아니라 «쓴 수»를 기기 통(d:<uid> · a:<sub>)에 누적하기 때문이다(worker.js).
+//       📌 그러니 「열쇠가 다 떨어져 막히는 화면」은 그 달에 «사실상 한 번» 볼 수 있다.
+//          여러 번 봐야 하면 시크릿 모드로 본다(기기 번호가 새로 생긴다).
+//       ⛔ 「되돌릴 수 있다」고 적었었다 — 표시만 맞는 말이라 고쳤다(적대적 검토가 잡았다).
+// ⛔ 이름에 「열쇠」를 안 쓴다 — 우리 앱에서 「열쇠」는 «레시피열쇠»를 뜻하고,
+//    `_repro-AI다듬기-0829` 가 「tidy.js 가 열쇠를 안 깎나」를 그 낱말로 본다(2026-09-10 실제로 걸렸다).
+export const 유저눈표식 = 'hankki:유저눈'
+export function 유저눈인가() {
+  try { return localStorage.getItem(유저눈표식) === '1' } catch { return false }
+}
+export function 유저눈설정(켤까) {
+  try { if (켤까) localStorage.setItem(유저눈표식, '1'); else localStorage.removeItem(유저눈표식) } catch { /* noop */ }
+}
+
 export function tidyFounder() {
+  if (유저눈인가()) return false   // 👀 유저 눈으로 보는 중 — 운영자가 아닌 «척» 한다
+  try { return !!localStorage.getItem('hankki:founder') } catch { return false }
+}
+// 🔑 진짜 운영자인가 — ⛔스위치와 «무관»하게 답한다.
+//    설정 화면이 「스위치를 보여줄지」를 이걸로 정한다(유저 눈을 켜면 스위치까지 사라지면 못 끈다).
+export function 진짜운영자() {
   try { return !!localStorage.getItem('hankki:founder') } catch { return false }
 }
 

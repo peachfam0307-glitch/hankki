@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useLayerBack } from '../useBackHandler'
-import FoodIcon, { FOOD_ICON_GROUPS_ING_FIRST, FOOD_ICON_GROUPS_SORTED, FOOD_NAMES, searchFoodIcons } from './FoodIcon'
+import FoodIcon, { FOOD_ICON_GROUPS_ING_ONLY, FOOD_ICON_GROUPS_SORTED, FOOD_NAMES, ING_ICON_KEYS, searchFoodIcons } from './FoodIcon'
 import Icon from './Icon'
 import Portal from './Portal'
 
@@ -36,8 +36,10 @@ const 긴이름 = (nm = '') => (nm.length >= 8 ? 'long' : nm.length >= 5 ? 'mid'
 
 // 아이콘 고르는 바텀시트만 따로 — 표지처럼 "자기 버튼 없이 시트만 열고 싶은 곳"에서 쓴다.
 // (레시피 상세에서 표지 아이콘 바꾸기 — 창업자 2026-07-28 "사진 바꾸기가 갤러리 말고 음식아이콘으로 가야 해")
-// 🥕 mode='ing' = 「재료를 고르는 자리」 (냉장고 재료 담기). 재료 갈래가 맨 위로 온다.
-//    📮 창업자 폰 제보 2026-08-16 *"냉장고에 유통기한넣을때 아이콘바꾸는거 음식이 먼저다떠"*
+// 🥕 mode='ing' = 「재료를 고르는 자리」 (냉장고 재료 담기). **재료만 나온다 — 요리는 하나도 안 나온다.**
+//    📮 창업자 폰 제보 2026-08-16 *"냉장고에 유통기한넣을때 아이콘바꾸는거 음식이 먼저다떠"* → 재료를 위로
+//    📮 창업자 폰 제보 2026-09-11 *"냉장고재료아이콘에 음식이 있을필요없어 다빼고 재료만남기자"* → 요리를 뺌
+//    ⭐ 막을 곳이 «셋»이다 — 갈래 목록 · 최근에 쓴 것 · 검색 결과. 하나만 막으면 나머지로 새어 나온다.
 //    ⛔ 기본값은 그대로 'dish' — 레시피 표지·프로필·쇼핑몰은 아무것도 안 바뀐다.
 // 📷 `onPhoto` = **「내 사진 올리기」를 이 시트에서 바로** (창업자 2026-08-17
 //    *"아이콘 바꾸기에 바로 내가 사진 올릴 수 있는 버튼도 있었으면 좋겠다고"* · *"이것도 반영아직이네"*)
@@ -48,11 +50,18 @@ const 긴이름 = (nm = '') => (nm.length >= 8 ? 'long' : nm.length >= 5 ? 'mid'
 export function FoodIconSheet({ value, onChange, onClose, mode = 'dish', onPhoto }) {
   useLayerBack(true, onClose) // 뒤로가기 → 닫기
   const ing = mode === 'ing'
-  const groups = ing ? FOOD_ICON_GROUPS_ING_FIRST : FOOD_ICON_GROUPS_SORTED
+  const groups = ing ? FOOD_ICON_GROUPS_ING_ONLY : FOOD_ICON_GROUPS_SORTED
   const [q, setQ] = useState('')
   // 최근 목록은 시트를 여는 순간의 것으로 고정 — 고를 때마다 위가 움직이면 눈이 어지럽다.
-  const [recent] = useState(readRecent)
-  const found = useMemo(() => searchFoodIcons(q), [q])
+  // 🥕 재료 자리에선 «재료였던 것»만 남긴다 — 최근 목록은 레시피 표지 픽커와 «한 통»을 쓴다.
+  //    ⛔ 갈래만 걸러선 여기가 안 막힌다 — 창업자 캡처에 뜬 가지볶음·봉골레가 바로 이 칸이었다.
+  const [recentAll] = useState(readRecent)
+  const recent = useMemo(() => (ing ? recentAll.filter((k) => ING_ICON_KEYS.has(k)) : recentAll), [ing, recentAll])
+  // 🔎 검색도 같다 — 「가지」를 치면 가지볶음·가지덮밥이 같이 걸린다. 재료 자리에선 가지만.
+  const found = useMemo(() => {
+    const r = searchFoodIcons(q)
+    return r && ing ? r.filter((k) => ING_ICON_KEYS.has(k)) : r
+  }, [q, ing])
 
   const pick = (k) => { pushRecent(k); onChange(k); onClose() }
   const cell = (k, prefix) => (

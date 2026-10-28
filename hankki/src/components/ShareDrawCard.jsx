@@ -2,10 +2,16 @@ import { isSeason, isPeakSeason, inCardWindow, seasonsNow } from '../season'
 import { SEASON_CUTS } from '../data/cardSeasons'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toJpeg, toCanvas } from 'html-to-image'
-import { 표지굽기 } from '../coverEncode.js'   // 🎴📦 표지 = WebP q0.8(되면) · 아니면 JPEG q0.86 (2026-09-07)
+import { 표지굽기, 예열굽기, 사파리엔진인가 } from '../coverEncode.js'   // 🎴📦 표지 = WebP q0.8(되면) · 아니면 JPEG q0.86 (2026-09-07) · 🍎 예열굽기 = 사파리 첫 굽기 그림 누락 대비 · 사파리엔진인가 = 칩 그림자 우회(2026-09-13)
 import { fontCSS, fontOptFrom } from '../fontEmbed'
 import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
+// 🍎 2026-09-13 — 아이폰 앱 안에선 「Play스토어」 대신 「App Store」. 심사 지침 2.3.10(다른 플랫폼 이름 금지) —
+//    딸 아이폰 실물(09-12 17:59 문자 카드 · 18:00 사진첩 카드)에서 「Play스토어 '한끼' 검색」이 그대로 나갔다.
+//    웹·안드로이드는 그대로. 카드 «그림 안 알약» 둘 ＋ 공유 «글» 둘 = 네 곳이 전부 이 한 줄을 본다.
+import { 앱안인가 } from '../nativeAuth'
+// 🏪 [2026-09-24] 찾는 글자 = shareCover 의 `스토어검색` 하나로(두 곳이 따로 놀아 표지만 늦게 고쳐진 적이 있다 · 2026-08-04)
+import { 스토어검색, 자랑주소 } from '../shareCover'
 // ⛔ UI엔 유니코드 이모지를 쓰지 않는다 — 우리 아이콘·스티커만(CLAUDE.md 핀).
 //    v8.63에서 앱 전체를 정리할 때 이 시트는 '보류'로 빠져 🔄💌🖼🐻🐧가 남아 있었다(2026-07-29 정리).
 import uiDuoHi from '../assets/stickers/photo/gp_duohi.png'
@@ -35,6 +41,7 @@ const SUMMER = /^(sm_|duo_(bingsu|naengmyeon|watermelon))/
 //   ⚠️ JPEG 다 — PNG(2.15MB)는 서비스워커 미리받기 한도 2MB를 넘어 **빌드가 막혔다.**
 //      투명이 필요 없는 사진이라 JPEG 로 굽는다(품질 90 · 크로마 서브샘플링 끔 = 글자·선이 안 뭉갠다)
 import HW_FELT from '../assets/cardbg/hw_felt.jpg'
+import HW_NIGHT_BG from '../assets/decorbg/halloween-night.webp'   // 🎃🌙 [창업자 2026-09-29 「어두운카드도 넣자 레꾸자랑은」] 꾸미기 「핼러윈 밤」 배경과 같은 그림
 // 🎃 펠트 소품 — 창업자 2026-08-03 *"필요하면 써 자랑카드꾸밀때"* (3×3 로 다시 뽑아준 시트)
 //   ⭐ 배경과 **같은 펠트 소재**라 카드 위에서 결이 안 싸운다.
 //   ⚠️ hwf_04(검은고양이)는 유료팩 `hs_04` 와 «소재»가 겹치지만 **그대로 쓴다** —
@@ -95,6 +102,18 @@ const SUMMER_SCENE = /^scene_(pool|sandcastle|picnic|night_market|walk)\./
 //   ⭐ 창업자가 «정본 펭펭 배경 씬»(영화·불꽃·기차·서재 / 가을 4)을 다시 보내주기로 했다 —
 //      `scenepool/` 에 넣기만 하면 저절로 다시 찬다(⛔아래 두 정규식에 안 걸리는 새 이름으로).
 const OLD_PENG_SCENE = /^scene_(camp|cook_kitchen|market|movie|soup|sandcastle|picnic)\./
+// 👀👀 **[전수검사 끝 · 2026-09-16] 43장을 «그림을 열어» 다 봤다 — 창업자 «이것도 네가 눈으로 전수검사해줘. 직접봐.»**
+//   🔢 본 것 = 사철 펭펭 pjs_ 8 · 콤비 duos_ 15 · 가을 pj_01~04 ＋ au_b15·au_b16 · 추석 cs_b02 · 씬 13
+//   ✅ **42장은 정본**이다 — 벨트 버클 ＋ 진한 베이지. (cs_b02 는 한복이라 코트 잣대가 안 통해 얼굴로 봤다)
+//   🚨 **딱 하나 옛 펭펭이 남아 있다 = `scene_n_09`(캠핑)** — 연한 크림 · 벨트 없음 · 코트색 잣대(R-B) **11.6**
+//      (옛 펭펭 11~15 · 정본 30~52 — pj_03·pjs_01 을 나란히 놓고 눈으로도 확인했다)
+//   ✅✅ **창업자 판정 = «둘다 그냥 둬도돼 ㅋㅋ» (2026-09-16 19:33)** → ⛔**빼지 않는다. 이대로 둔다.**
+//      ⛔⛔ **다음 세션이 이걸 「새로 찾은 옛 펭펭」이라 여기고 또 빼지 말 것** — 창업자가 보고 남기기로 정했다.
+//   🐧💙 ＋ `scene_np01_cinema` 오른쪽에 **파란 펭귄**(선글라스·헌팅캡)이 있다. 한끼 친구들 다섯에 없는 애다.
+//      📮 창업자 = *"파랑펭귄은 일부러한건 아닌데 귀엽네 ㅋㅋ"* → **그대로 둔다.** ⛔지우지 말 것.
+//   ⭐⭐ **왜 이름 거름망이 이걸 못 잡았나** — 위 정규식은 «이름»으로 거른다(`scene_camp` 같은).
+//      그런데 `scene_n_09` 는 **「새 씬」 이름표를 달고 들어왔고 그림만 옛 펭펭**이었다.
+//      📌 **이름으로 거르면 이름만 바꿔 들어온 것은 못 막는다.** 그래서 눈으로 본 것이다.
 const scenesNow = () => SCENES.filter((s) => !OLD_PENG_SCENE.test(s.name) && !SUMMER_SCENE.test(s.name))
 
 const GOM = pickPool(/^gom_/)
@@ -181,7 +200,6 @@ const csOnly = (kind) => seasonCuts(kind).filter((e) => HANBOK.test(e.name))
 // 📌 계절 캐릭터 컷은 `seasonCuts()` 가 **창이 열렸을 때만** 넣어주므로 스킨별로 따로 거를 필요가 없다.
 //    (아치 스킨은 이제 가을 전용이 아니라 **사철 뼈대**다 — 옷만 계절마다 갈아입는다)
 
-const APP_URL = 'https://peachfam0307-glitch.github.io/hankki/'
 const rnd = (a) => a[Math.floor(Math.random() * a.length)]
 const titleFont = (t) => { const n = String(t).replace(/\s/g, '').length; return n <= 5 ? 104 : n <= 7 ? 88 : n <= 9 ? 74 : 62 }
 
@@ -193,7 +211,8 @@ function tagsOf(recipe) {
 }
 
 // 스타일별 카테고리 규칙(적재적소): 콤비는 넓은 스타일(홀로·팝·여름)에만.
-function drawState() {
+// 🎃 [창업자 2026-10-16 「레꾸자랑도 할로윈이 젤먼저보이고」] 시트를 처음 열 때(첫판)는 명절 카드만 — 「다시 뽑기」부터는 전부 섞는다.
+function drawState(첫판 = false) {
   // ⚠️ 스티커는 철이 지나도 순서만 밀리지만, **카드 스킨은 뽑기 풀에서 아예 빠진다**(한정 수집감).
   //    ✅✅ **[창업자 확정 2026-08-29] 카드 스킨은 «전환기 겹침을 안 쓴다» — 계절 첫날에 바로 갈아탄다.**
   //       📮 창업자 = *"레꾸자랑은 9월에는 여름꺼는 빠지는거 아냐?"* → *"**9월1일에 빼야지 가을시작이니까.**"*
@@ -217,16 +236,17 @@ function drawState() {
     // 🍂 `isPeakSeason` = 전환기 겹침을 «안» 센다 → **9/1 에 여름 스킨이 바로 빠진다**
     //    (창업자 확정 2026-08-29 = *"9월1일에 빼야지 가을시작이니까."* · ⛔`isSeason` 이면 9/14 까지 남는다)
     ...(isPeakSeason('summer') ? ['summer'] : []),
-    ...(hwOpen ? ['halloween'] : []), ...(csOpen ? ['chuseok'] : []),
+    ...(hwOpen ? ['halloween', 'hwn_poster', 'hwn_moon', 'hwn_invite'] : []), ...(csOpen ? ['chuseok'] : []),
     // 🍂🍂 **[창업자 확정 2026-09-02] 11월엔 «둘 다» 얹는다** — *"11월은 둘가추가하자."*
     //   ⭐ 11/3 부터 덤(추석·핼러윈)이 다 빠져 **기본 6장만 남던 자리**다. 이제 11월이 **8장**이 된다.
     //   ⛔ 날짜를 여기 또 적지 «않는다» — `isLateAutumn`(LATE_AUTUMN_MONTH) 한 곳이 늦가을의 유일한 정의다.
     //      그래서 **옷(늦가을)과 뼈대(둘)가 «같은 날» 같이 온다** — 11월 1일에 화면이 확 바뀐다.
     //   🔢 뽑기 확률 = 6장 각 16.7% → **8장 각 12.5%**(창업자가 그 값을 보고 「둘 다」로 정했다)
     ...(isLateAutumn() ? ['post', 'ticket'] : [])]
+  const 첫판들 = 첫판 && hwOpen ? ['halloween', 'hwn_poster', 'hwn_moon', 'hwn_invite'] : null
   const key = (() => {
     try { const v = new URLSearchParams(location.search).get('card'); if (v && SKINS[v]) return v } catch { /* noop */ }
-    return rnd(pool)
+    return rnd(첫판들 || pool)
   })()
   // 옷은 **뽑을 때** 정한다(상수로 굳히면 앱을 켜둔 채 계절이 넘어갈 때 안 바뀐다)
   const skin = { ...SKINS[key], W: wearOf(key) }
@@ -234,7 +254,7 @@ function drawState() {
   // 여름 스킨만 여름 컷(수박·빙수·바비큐)까지 포함한 풀에서 뽑는다.
   const r = Math.random()
   const [g, p, d] = key === 'summer' ? [S_GOM, S_PENG, S_DUO]
-    : key === 'halloween' ? [hwOnly('gom'), hwOnly('peng'), hwOnly('duo')]
+    : (key === 'halloween' || key === 'halloween_night' || key.startsWith('hwn_')) ? [hwOnly('gom'), hwOnly('peng'), hwOnly('duo')]
       : key === 'chuseok' ? [csOnly('gom'), csOnly('peng'), csOnly('duo')]
       : [gomPool(), pengPool(), duoPool()]
   const 씬 = scenesNow()   // 🏖 여름 씬은 여름에만 (위 `scenesNow` 주석 참고)
@@ -243,7 +263,7 @@ function drawState() {
       // ⛔ **펭 자리도 비어 있을 수 있다** — 2026-09-02 에 옛 펭펭을 다 내려서 사철 펭 = 0 이 됐다.
       //    안 막으면 `rnd([])` → 아래 마지막 줄의 폴백이 «전체 풀»로 새어 **방금 내린 컷이 되살아난다.**
       ? (r < 0.5 ? g : r < 0.78 ? (p.length ? p : (d.length ? d : g)) : (d.length ? d : g))
-      : (key === 'halloween' || key === 'chuseok')
+      : (key === 'halloween' || key === 'halloween_night' || key.startsWith('hwn_') || key === 'chuseok')
         // 곰·펭·콤비 골고루 — ⚠️ **콤비가 없으면 그 몫을 곰에게 몰지 말고 반반으로 나눈다.**
         //   안 그러면 곰 65% · 펭 35% 가 된다(추석은 콤비가 없어서 실제로 5판 중 4판이 곰이었다).
         //   📌 「명단이 2:2니까 반반이겠지」는 «명단»이지 «확률»이 아니다. 뽑아 보고 세야 안다.
@@ -274,7 +294,9 @@ const SKINS = {
   warm: { key: 'warm' }, panel: { key: 'panel' }, pola: { key: 'pola' },
   mag: { key: 'mag' }, arch: { key: 'arch' }, night: { key: 'night' },
   summer: { key: 'summer' },
-  halloween: { key: 'halloween' },   // 🎃 10/01~11/02 에만 얹는 한 장 (펠트 배경 ＋ 핼러윈 애들만)
+  halloween: { key: 'halloween' },
+  halloween_night: { key: 'halloween_night' },
+  hwn_poster: { key: 'hwn_poster' }, hwn_moon: { key: 'hwn_moon' }, hwn_invite: { key: 'hwn_invite' },   // 🧪 시안 셋(풀 밖 · ?card= 로만)   // 🌙 [창업자 2026-09-29] 같은 창에 얹는 어두운 한 장   // 🎃 10/01~11/02 에만 얹는 한 장 (펠트 배경 ＋ 핼러윈 애들만)
   chuseok: { key: 'chuseok' },       // 🏮 09/01~10/15 에만 얹는 한 장 (조각보 배경 ＋ 한복만)
   // 🍂❄️ **11월 뼈대 시안 셋 (2026-09-02 · ⏳창업자 판정 대기)**
   //   ⛔ `drawState` 의 `pool` 엔 «안» 넣었다 — 고르기 전엔 유저에게 안 나온다(규칙 13).
@@ -585,9 +607,15 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
       {meta.map((m, i) => (<span key={i} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>{i > 0 && <span style={{ width: 6, height: 6, borderRadius: 3, background: sep }} />}{m}</span>))}
     </div>
   )
+  // 🍎🍎 [2026-09-13] **사파리 엔진(아이폰)은 이 칩의 box-shadow 를 SVG 안에서 잘못 굽는다** — 칩 오른쪽 절반이 갈라진 흰 반달로
+  //   나온다(딸 아이폰14 · 빌드 12 · 문자 공유 카드 12:12 캡처). 맥 WebKit 재현판(`_repro-칩반달-실물-webkit-0913.mjs` · run 34736276791)
+  //   = A 그대로 ⛔ · B 둥근값 고정 ⛔ · **C 그림자 대신 border ✅** · D ✅ · E 바깥 그림자만 빼기 ⛔(inset 만 남겨도 남는다).
+  //   ⇒ 사파리 엔진일 때만 «그림자 0 · 진짜 테두리 2px». 크롬(안드로이드)은 원래 모양 그대로(같은 판에서 다섯 후보 전부 멀쩡).
+  //   border 는 자리를 먹어(inset 은 안 먹는다) 패딩을 2px 씩 줄여 칩 크기를 같게 맞춘다.
+  const 사파리칩 = 사파리엔진인가()
   const chips = (ring, text) => (
     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-      {meta.map((c, i) => <span key={i} style={{ padding: '11px 24px', borderRadius: 999, background: '#fffdf8', boxShadow: `0 8px 20px -12px rgba(120,80,50,.5), inset 0 0 0 2px ${ring}`, fontFamily: 'Jua, sans-serif', fontSize: 28, color: text }}>{c}</span>)}
+      {meta.map((c, i) => <span key={i} style={{ padding: 사파리칩 ? '9px 22px' : '11px 24px', borderRadius: 999, background: '#fffdf8', ...(사파리칩 ? { border: `2px solid ${ring}` } : { boxShadow: `0 8px 20px -12px rgba(120,80,50,.5), inset 0 0 0 2px ${ring}` }), fontFamily: 'Jua, sans-serif', fontSize: 28, color: text }}>{c}</span>)}
     </div>
   )
   // 🔍🔍 **「Play스토어 '한끼' 검색」 = 설치 유도 글자.** 이 카드에서 제일 아까운 한 줄이다.
@@ -614,7 +642,7 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
           「Play스토어 ‘한끼’ / 검색」 으로 «두 줄»이 되어 알약 밖으로 삐져나왔다.
           ⭐ 뽑힌 사진에서만 보였다 — 화면에선 한 줄이라 눈으로는 절대 못 잡는다. */}
       <span style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', padding: '9px 20px', borderRadius: 999, background: wm, color: onColor(wm), fontFamily: 'Jua, sans-serif', fontSize: 22, letterSpacing: '-0.01em' }}>
-        Play스토어 ‘한끼’ 검색
+        {스토어검색()}
       </span>
     </div>
   )
@@ -797,11 +825,13 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
   //    펠트 질감은 우리 카드에 하나도 없던 결이라 나란히 놓으면 이 한 장만 튄다.
   // ⚠️ 배경이 세니까 **글자는 크림 판 위에** 올린다 — 펠트 위에 바로 얹으면 안 읽힌다.
   //    (배경 그림의 가운데가 비어 있어서 그 자리를 쓴다)
-  if (K.key === 'halloween') {
+  // 🌙 [창업자 2026-09-29] 어두운 한 장(`halloween_night`)도 같은 뼈대 — 배경 그림과 바깥 글자색만 다르다. 크림 판은 그대로.
+  if (K.key === 'halloween' || K.key === 'halloween_night') {
+    const 밤 = K.key === 'halloween_night'
     const hs = headSize([l1, l2], 132, 1080 - PAD * 2 - 40)
-    return shell('#f3ede1', <>
-      <img src={HW_FELT} alt="" crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: 1080, height: 1350, objectFit: 'cover' }} />
-      {brand('#4a3568', { textShadow: '0 2px 10px rgba(255,253,248,.95), 0 0 24px rgba(255,253,248,.8)' })}
+    return shell(밤 ? '#2a2036' : '#f3ede1', <>
+      <img src={밤 ? HW_NIGHT_BG : HW_FELT} alt="" crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: 1080, height: 1350, objectFit: 'cover' }} />
+      {밤 ? brand('#f4ecff', { textShadow: '0 2px 10px rgba(20,12,30,.9)' }) : brand('#4a3568', { textShadow: '0 2px 10px rgba(255,253,248,.95), 0 0 24px rgba(255,253,248,.8)' })}
       <div style={{ position: 'absolute', top: 84, right: PAD, transform: 'rotate(-7deg)', fontFamily: 'Jua, sans-serif', fontSize: 31, color: '#fff', background: 'linear-gradient(180deg,#8d6bb0,#6e4e94)', padding: '13px 28px', borderRadius: 18, boxShadow: '0 10px 18px -6px rgba(80,50,120,.55), inset 0 2px 0 rgba(255,255,255,.35)', zIndex: 9 }}>핼러윈 한정</div>
       {/* 가운데 크림 판 — 배경이 복잡해 글자를 여기 올린다 */}
       <div style={{ position: 'absolute', left: PAD - 6, right: PAD - 6, top: 300, padding: '34px 38px 40px', borderRadius: 34, background: 'rgba(253,250,244,.93)', boxShadow: '0 18px 40px -18px rgba(70,45,100,.45)', zIndex: 6 }}>
@@ -831,8 +861,61 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
         })()}
       </div>
       {hero({ right: 24, bottom: 210, height: 540, filter: die8('#ffffff') })}
-      {veil('250,246,238')}
-      {more('#33254a', '#6e4e94')}{foot('#4a3568', '#6e4e94')}
+      {밤 ? veil('32,24,44') : veil('250,246,238')}
+      {밤 ? <>{more('#f4ecff', '#d7c3f0')}{foot('#f4ecff', '#d7c3f0')}</> : <>{more('#33254a', '#6e4e94')}{foot('#4a3568', '#6e4e94')}</>}
+    </>)
+  }
+
+  // 🌙✅ [2026-09-29 창업자 「웅 이거 다 넣자」] 어두운 핼러윈 카드 «뼈대 셋» 모두 뽑기 풀에 — `halloween_night`(크림 카드와 뼈대가 같던 것)은 풀에서 뺐다
+  //    (옛 메모) 어두운 핼러윈 카드 «뼈대 시안 셋» — 창업자 「디자인이 너무 똑같은뎅 · 박스랑.. 배경만 다르고」
+  //    ⛔ 뽑기 풀엔 «안» 넣었다 — `?card=hwn_poster|hwn_moon|hwn_invite` 로만 열린다. 고른 것 하나만 `halloween_night` 자리에 올린다.
+  if (K.key === 'hwn_poster' || K.key === 'hwn_moon' || K.key === 'hwn_invite') {
+    const bgImg = <img src={HW_NIGHT_BG} alt="" crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: 1080, height: 1350, objectFit: 'cover' }} />
+    const badge = <div style={{ position: 'absolute', top: 84, right: PAD, transform: 'rotate(-7deg)', fontFamily: 'Jua, sans-serif', fontSize: 31, color: '#fff', background: 'linear-gradient(180deg,#8d6bb0,#6e4e94)', padding: '13px 28px', borderRadius: 18, boxShadow: '0 10px 18px -6px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.35)', zIndex: 9 }}>핼러윈 한정</div>
+    const glow = '0 4px 18px rgba(20,10,35,.85), 0 0 40px rgba(20,10,35,.6)'
+    const tail = <>{veil('32,24,44')}{more('#f4ecff', '#d7c3f0')}{foot('#f4ecff')}</>
+    // ① 포스터 — 박스 없음 · 캐릭터 가운데 크게 · 제목은 아래 흰 글씨
+    if (K.key === 'hwn_poster') {
+      const hs = headSize([l1, l2], 128, 1080 - PAD * 2)
+      return shell('#2a2036', <>
+        {bgImg}{brand('#f4ecff', { textShadow: glow })}{badge}
+        {hero({ left: '50%', top: 130, height: 500, transform: 'translateX(-50%)', filter: die8('#ffffff') })}
+        {tail}
+        <div style={{ position: 'absolute', left: PAD, right: PAD, bottom: 300, zIndex: 9, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 44, color: '#e3cffb', textShadow: glow }}>오늘 밤은, 이 한 끼</div>
+          <div style={{ marginTop: 2, fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.99, letterSpacing: -3, color: '#fffaf0', textShadow: glow, wordBreak: 'keep-all' }}>{l1}{l2 && <><br />{l2}</>}</div>
+          <div style={{ marginTop: 22, display: 'flex', justifyContent: 'center' }}>{chips('rgba(200,170,240,.5)', '#6e4e94')}</div>
+        </div>
+      </>)
+    }
+    // ② 보름달 창 — 위 제목 · 가운데 큰 보름달 안에 캐릭터
+    if (K.key === 'hwn_moon') {
+      const hs = headSize([l1, l2], 112, 1080 - PAD * 2)
+      return shell('#2a2036', <>
+        {bgImg}{brand('#f4ecff', { textShadow: glow })}{badge}
+        <div style={{ position: 'absolute', left: PAD, right: PAD, top: 150, zIndex: 9, textAlign: 'center' }}>
+          <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 40, color: '#e3cffb', textShadow: glow }}>오늘 밤은, 이 한 끼</div>
+          <div style={{ fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.99, letterSpacing: -3, color: '#fffaf0', textShadow: glow, wordBreak: 'keep-all' }}>{l1}{l2 && <><br />{l2}</>}</div>
+          <div style={{ marginTop: 18, display: 'flex', justifyContent: 'center' }}>{chips('rgba(200,170,240,.5)', '#6e4e94')}</div>
+        </div>
+        <div style={{ position: 'absolute', left: 250, top: 520, width: 580, height: 580, borderRadius: '50%', background: 'radial-gradient(circle at 42% 38%, #fff6d2 0%, #f7df8c 55%, #e8c45e 100%)', boxShadow: '0 0 80px 20px rgba(255,225,140,.35)', zIndex: 5 }} />
+        {tail}
+        {hero({ left: '50%', top: 540, height: 540, transform: 'translateX(-50%)', filter: die8('#ffffff') })}
+      </>)
+    }
+    // ③ 초대장 — 기울인 종이 카드 안에 제목 · 캐릭터는 옆에 걸친다
+    const hs = headSize([l1, l2], 104, 560)
+    return shell('#2a2036', <>
+      {bgImg}{brand('#f4ecff', { textShadow: glow })}{badge}
+      <div style={{ position: 'absolute', left: 84, top: 230, width: 620, padding: '44px 44px 52px', background: '#fbf4e6', borderRadius: 22, transform: 'rotate(-4deg)', boxShadow: '0 30px 50px -20px rgba(0,0,0,.6)', zIndex: 6 }}>
+        <div style={{ position: 'absolute', inset: 16, border: '3px dashed rgba(110,78,148,.45)', borderRadius: 14, pointerEvents: 'none' }} />
+        <div style={{ fontFamily: 'Jua, sans-serif', fontSize: 28, letterSpacing: 6, color: '#8d6bb0' }}>HALLOWEEN PARTY</div>
+        <div style={{ marginTop: 6, fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 42, color: '#7a5a9e' }}>오늘 밤 초대 메뉴는</div>
+        <div style={{ marginTop: 10, fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.99, letterSpacing: -3, color: '#33254a', wordBreak: 'keep-all' }}>{l1}{l2 && <><br />{l2}</>}</div>
+        <div style={{ marginTop: 24 }}>{chips('rgba(140,110,180,.3)', '#6e4e94')}</div>
+      </div>
+      {tail}
+      {hero({ right: 10, bottom: 230, height: 560, filter: die8('#ffffff') })}
     </>)
   }
 
@@ -1140,13 +1223,14 @@ export function RecipeCard({ recipe }) {
         {steps.length > 7 && <div style={{ fontSize: 26, color: '#a8987e', paddingLeft: 53, marginTop: 2 }}>… 전체 {steps.length}단계는 한끼 앱에서 →</div>}
       </div>
       <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, textAlign: 'center' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '18px 42px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontSize: 38, fontWeight: 800 }}>🔍 Play스토어 ‘한끼’ 검색</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '18px 42px', borderRadius: 999, background: '#5d3410', color: '#fffdf8', fontSize: 38, fontWeight: 800 }}>🔍 {스토어검색()}</span>
       </div>
     </div>
   )
 }
 
-export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }) {
+// 📊 [2026-09-24] onTap = 「보내기」를 눌렀다 · onCancel = 폰 공유창을 닫았다 — 둘 다 부모가 계측으로 넘긴다(없으면 조용)
+export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared, onTap, onCancel, onSavedFallback }) {
   // ⛔⛔ **뒤로가기가 이 카드를 못 보고 «홈»으로 샜다** (창업자 2026-08-23
   //    *"레꾸자랑 갑자기 홈가는게 뒤로가기할때야. 닫기누르면 그대로있어"*)
   //   ⭐⭐ 창업자가 「닫기 ↔ 뒤로가기」로 갈라준 게 답을 줬다 —
@@ -1159,7 +1243,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
   useModalBack(onClose)
   const title = recipe?.title || '오늘의 한 끼'
   const tags = useMemo(() => tagsOf(recipe), [recipe])
-  const [draw, setDraw] = useState(drawState)
+  const [draw, setDraw] = useState(() => drawState(true))
   // busy = null 이거나 '지금 뭘 만들고 있는지' 한 줄. 문자열도 참이라 disabled·opacity 판정은 그대로 돈다.
   // ⚠️ 예전엔 버튼 글자만 '만드는 중…'으로 바뀌어서, 캡처가 오래 걸리면 먹통처럼 보였다
   //    (창업자 제보 2026-07-30 "레꾸자랑 공유하기 만들때 기다려달라는 멘트 안 떠").
@@ -1202,7 +1286,8 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
     //      4.7MB 가 되고, 글씨체 하나만 쓴 사람도 열두 벌을 다 내려받는다.
     //   ⚠️ pixelRatio 는 1.6 유지 — 1 로 낮추면 반올림 때문에 폭이 미세하게 달라진다.
     const fontOpt = fontOptFrom(await fontCSS(el))
-    const u = await toJpeg(el, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff', ...fontOpt })
+    // 🍎 사파리 엔진은 첫 굽기에서 그림을 빠뜨린다(9/12 딸 아이폰 실물 · 재현 run 34732617886) → 예열굽기(coverEncode.js)
+    const u = await 예열굽기(() => toJpeg(el, { pixelRatio: 1.6, quality: 0.92, backgroundColor: '#ffffff', ...fontOpt }))
     const b = await (await fetch(u)).blob()
     return new File([b], name.replace(/\.png$/, '.jpg'), { type: 'image/jpeg' })
   }, [])
@@ -1278,21 +1363,32 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
   //    ⛔ 문구의 「· 재료·레시피 같이!」도 뺐다 — 한 장만 가는데 그렇게 적으면 거짓말이다.
   //    ⭐ 남은 레시피는 **버리지 않는다** — `남은레시피` 에 담아 아래 시트가 한 번 더 청한다.
   //       ⛔ 여기서 이어서 또 `share` 를 부르면 안 된다 — 허가(user activation)가 이미 소진돼 폰이 거절한다.
+  // 🍳 [창업자 2026-10-12] 「② 레시피」를 고른 채 보내면 «레시피 카드 한 장만» — 표지 없이.
+  //    📮 *"레시피만 보낼수가 없더라고. 레시피만 보내기를해도 표지가 무조건 먼저 가"* · *"작게 보이면 안되지"*
+  //    ⛔ 두 장을 한 번에 넘기지 않는다(위 2026-08-28 ⓑ) — 고른 한 장만 간다.
   const go = useCallback((files) => {
     if (!(navigator.canShare && navigator.share)) return null
+    const 레시피만 = page === 2 && files.length > 1
+    if (레시피만) {
+      const 한장 = [files[1]]
+      if (!navigator.canShare({ files: 한장 })) return null
+      return navigator
+        .share({ files: 한장, title, text: `『${title}』 재료·만드는 법이에요 🍳\n${스토어검색()} 🔍`, url: 자랑주소 })
+        .then((v) => { onShared?.(); return v })
+    }
     const 표지 = [files[0]]
     const 레시피 = files.length > 1 ? files[1] : null
     if (!navigator.canShare({ files: 표지 })) return null
     return navigator
-      .share({ files: 표지, title, text: `『${title}』 오늘의 한 끼 🧡\nPlay스토어에서 '한끼' 검색 🔍`, url: APP_URL })
+      .share({ files: 표지, title, text: `『${title}』 오늘의 한 끼 🧡\n${스토어검색()} 🔍`, url: 자랑주소 })
       .then((v) => { onShared?.(); if (레시피) set남은레시피(레시피); return v })
-  }, [title, onShared])
+  }, [title, onShared, page])
 
   // 📱 남은 레시피 한 장을 «따로» 보낸다 — 이 버튼이 «새 터치»라 허가가 살아 있다.
   const 레시피보내기 = useCallback(() => {
     const f = 남은레시피
     if (!f) return
-    const opt = { files: [f], title, text: `『${title}』 재료·만드는 법이에요 🍳\nPlay스토어에서 '한끼' 검색 🔍`, url: APP_URL }
+    const opt = { files: [f], title, text: `『${title}』 재료·만드는 법이에요 🍳\n${스토어검색()} 🔍`, url: 자랑주소 }
     if (navigator.canShare && navigator.share && navigator.canShare({ files: [f] })) {
       navigator.share(opt)
         .then(() => set남은레시피(null))
@@ -1314,7 +1410,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
     if (!files) return
     const t = go(files)
     if (t) {
-      t.then(() => setReady(null)).catch((e) => { if (e && e.name === 'AbortError') setReady(null) })
+      t.then(() => setReady(null)).catch((e) => { if (e && e.name === 'AbortError') { setReady(null); try { onCancel?.() } catch { /* noop */ } } })
       return
     }
     files.forEach((f, i) => setTimeout(() => saveFile(f), i * 400)) // 이 폰은 파일 공유 자체가 안 된다
@@ -1323,12 +1419,15 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
 
   const share = useCallback(async () => {
     if (!cardRef.current || busy) return
+    try { onTap?.() } catch { /* 통계가 죽어도 공유는 된다 */ }
     const pre = readyRef.current
     if (pre) {
       const t = go(pre)
-      if (t) { try { await t; return } catch (e) { if (e && e.name === 'AbortError') return } }
+      if (t) { try { await t; return } catch (e) { if (e && e.name === 'AbortError') { try { onCancel?.() } catch { /* noop */ } return } } }
       // 여기까지 왔으면 이 폰은 파일 공유를 못 한다 → 저장으로
+      if (앱안인가()) { setBusy('공유 창을 못 열었어요 · 잠시 뒤 다시 눌러 주세요'); setTimeout(() => setBusy(null), 2400); return }   // 🍎 아이폰 앱은 <a download> 가 안 된다 — 「저장했어요」라고 거짓말하지 않는다
       pre.forEach((f, i) => setTimeout(() => saveFile(f), i * 400))
+      try { onSavedFallback?.() } catch { /* noop */ }
       setBusy('공유가 안 되는 폰이라 사진으로 저장했어요')
       setTimeout(() => setBusy(null), 2400)
       return
@@ -1349,7 +1448,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
       if (t) {
         try { await t; setBusy(null); return }
         catch (e) {
-          if (e && e.name === 'AbortError') { setBusy(null); return }
+          if (e && e.name === 'AbortError') { setBusy(null); try { onCancel?.() } catch { /* noop */ } return }
           // ⭐ 여기까지 오면 «허가가 끊긴 것»이다(카드는 다 만들어졌다).
           //   ⛔ 예전엔 곧바로 저장으로 밀었다 — 그게 창업자가 본 「다운로드 팝업」이다.
           //   → 저장하지 말고 **「지금 보내기」 버튼**을 띄운다. 한 번 더 누르면 진짜로 나간다.
@@ -1357,6 +1456,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
         }
       }
       files.forEach((f, i) => setTimeout(() => saveFile(f), i * 400)) // 이 폰은 파일 공유 자체가 안 된다
+      try { onSavedFallback?.() } catch { /* noop */ }
       setBusy('공유가 안 되는 폰이라 사진으로 저장했어요')
       setTimeout(() => setBusy(null), 2400)
       return
@@ -1369,7 +1469,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
       else setBusy('공유가 안 됐어요. 잠시 뒤 다시 눌러주세요')
       setTimeout(() => setBusy(null), 2800)
     }
-  }, [busy, title, hasRecipe, capture])
+  }, [busy, title, hasRecipe, capture, go])   // ⛔ go 를 빼면 «탭을 바꾸기 전» go(page=1)를 들고 있어 ② 레시피를 골라도 표지가 간다(2026-10-12 눈검사로 잡음)
 
   // 🖼 이 카드를 레시피 표지로 저장 — CTA 없는 cover 카드를 이미지로 캡처해 부모(레시피 화면)에 넘긴다.
   //    ⭐ 저장 «모양»은 아래 `카드표지로()` 한 곳에서 만든다 — 부르는 화면이 둘이라 흩어지면 한쪽이 낡는다.
@@ -1385,7 +1485,8 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
       // 📦 [2026-09-07] 캔버스로 받아 «작게» 굽는다 — WebP q0.8(≈1/3 · 실측) · 사파리처럼 못 구우면 JPEG q0.86 그대로.
       //    ⛔ 품질값은 coverEncode.js 한 곳에 있다 — 여기서 숫자를 적지 않는다.
       let canvas
-      try { canvas = await toCanvas(coverRef.current, opt) } catch { canvas = await toCanvas(coverRef.current, { ...opt, skipFonts: true }) }
+      // 🍎 사파리 엔진 첫 굽기 그림 누락 대비 → 예열굽기(coverEncode.js · 2026-09-13)
+      try { canvas = await 예열굽기(() => toCanvas(coverRef.current, opt)) } catch { canvas = await 예열굽기(() => toCanvas(coverRef.current, { ...opt, skipFonts: true })) }
       const { url } = 표지굽기(canvas)
       await onSaveCover?.(url)
       onClose?.()
@@ -1427,11 +1528,11 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
             style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, padding: '15px 34px', borderRadius: 999, background: '#fffdf8', color: '#5d3410', fontWeight: 800, fontSize: 16, border: 'none' }}>
             <Icon name="share" size={18} stroke={2.2} />지금 보내기
           </button>
-          <button className="press"
+          {!앱안인가() && <button className="press"
             onClick={() => { ready.forEach((f, i) => setTimeout(() => saveFile(f), i * 400)); setReady(null) }}
             style={{ padding: '9px 18px', background: 'transparent', color: 'rgba(255,255,255,.85)', fontSize: 13.5, fontWeight: 700, border: 'none' }}>
             사진으로 저장할게요
-          </button>
+          </button>}
         </div>
       )}
       {/* 📱 [2026-08-28 ⓑ] 카드 한 장이 나갔다 → 레시피 한 장을 «따로» 보낼지 청한다.
@@ -1479,7 +1580,7 @@ export default function ShareDrawCard({ recipe, onClose, onSaveCover, onShared }
           {hasRecipe
             /* 📱 [2026-08-28 ⓑ] 옛 글 = 「공유하면 2장(카드+레시피)이 «함께» 가요」 → 이제 **거짓말**이다.
                한 장씩 따로 보낸다(창업자 "ㄴ으로 하자"). ⛔되는 척하는 글자를 남기지 않는다(v11.19 「링크 정직」). */
-            ? <>카드 먼저, 레시피는 한 장 더 보내요<img src={uiDuoHi} alt="" draggable={false} style={{ width: 24, height: 24, objectFit: 'contain' }} /></>
+            ? <>{page === 2 ? '레시피만 한 장 보내요' : '카드 먼저, 레시피는 한 장 더 보내요'}<img src={uiDuoHi} alt="" draggable={false} style={{ width: 24, height: 24, objectFit: 'contain' }} /></>
             : <><Icon name="refresh" size={14} stroke={2} />다시 뽑기로 마음에 들 때까지</>}
         </div>
         {/* 버튼 */}

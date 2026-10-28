@@ -1,0 +1,28 @@
+<!doctype html><meta charset="utf-8"><style>
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#fbf7ef}
+.c{position:absolute;bottom:520px;transform-origin:50% 100%}
+.c img{position:absolute;left:0;bottom:0;opacity:0}
+#g{left:70px;width:480px;height:600px}#p{left:580px;width:430px;height:560px}
+.c img{width:100%;height:100%;object-fit:contain;object-position:bottom}
+.sh{position:absolute;bottom:500px;height:40px;border-radius:50%;background:rgba(120,90,60,.15)}
+@keyframes hop{0%,100%{transform:translateY(0) scale(1.04,.96)}35%{transform:translateY(-70px) scale(.97,1.04)}60%{transform:translateY(-70px) scale(1,1)}85%{transform:translateY(0) scale(1.06,.94)}}
+@keyframes sh{0%,100%{transform:scaleX(1);opacity:1}45%{transform:scaleX(.7);opacity:.5}}
+@keyframes show{0%,24.9%{opacity:1}25%,100%{opacity:0}}
+@font-face{font-family:D;src:url(dohyeon-korean-400.woff2),url(dohyeon-latin-400.woff2)}@font-face{font-family:J;src:url(jua-korean-400.woff2),url(jua-latin-400.woff2)}
+.t{position:absolute;left:0;right:0;top:330px;text-align:center;font-family:D,J;color:#2b2420;animation:pop .5s cubic-bezier(.2,1.4,.4,1) both}
+.t img{width:150px;height:150px;border-radius:36px;box-shadow:0 12px 26px -10px rgba(40,30,20,.4)}
+.t h1{margin:18px 0 0;font-weight:400;font-size:120px}.t p{margin:6px 0 0;font-size:56px;color:#b5583a}
+.pill{position:absolute;left:90px;right:90px;bottom:300px;text-align:center;font-family:D,J;font-size:52px;color:#2b2420;background:#fffdf8;border-radius:60px;padding:24px 20px;box-shadow:0 12px 26px -10px rgba(40,30,20,.35);animation:pop .5s .3s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes pop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+</style>
+<div class="t"><img src="icon.png"><h1>한끼 레시피북</h1><p>레시피 · 장보기 · 냉장고 · 식비를 한 곳에</p></div>
+<div class="pill">App Store · Google Play 에서<br><b style="color:#b5583a;font-weight:400">「한끼 레시피북」</b> 검색</div>
+<div class="sh" style="left:130px;width:360px;animation:sh .5s infinite"></div>
+<div class="sh" style="left:630px;width:320px;animation:sh .5s .25s infinite"></div>
+<div class="c" id="g" style="animation:hop .5s infinite"></div>
+<div class="c" id="p" style="animation:hop .5s .25s infinite"></div>
+<script>
+function set(id,keys,off){const el=document.getElementById(id);keys.forEach((k,i)=>{const im=document.createElement('img');im.src=k+'.png';im.style.animation=`show 2s ${(off+i*0.5-2).toFixed(2)}s infinite steps(1)`;el.appendChild(im)})}
+set('g',['gp_gomft','gp_gomv','gp_gomhi','gp_gomtb'],0)
+set('p',['gp_pengv','gp_penghi','gp_pengft','gp_pengtb'],0.25)
+</script>

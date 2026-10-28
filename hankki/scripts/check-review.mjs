@@ -73,11 +73,13 @@ if (id수 !== 편들.length) {
 //    ＝ 규칙으로 부탁하던 「전날 검수」가 **장치로 강제된다.**
 //
 // ⏰ 날짜는 `src/today.js` 한 곳에서만 만든다(게이트 `check-kst` 가 강제 · 2026-08-17 사고).
-import { todayKST, tomorrowKST } from '../src/today.js'
+import { todayKST, tomorrowKST, daysAheadKST } from '../src/today.js'
+// 📅 [창업자 2026-09-26] *"아이폰 승인때문에 전날 검수하면 안되겠어. 3일전에 검수하는 걸로 하자."* → 잣대 = 사흘 뒤까지
+const 사흘뒤 = daysAheadKST(3)
 
 const 오늘 = todayKST()
 const 내일 = tomorrowKST()
-const 열린것 = 편들.filter((r) => !r.from || r.from <= 내일)
+const 열린것 = 편들.filter((r) => !r.from || r.from <= 사흘뒤)
 const 안된것 = 열린것.filter((r) => r.review !== '창업자')
 const 내일열림 = (r) => r.from === 내일
 
