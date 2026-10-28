@@ -578,7 +578,9 @@ const html = `<title>레시피 검수판 ${이름}</title>
 
 const 파일 = 편이름들.length ? `검수판-이름바꾼${그린것.length}편.html` : id앞 ?
  `검수판-${id앞.replace(/[^a-zA-Z0-9가-힣-]/g, '')}${그린것.length}편.html` : `검수판-${날짜들[0]}${날짜들.length > 1 ? `-외${날짜들.length - 1}` : ''}.html`
-writeFileSync(join(OUT, 파일), html)
+// 🔤 [2026-10-28 창업자 「검수판 깨졌엉」 = 글자 깨짐] 머리에 charset 이 없어 폰이 다른 글자 방식으로 읽었다 → 문서 머리를 붙인다
+const 머리 = /^\s*<!doctype/i.test(html) ? '' : '<!doctype html>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+writeFileSync(join(OUT, 파일), 머리 + html)
 console.log(`✅ 판 완성 — ${(html.length / 1024).toFixed(0)}KB`)
 for (const m of 목록) {
   const r = 편들.get(m.id)

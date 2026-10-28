@@ -4249,10 +4249,12 @@ html, body { overscroll-behavior: none; }
   background-size: 100% 100%;
   padding: 15px 20px 17px;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .memo-note { background: #4a4433; color: #f0e9d8; }
-}
-:root[data-theme="dark"] .memo-note { background: #4a4433; color: #f0e9d8; }
+/* ⛔ [2026-10-28] 여기 «폰 시스템 다크»를 따르는 규칙이 있었다 — 우리 앱은 테마(그레이지·크림·살구·다크)를 앱에서 고르고
+   data-theme 에 "light" 가 없어 «모든 테마»에 걸렸다. 그래서 핼러윈 배경(밝은 테마)인데도 밤에 폰이 다크로 바뀌면 포스트잇이 깨졌다.
+   ⭐ 어두운 메모는 앱의 «다크» 테마일 때만(아래 한 줄) */
+/* ⛔ [2026-10-28 창업자 「예전에 붙인건데 이상해졌어」] 종이(.memo-paper) 까지 덮으면 `background` 한 줄이 그림 크기(100% 100%)를 풀어
+   종이가 원래 크기로 커져 잘리고, 어두운 바탕·밝은 글씨가 깔린다 — 종이는 «자기 바탕»을 들고 다니니 어두운 화면에서도 그대로 둔다 */
+:root[data-theme="dark"] .memo-note:not(.memo-paper) { background: #4a4433; color: #f0e9d8; }
 /* ⛔ 색을 `var(--text)` 로 두지 않는다 — 포스트잇은 «자기 바탕»을 들고 다녀서
    화면 테마가 아니라 «이 종이»에 맞는 글자색이라야 한다 */
 /* 📌📌 재료 목록 «옆»에 붙인 포스트잇 (창업자 확정 2026-08-20 — 재료 옆 · 비뚤게 · 44%)

@@ -40,6 +40,10 @@
           },
           {
             "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/yt-guard.sh"
+          },
+          {
+            "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/mdread-guard.sh"
           },
           {
@@ -80,6 +84,15 @@
           {
             "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/bake-guard.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__Higgsfield__generate_.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/hf-guard.sh"
           }
         ]
       }

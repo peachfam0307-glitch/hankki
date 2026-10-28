@@ -25,7 +25,7 @@ import { gates } from './release-calendar.mjs'
 
 const require_ = createRequire(import.meta.url)
 const FF = require_('ffmpeg-static')
-const SCRATCH = '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad'
+const SCRATCH = process.env.OUT || '/tmp/claude-0/-home-user-hankki/a6ddf416-4395-54cf-84a2-c8a56d2df1b1/scratchpad'   // 🔧 2026-10-28 세션마다 스크래치 경로가 달라 OUT 으로 받는다(찍기 도구와 같게)
 const 그날 = process.env.ON || '2026-09-01'
 const 방 = `${SCRATCH}/공개검수-${그날}`
 if (!existsSync(방)) { console.error(`✗ ${방} 이 없다 — _shot-공개검수-0901.mjs 를 먼저 돌린다`); process.exit(1) }
