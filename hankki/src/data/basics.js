@@ -8752,7 +8752,7 @@ const RAW_BASICS = [
     category: '중식', folder: '중식', tags: ['마늘쫑', '돼지고기'],
     time: 20, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://youtube.com/shorts/FNKR2V8Hl-w',   // 창업자 「마늘쫑은 유튜브 쇼츠로 하자」
-    sourceName: '이연복',
+    sourceName: '따라쿡',   // 설명란 = 「레시피 출처: 이연복의 복주머니」 · 영상 제목 「이연복 마늘쫑 삼겹살볶음」
     // 창업자가 영상 보고 받아 적어 줌(2026-10-28)
     ingredients: [
       '마늘쫑 1단', '돼지고기 300g', '기름 200ml', '간장 2', '굴소스 1',
@@ -8815,7 +8815,7 @@ const RAW_BASICS = [
     category: '한식', folder: '반찬', tags: ['무', '밥도둑'],
     time: 15, servings: 4, difficulty: '쉬움',
     sourceUrl: 'https://youtu.be/6Ljb9ZqAmF8',
-    sourceName: '정호영',
+    sourceName: '정호영의 오늘도 요리 Kitchen Caden',
     ingredients: [
       '무 1kg',
       '[무생채 양념]',
