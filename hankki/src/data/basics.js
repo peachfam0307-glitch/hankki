@@ -8570,7 +8570,7 @@ const RAW_BASICS = [
   {
     ...base,
     id: 'basic-haemul-nurungjitang-sns',
-    title: '해물 누룽지탕', from: '2026-12-16',   // 영상 제목 글자 그대로 · 11/9 창업자 편 「해물누룽지탕」과 다른 편
+    title: '초간단 해물누룽지탕', from: '2026-12-16',   // ✏️ 창업자 2026-10-28 이름 · 11/9 창업자 편 「해물누룽지탕」과 다른 편
     category: '중식', folder: '중식', tags: ['해물', '누룽지', '손님상'],
     time: 25, servings: 2, difficulty: '쉬움',
     sourceUrl: 'https://www.instagram.com/reel/Deq0ujrBCly/',
