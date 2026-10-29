@@ -15,12 +15,15 @@ import { 검색빈손, 기본레시피표시 } from '../stats'
 //   홈 검색을 레시피 탭 검색과 같게 = ① 결과 카드에 꽂이 ② 초성(matchKo)으로도 찾기
 //   🔑 열쇠 뒤 = `?검색=새`(이 기기 켬) · `?검색=옛`(끔) — 아이폰 승인 날 같이 연다
 import { matchKo } from '../utils'
+import { 아이폰앱인가 } from '../pushConsent'
 import { pinName, pinOf, nextPin } from '../favPin'
 import idxChef from '../assets/ui/idx_chef.png'
 import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 import idxHeart from '../assets/ui/idx_heart.png'
+// 🍎 아이폰 앱은 «열쇠 없이» 켠다 — 창업자 2026-10-29 「아이폰 판은 열쇠 떼고 굽기」
 function 새검색열쇠() {
   try {
+    if (아이폰앱인가()) return true
     const v = new URLSearchParams(location.search).get('검색')
     if (v === '새') localStorage.setItem('hankki:검색새', '1')
     if (v === '옛') localStorage.removeItem('hankki:검색새')
