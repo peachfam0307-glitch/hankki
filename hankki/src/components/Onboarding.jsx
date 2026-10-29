@@ -28,6 +28,13 @@ import avPeng from '../assets/avatars/av_peng.png'
 import avCapy from '../assets/avatars/av_capy.png'
 import avFox from '../assets/avatars/av_fox.png'
 import avGecko from '../assets/avatars/av_gecko.png'
+// 🆕 새 소개 7장 화면 사진(아래 NEW_SLIDES)
+import obImport from '../assets/onboard/import.webp'
+import obShop from '../assets/onboard/shop.webp'
+import obFridge from '../assets/onboard/fridge.webp'
+import obCook from '../assets/onboard/cook.webp'
+import obWeekly from '../assets/onboard/weekly.webp'
+import obReku from '../assets/onboard/reku.webp'
 
 // 첫 실행 온보딩 — 스토어 스샷과 똑같은 레꾸 카드+곰펭 디자인을 앱 안에서 라이브로.
 // 곰펭은 앱 실제 모션(콩콩·살랑·둥실…), 꾸미기 슬라이드엔 반짝·하트 효과. 문구=꼬르곰·펭펭/레꾸(옛 '흩어진'·'곰펭이' 없음).
@@ -502,6 +509,57 @@ const Slide8 = () => (
 //    「레시피 재료를 담아 사러 간다」가 먼저고 「살림템 추천」이 그다음이라 흐름도 맞는다.
 const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, SlideD, Slide3, SlideS, Slide6, Slide7, Slide8]
 
+// 🆕🆕 새 소개 7장 — 창업자 2026-10-29 「1번으로 하되 마지막장은 우리애들로 끝내자」 · 「이대로 가자」
+//   ① 오트 라떼(#F4DEAF/#3F1D12) · 1~6장 = 실제 앱 화면이 아래서 올라옴 · 7장 = 친구들 ＋ 주인장 이야기 ＋ 시작
+//   글 = 전부 창업자 확인(docs/소개화면-다시짜기-2026-10-29.md) — ⛔ 글자를 고치면 창업자에게 다시 묻는다
+//   🔑 열쇠 뒤 = `?소개=새`(이 기기 켬) · `?소개=옛`(끔) — 아이폰 승인 날 창업자 「같이 밀자」 때 기본값을 켠다
+//   📸 화면 사진 = 핼러윈 끈 그레이지 테마 · 2·3장 재료(두부·대파·고등어…)는 찍을 때만 넣은 예시(사진 import = 파일 맨 위)
+export function 새소개열쇠() {
+  try {
+    const v = new URLSearchParams(location.search).get('소개')
+    if (v === '새') localStorage.setItem('hankki:소개새', '1')
+    if (v === '옛') localStorage.removeItem('hankki:소개새')
+    return localStorage.getItem('hankki:소개새') === '1'
+  } catch { return false }
+}
+const OAT = '#F4DEAF', INK = '#3F1D12', KICK = '#9a5b2e'
+const 새글 = { kick: { fontSize: 13, fontWeight: 800, letterSpacing: '.06em', color: KICK }, h: { fontSize: 25, lineHeight: 1.32, fontWeight: 900, letterSpacing: '-.5px', margin: '6px 0 8px', color: INK, textWrap: 'balance' }, p: { fontSize: 15, lineHeight: 1.5, color: INK, opacity: 0.8, margin: 0 } }
+// 폰 화면 — 위만 보이고 아래는 잘린다. top = 사진을 위로 올릴 만큼(사진 폭의 %)
+function NewPage({ kick, h, p, img, top = 0 }) {
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', padding: '8px 28px 0', boxSizing: 'border-box' }}>
+      <div style={새글.kick}>{kick}</div>
+      <h2 style={새글.h}>{h}</h2>
+      <p style={새글.p}>{p}</p>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', justifyContent: 'center', marginTop: 20 }}>
+        <div style={{ width: '78%', maxWidth: 300, border: `8px solid ${INK}`, borderBottom: 0, borderRadius: '28px 28px 0 0', overflow: 'hidden', background: '#f4f1ea' }}>
+          <img src={img} alt="" draggable={false} style={{ display: 'block', width: '100%', marginTop: `${-top}%` }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+const NEW_SLIDES = [
+  () => <NewPage kick="가져오기" h={<>저장만 한 레시피,<br />한끼가 정리해 줘요</>} p="인스타·유튜브 캡처 한 장이면 돼요" img={obImport} />,
+  () => <NewPage kick="장보기 · 식비" h={<>재료는 장보기로,<br />쓴 돈은 식비 가계부로</>} p="장 본 만큼 식비가 저절로 적혀요" img={obShop} top={28.6} />,
+  () => <NewPage kick="냉장고" h={<>냉장고 재료로<br />만들 요리를 골라줘요</>} p="유통기한 임박한 재료부터 챙겨요" img={obFridge} top={28.6} />,
+  () => <NewPage kick="요리모드" h={<>요리할 땐 큰 글씨로,<br />화면은 안 꺼져요</>} p="단계마다 타이머도 맞출 수 있어요" img={obCook} top={28.6} />,
+  () => <NewPage kick="매주 새 레시피" h={<>매주 새로운<br />레시피가 올라와요</>} p="뭐 해 먹을지 고민을 덜어 드려요" img={obWeekly} />,
+  () => <NewPage kick="레꾸 · 일기" h={<>한 끼를 해냈다면,<br />레꾸하세요</>} p="내가 꾸민 표지로 일기도 남기고 자랑도 해요" img={obReku} top={42.9} />,
+  () => (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', padding: '8px 28px 0', boxSizing: 'border-box', overflow: 'auto' }}>
+      <div style={새글.kick}>한끼 친구들</div>
+      <h2 style={새글.h}>한끼 친구들과 함께<br />즐거운 추억을 만들어요</h2>
+      <div style={{ background: '#f9f9f9', borderRadius: 22, overflow: 'hidden', marginTop: 8, flex: 'none' }}>
+        <img src={lineup5} alt="" draggable={false} style={{ display: 'block', width: '100%', maxHeight: '24vh', objectFit: 'contain' }} />
+      </div>
+      <div style={{ background: '#fff8e6', borderRadius: 16, padding: '14px 16px', fontSize: 'min(15.5px, 2.3vh)', lineHeight: 1.6, color: INK, marginTop: 16 }}>
+        안녕하세요, 저는 올해 18년 차 주부예요. 매일 &quot;오늘 뭐 먹지?&quot;가 고민이라 한끼 앱을 만들었어요. 한끼 친구들과 오늘도 맛있는 한끼 하세요 🙂
+      </div>
+    </div>
+  ),
+]
+
 // 🔁🔁 onRestore = 「이미 다른 기기에서 쓰고 있었어요」 문 (창업자 2026-08-15)
 //   📮 *"이거 백업안하고 기기를 바꾸거나, 패드에 깔면 이메일을 안받으니까 **처음 가입한 것 처럼되거든?**
 //      … 패드에 깔아서 핸드폰에 내가 저장한 것들 살리는 법도 안내하고."*
@@ -511,7 +569,10 @@ const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, SlideD, Slide3, SlideS, Slide6
 //   ⭐ 새 기기에서 앱을 처음 여는 순간이 **유일하게 안 놓치는 자리**다. 여기서 못 잡으면
 //      유저는 빈 앱을 보고 「초기화됐다」고 읽는다 (창업자 *"저장한거 초기화되면 나같으면 앱지워"*).
 export default function Onboarding({ onDone, onRestore }) {
-  const N = SLIDES.length
+  // 🆕 열쇠가 켜진 기기만 새 7장(아래 NEW_SLIDES) — 열쇠는 처음 그릴 때 한 번만 본다
+  const [새] = useState(() => 새소개열쇠())
+  const 장들 = 새 ? NEW_SLIDES : SLIDES
+  const N = 장들.length
   // 🚪 onboard_seen — 「소개를 본 사람」. skip/done 과 견줘야 «중간에 앱을 꺼 버린 사람»이 보인다.
   //    ⭐ «이 컴포넌트»는 한 번만 뜬다 → 사람당 1건. (⛔Stage 에 걸면 장마다 나간다 — 위 주석)
   useEffect(() => { try { 소개봄() } catch { /* 통계가 죽어도 소개는 뜬다 */ } }, [])
@@ -557,9 +618,9 @@ export default function Onboarding({ onDone, onRestore }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--bg)', display: 'flex', flexDirection: 'column', paddingTop: 'calc(var(--safe-top) + 6px)', paddingBottom: 'calc(var(--safe-bottom) + 20px)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 새 ? OAT : 'var(--bg)', display: 'flex', flexDirection: 'column', paddingTop: 'calc(var(--safe-top) + 6px)', paddingBottom: 'calc(var(--safe-bottom) + 20px)' }}>
       <div style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 16px' }}>
-        {!last && <button className="press" onClick={() => { try { 소개건너뜀() } catch { /* noop */ } finish() }} style={{ color: 'var(--text-sub)', fontSize: 14, fontWeight: 700, padding: '6px 8px' }}>건너뛰기</button>}
+        {!last && <button className="press" onClick={() => { try { 소개건너뜀() } catch { /* noop */ } finish() }} style={{ color: 새 ? INK : 'var(--text-sub)', opacity: 새 ? 0.7 : 1, fontSize: 14, fontWeight: 700, padding: '6px 8px' }}>건너뛰기</button>}
       </div>
       <div ref={wRef} style={{ flex: 1, overflow: 'hidden', position: 'relative' }}
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
@@ -569,7 +630,7 @@ export default function Onboarding({ onDone, onRestore }) {
           transition: dragging ? 'none' : 'transform .5s cubic-bezier(.33,.1,.25,1)',
           willChange: 'transform'
         }}>
-          {SLIDES.map((S, k) => (
+          {장들.map((S, k) => (
             <div key={k} style={{ width: `${100 / N}%`, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               <S />
             </div>
@@ -578,9 +639,9 @@ export default function Onboarding({ onDone, onRestore }) {
       </div>
       <div style={{ padding: '18px 24px 0' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 7, marginBottom: 18 }}>
-          {SLIDES.map((_, k) => <span key={k} style={{ width: k === i ? 20 : 7, height: 7, borderRadius: 999, background: k === i ? 'var(--brown)' : 'var(--line)', transition: 'all .25s ease' }} />)}
+          {장들.map((_, k) => <span key={k} style={{ width: k === i ? 20 : 7, height: 7, borderRadius: 999, background: k === i ? (새 ? INK : 'var(--brown)') : (새 ? 'rgba(63,29,18,.22)' : 'var(--line)'), transition: 'all .25s ease' }} />)}
         </div>
-        <button className="btn-primary press" style={{ width: '100%' }} onClick={next}>{last ? '한끼 시작하기' : '다음'}</button>
+        <button className="btn-primary press" style={새 ? { width: '100%', background: INK, color: OAT } : { width: '100%' }} onClick={next}>{last ? '한끼 시작하기' : '다음'}</button>
         {/* ⭐ 마지막 장에서만 — 앞 장에 두면 «처음 깐 사람»이 매 장 이 문구를 보고 헷갈린다.
             ⛔ 버튼(btn-primary)으로 만들지 않는다 — 대부분은 새로 시작하는 사람이라
                두 버튼이 같은 무게로 있으면 «뭘 눌러야 하나»가 된다. 아는 사람만 찾으면 되는 줄이다. */}
@@ -588,7 +649,7 @@ export default function Onboarding({ onDone, onRestore }) {
           <button
             className="press"
             onClick={() => { markOnboarded(); onRestore() }}
-            style={{ width: '100%', marginTop: 12, color: 'var(--text-sub)', fontSize: 13, fontWeight: 600, padding: '6px 0', textDecoration: 'underline', textUnderlineOffset: 3 }}
+            style={{ width: '100%', marginTop: 12, color: 새 ? INK : 'var(--text-sub)', fontSize: 13, fontWeight: 600, padding: '6px 0', textDecoration: 'underline', textUnderlineOffset: 3 }}
           >
             이미 다른 기기에서 쓰고 있었어요 · 백업 불러오기
           </button>
