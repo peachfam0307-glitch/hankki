@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { 아이폰앱인가 } from '../pushConsent'
 import Icon from './Icon'
 import { 소개봄, 소개건너뜀, 소개끝냄, 소개장도달 } from '../stats'   // 🚪 [2026-09-21] 관문 — 덮개 층이라 화면봄이 못 잡는다
 // 🛒 장보기 콤비 — 꼬르곰이 카트, 펭펭이 바구니. 스토어 스샷 ⑤가 쓰는 그 컷이다.
@@ -514,8 +515,10 @@ const SLIDES = [Slide7B, Slide7C, Slide1, Slide2, SlideD, Slide3, SlideS, Slide6
 //   글 = 전부 창업자 확인(docs/소개화면-다시짜기-2026-10-29.md) — ⛔ 글자를 고치면 창업자에게 다시 묻는다
 //   🔑 열쇠 뒤 = `?소개=새`(이 기기 켬) · `?소개=옛`(끔) — 아이폰 승인 날 창업자 「같이 밀자」 때 기본값을 켠다
 //   📸 화면 사진 = 핼러윈 끈 그레이지 테마 · 2·3장 재료(두부·대파·고등어…)는 찍을 때만 넣은 예시(사진 import = 파일 맨 위)
+// 🍎 아이폰 앱은 «열쇠 없이» 켠다 — 창업자 2026-10-29 「아이폰 판은 열쇠 떼고 굽기」(86판) · 웹·갤럭시는 승인 날 「같이 밀자」 때
 export function 새소개열쇠() {
   try {
+    if (아이폰앱인가()) return true
     const v = new URLSearchParams(location.search).get('소개')
     if (v === '새') localStorage.setItem('hankki:소개새', '1')
     if (v === '옛') localStorage.removeItem('hankki:소개새')

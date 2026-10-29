@@ -51,9 +51,12 @@ import gomPot from '../assets/ui/wave/gom_pot.png'
 import DetailDecor from '../components/DetailDecor'
 import MemoNote from '../components/MemoNote'
 import MemoPinSheet from '../components/MemoPinSheet'
+import { 아이폰앱인가 } from '../pushConsent'
 // 📌 「메모 붙이기」 열쇠 — `?메모=새`(이 기기 켬) · `?메모=옛`(끔) · 아이폰 승인 날 같이 연다(창업자 2026-10-29)
+// 🍎 아이폰 앱은 «열쇠 없이» 켠다 — 창업자 2026-10-29 「아이폰 판은 열쇠 떼고 굽기」
 function 메모붙이기열쇠() {
   try {
+    if (아이폰앱인가()) return true
     const v = new URLSearchParams(location.search).get('메모')
     if (v === '새') localStorage.setItem('hankki:메모새', '1')
     if (v === '옛') localStorage.removeItem('hankki:메모새')
