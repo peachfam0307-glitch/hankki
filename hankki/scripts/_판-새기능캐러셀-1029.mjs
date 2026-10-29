@@ -23,7 +23,7 @@ const 폰트 = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-korean-400.wof
 const 폰트L = readFileSync(join(R, 'src/assets/fonts/gowun-dodum-latin-400.woff2')).toString('base64')
 
 // 🎨 색 = PAL="바탕,글씨,점" 으로 바꿔 찍는다(창업자 2026-10-29 「한끼 소개랑 캐러셀색이 너무 똑같아서」 → 후보 넷 · docs/색조합-참고-릴스-2026-10-23.md)
-const [바탕, 진, 점] = (process.env.PAL || '#F4DEAF,#3F1D12,#9a5b2e').split(',')
+const [바탕, 진, 점] = (process.env.PAL || '#FFEDAB,#75070C,#a3343a').split(',')   // ✅ 창업자 2026-10-29 「3번」= 버터 와인
 const 머리 = `<style>
   @font-face{font-family:GD;src:url(data:font/woff2;base64,${폰트}) format('woff2');unicode-range:U+AC00-D7A3,U+1100-11FF,U+3130-318F}
   @font-face{font-family:GD;src:url(data:font/woff2;base64,${폰트L}) format('woff2')}
