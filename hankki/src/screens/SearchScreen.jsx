@@ -82,7 +82,7 @@ export default function SearchScreen() {
       <div className="pad">
         <div className="searchbar" style={{ marginTop: 2 }}>
           <Icon name="search" size={19} color="var(--text-sub)" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="검색어를 입력하세요" autoComplete="off" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={새검색 ? "요리 이름·재료로 찾기 · 초성(ㄷㅂ)도 돼요" : "검색어를 입력하세요"} autoComplete="off" />
           {q && (
             <button className="press" onClick={() => setQ('')} aria-label="지우기">
               <Icon name="x" size={18} color="var(--text-sub)" />
