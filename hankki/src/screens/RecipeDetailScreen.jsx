@@ -157,6 +157,9 @@ export default function RecipeDetailScreen({ id }) {
   const [askDiaryPhoto, setAskDiaryPhoto] = useState(null)   // 표지에 넣은 사진 → 일기에도?
   const [askDiaryRemove, setAskDiaryRemove] = useState(false) // 표지를 아이콘으로 → 일기 사진도 뺄까?
   const [logEntry, setLogEntry] = useState(null)
+  // 📌 메모 붙이기 열쇠·창 — ⛔ 훅이라 «if (!r) return» 보다 위에 둔다(check-hooks)
+  const [메모열쇠] = useState(() => 메모붙이기열쇠())
+  const [메모창, set메모창] = useState(false)
   const [decorOpen, setDecorOpen] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
   const [drawOpen, setDrawOpen] = useState(false) // 공유 뽑기카드
@@ -364,8 +367,6 @@ export default function RecipeDetailScreen({ id }) {
   const myEntries = diary.filter((d) => d.recipeId === id).sort((a, b) => b.at - a.at)
   const latestEntry = myEntries[0]
   // 📌 붙인 메모(ⓑ 늘 먼저) — 있으면 포스트잇은 이것, 없으면 「만들었어요」 한 줄(가장 최근)
-  const [메모열쇠] = useState(() => 메모붙이기열쇠())
-  const [메모창, set메모창] = useState(false)
   const 붙인메모 = 메모열쇠 && String(r?.postit?.text || '').trim() ? { note: r.postit.text, at: r.postit.at } : null
   const 포스트잇있나 = !!(붙인메모 || latestEntry?.note)
   const cookedN = r?.cooked || myEntries.length
