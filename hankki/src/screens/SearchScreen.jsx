@@ -10,10 +10,27 @@ import TabTips from '../components/TabTips'
 //   ✅ 재료는 «재료» 규칙(`guessIngredientIcon`)을 본다 — 그게 못 찾으면 스스로 요리 규칙으로 넘긴다.
 import FoodIcon, { guessIngredientIcon } from '../components/FoodIcon'
 import { POPULAR_SEARCHES, TAG_LIST, INGREDIENT_CHIPS } from '../data/seed'
-import { 검색빈손 } from '../stats'
+import { 검색빈손, 기본레시피표시 } from '../stats'
+// 🔖🔤 [창업자 2026-10-29 「홈에서 검색시에 꽂이를 못써」 · 「ㄱㄴㄷ로 검색도 열어주면 좋겠어」]
+//   홈 검색을 레시피 탭 검색과 같게 = ① 결과 카드에 꽂이 ② 초성(matchKo)으로도 찾기
+//   🔑 열쇠 뒤 = `?검색=새`(이 기기 켬) · `?검색=옛`(끔) — 아이폰 승인 날 같이 연다
+import { matchKo } from '../utils'
+import { pinName, pinOf, nextPin } from '../favPin'
+import idxChef from '../assets/ui/idx_chef.png'
+import idxChefFaint from '../assets/ui/idx_chef_faint.png'
+import idxHeart from '../assets/ui/idx_heart.png'
+function 새검색열쇠() {
+  try {
+    const v = new URLSearchParams(location.search).get('검색')
+    if (v === '새') localStorage.setItem('hankki:검색새', '1')
+    if (v === '옛') localStorage.removeItem('hankki:검색새')
+    return localStorage.getItem('hankki:검색새') === '1'
+  } catch { return false }
+}
 
 export default function SearchScreen() {
-  const { recipes } = useStore()
+  const { recipes, setFavPin } = useStore()
+  const [새검색] = useState(() => 새검색열쇠())
   const nav = useNav()
   // 다른 화면(내 레시피의 태그 등)에서 넘겨준 검색어가 있으면 그걸로 시작
   const [q, setQ] = useState(() => {
@@ -30,9 +47,9 @@ export default function SearchScreen() {
     const k = query.toLowerCase()
     return recipes.filter((r) => {
       const hay = [r.title, r.category, ...(r.tags || []), ...(r.ingredients || [])].join(' ').toLowerCase()
-      return hay.includes(k)
+      return 새검색 ? matchKo(hay, k) : hay.includes(k)
     })
-  }, [query, recipes])
+  }, [query, recipes, 새검색])
 
   // 📊 [2026-09-14] 🔍 「찾았는데 «0건»이었다」
   //   ⭐ 왜 재나 = 「뭘 찾다 못 찾고 나가나」는 «레시피를 더 만들 근거»가 된다. 지금은 통째로 깜깜하다.
@@ -81,8 +98,31 @@ export default function SearchScreen() {
             {results.length === 0 ? (
               <div className="empty">{'검색 결과가 없어요.\n다른 키워드로 찾아보세요.'}</div>
             ) : (
-              <div className="grid2">
-                {results.map((r) => (
+              <div className="grid2" style={새검색 ? { paddingTop: 14, rowGap: 24 } : undefined}>
+                {results.map((r) => 새검색 ? (
+                  // 🔖 레시피 탭 카드와 «같은» 꽂이 — 단추를 카드 «밖»에 둔다(카드가 button 이라 안에 넣으면 중첩 단추)
+                  <div key={r.id} style={{ position: 'relative', minWidth: 0 }}>
+                    <button className="grid-card press" style={{ textAlign: 'left', width: '100%' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
+                      <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
+                      <div className="name">{r.title}</div>
+                      <div className="date">{r.category} · {r.time}분</div>
+                    </button>
+                    <button
+                      className={`fav-dot press${r.favorite ? ' on' : ''}`}
+                      aria-label={nextPin(r) ? `${r.title} ${pinName(nextPin(r))}에 꽂기` : `${r.title} ${pinName(pinOf(r))}에서 빼기`}
+                      aria-pressed={!!r.favorite}
+                      onClick={(ev) => {
+                        ev.stopPropagation()
+                        const 다음 = nextPin(r)
+                        setFavPin(r.id, 다음)
+                        if (다음) 기본레시피표시(r.id, 다음)
+                        nav.showToast?.(다음 ? `${pinName(다음)}에 넣었어요` : `${pinName(pinOf(r))}에서 뺐어요`)
+                      }}
+                    >
+                      <img src={!r.favorite ? idxChefFaint : pinOf(r) === 'heart' ? idxHeart : idxChef} alt="" className={`idx-clip${r.favorite && pinOf(r) === 'heart' ? ' heart' : ''}`} />
+                    </button>
+                  </div>
+                ) : (
                   <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
                     <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                     <div className="name">{r.title}</div>

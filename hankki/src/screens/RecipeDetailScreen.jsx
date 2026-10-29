@@ -1058,7 +1058,11 @@ export default function RecipeDetailScreen({ id }) {
                       key={i} type="button" className="ing press"
                       aria-pressed={켠것.has(i)}
                       onClick={() => set켠것((옛) => { const 새 = new Set(옛); if (새.has(i)) 새.delete(i); else 새.add(i); return 새 })}
-                      style={{ display: 'flex', alignItems: 'center', width: '100%', textAlign: 'left', background: 'none', border: 'none' }}
+                      // 📌🩹 [창업자 제보 2026-10-29 「메모가 복구는 됐는데 재료가 아래로 밀려있어」]
+                      //   뿌리 = 9/16 재료 줄을 <button>(width 100%)로 바꾸면서 포스트잇(float) 옆에 «못 서고» 아래로 밀렸다
+                      //   (button 은 float 를 감싸지 않는 상자 — 100% 폭은 옆자리에 안 들어간다). 메모가 있을 때만 auto 로 둔다.
+                      //   🔢 재현 = 첫 재료 줄 y 가 메모 «아래» → auto 면 메모 «옆»(폭 151px) · 메모 없으면 지금처럼 100%
+                      style={{ display: 'flex', alignItems: 'center', width: latestEntry?.note ? 'auto' : '100%', textAlign: 'left', background: 'none', border: 'none' }}
                     >
                       {/* ☑️☑️ [창업자 확정 2026-09-16] **기본은 «다 꺼짐». 직접 체크한 것만 담는다.**
                           📮 *"체크는 되어있으면 안되지"* ＋ *"그냥 보이고 앞에 체크표시를 직접해야하는거고"*
