@@ -44,7 +44,7 @@ const 장들 = [
      <div class="s" style="font-size:42px;line-height:1.75">레시피에 메모 붙이기<br>ㄷㅂ만 쳐도 찾는 검색</div></div>
    <div style="position:absolute;left:140px;width:800px;bottom:90px;background:#f9f9f9;border-radius:48px;overflow:hidden"><img src="${파일('src/assets/cast/lineup5.png')}" style="display:block;width:100%"></div>`,
   // 2 메모 붙이기
-  `${머리}${글('메모 붙이기', '레시피에 메모를<br>언제든 붙여요', '요리 안 해도 · 재료 옆에 포스트잇으로')}
+  `${머리}${글('메모 붙이기', '레시피에 메모를<br>언제든 붙여요', '나만의 레시피 메모 · 재료 옆에 포스트잇으로')}
    <div class="폰" style="top:560px;width:720px;height:790px"><img src="${사진('memo2/n-3.png')}" style="margin-top:-108%"></div>`,
   // 3 검색
   `${머리}${글('홈 검색', 'ㄷㅂ만 쳐도<br>찾아요', '두부·덮밥… 초성으로 찾고 바로 꽂아 둬요')}
