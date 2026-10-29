@@ -50,6 +50,16 @@ import pnShoplist from '../assets/ui/wave/pn_shoplist.png'
 import gomPot from '../assets/ui/wave/gom_pot.png'
 import DetailDecor from '../components/DetailDecor'
 import MemoNote from '../components/MemoNote'
+import MemoPinSheet from '../components/MemoPinSheet'
+// 📌 「메모 붙이기」 열쇠 — `?메모=새`(이 기기 켬) · `?메모=옛`(끔) · 아이폰 승인 날 같이 연다(창업자 2026-10-29)
+function 메모붙이기열쇠() {
+  try {
+    const v = new URLSearchParams(location.search).get('메모')
+    if (v === '새') localStorage.setItem('hankki:메모새', '1')
+    if (v === '옛') localStorage.removeItem('hankki:메모새')
+    return localStorage.getItem('hankki:메모새') === '1'
+  } catch { return false }
+}
 import { hlColor } from '../components/Stickers'
 // 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
 import { FAV_NAME } from '../favName'
@@ -350,6 +360,11 @@ export default function RecipeDetailScreen({ id }) {
 
   const myEntries = diary.filter((d) => d.recipeId === id).sort((a, b) => b.at - a.at)
   const latestEntry = myEntries[0]
+  // 📌 붙인 메모(ⓑ 늘 먼저) — 있으면 포스트잇은 이것, 없으면 「만들었어요」 한 줄(가장 최근)
+  const [메모열쇠] = useState(() => 메모붙이기열쇠())
+  const [메모창, set메모창] = useState(false)
+  const 붙인메모 = 메모열쇠 && String(r?.postit?.text || '').trim() ? { note: r.postit.text, at: r.postit.at } : null
+  const 포스트잇있나 = !!(붙인메모 || latestEntry?.note)
   const cookedN = r?.cooked || myEntries.length
 
   // ⭐⭐ 「만들었어요」는 누르면 «끝»이다 — 토스트만 뜨고 아무 폼도 안 연다. (창업자 확정 2026-08-06)
@@ -1015,6 +1030,13 @@ export default function RecipeDetailScreen({ id }) {
                   <Icon name="help" size={12} color="var(--brown)" />
                   계량·손질
                 </button>
+                {/* 📌 「메모 붙이기」 — 창업자 2026-10-29 ② 「재료」 옆 진한 단추. 붙어 있으면 「메모 고치기」 */}
+                {메모열쇠 && (
+                  <button className="press" onClick={() => set메모창(true)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 11px', borderRadius: 999, background: 'var(--brown)', color: '#fff', fontSize: 15, fontWeight: 800, whiteSpace: 'nowrap', flex: '0 0 auto', marginLeft: 6 }}>
+                    📌 {붙인메모 ? '메모 고치기' : '메모 붙이기'}
+                  </button>
+                )}
               </div>
             </div>
             {baseServings > 0 && (
@@ -1035,8 +1057,8 @@ export default function RecipeDetailScreen({ id }) {
                   ⛔ **재료 목록 «안»에 넣어야 한다** — 밖에 두면 글이 안 흐르고 통째로 아래로 밀린다.
                   ⛔ 요리 모드(`CookScreen`)엔 이 방식이 «안 통한다» — 거긴 재료 한 줄이 «flex 버튼»이라
                      float 를 감싸지 않는다(`scripts/_probe-요리모드재료-0820.mjs` 로 쟀다). */}
-              {latestEntry?.note && (
-                <MemoNote recipeId={r.id} 횟수={cookedN} 붙임 onClick={() => setLogEntry(latestEntry)} />
+              {포스트잇있나 && (
+                <MemoNote recipeId={r.id} 횟수={cookedN} 붙임 붙인={붙인메모} onClick={() => (붙인메모 ? set메모창(true) : setLogEntry(latestEntry))} />
               )}
               {/* ☑️ [창업자 2026-09-15] *"재료에 체크박스를 둬서 필요한 것만 장보기 담기할수는 없나?"*
                   ＋ *"지금은 전체를 다 담고 직접 지워야 하잖아"*
@@ -1062,7 +1084,7 @@ export default function RecipeDetailScreen({ id }) {
                       //   뿌리 = 9/16 재료 줄을 <button>(width 100%)로 바꾸면서 포스트잇(float) 옆에 «못 서고» 아래로 밀렸다
                       //   (button 은 float 를 감싸지 않는 상자 — 100% 폭은 옆자리에 안 들어간다). 메모가 있을 때만 auto 로 둔다.
                       //   🔢 재현 = 첫 재료 줄 y 가 메모 «아래» → auto 면 메모 «옆»(폭 151px) · 메모 없으면 지금처럼 100%
-                      style={{ display: 'flex', alignItems: 'center', width: latestEntry?.note ? 'auto' : '100%', textAlign: 'left', background: 'none', border: 'none' }}
+                      style={{ display: 'flex', alignItems: 'center', width: 포스트잇있나 ? 'auto' : '100%', textAlign: 'left', background: 'none', border: 'none' }}
                     >
                       {/* ☑️☑️ [창업자 확정 2026-09-16] **기본은 «다 꺼짐». 직접 체크한 것만 담는다.**
                           📮 *"체크는 되어있으면 안되지"* ＋ *"그냥 보이고 앞에 체크표시를 직접해야하는거고"*
@@ -1389,6 +1411,10 @@ export default function RecipeDetailScreen({ id }) {
       )}
 
       {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
+      {메모창 && (
+        <MemoPinSheet title={r.title} text={r.postit?.text || ''} onClose={() => set메모창(false)}
+          onSave={(t) => { updateRecipe(r.id, { postit: t ? { text: t, at: Date.now() } : null }); nav.showToast(t ? '메모를 붙였어요' : '메모를 뗐어요') }} />
+      )}
 
       {shareSheet && (
         <Portal>

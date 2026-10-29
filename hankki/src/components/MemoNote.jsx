@@ -44,7 +44,8 @@ const 메모날짜 = (at) => { const d = new Date(at || Date.now()); return `${d
 // 📌 `붙임` = **재료 목록 옆에 «붙인» 포스트잇**(창업자 확정 2026-08-20)
 //    📮 *"우리 보통 **필기하다가 포스트잇 붙이잖아. 그런느낌으로.**"* · *"자리는 **재료옆**이어야해"*
 //    ✅ 판정 = **재료 옆 · 비뚤게 · 44%**
-export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟수, 붙임 }) {
+// 📌 붙인 = 「메모 붙이기」로 붙인 메모 { note, at } (창업자 2026-10-29 ⓑ — 있으면 «늘 먼저»)
+export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟수, 붙임, 붙인 }) {
   const { diary, profile, setProfile } = useStore()
 
   // 그 레시피의 메모만, 최근 것부터. ⛔빈 메모는 세지 않는다(「만들었어요」가 note:'' 로 만든다)
@@ -106,8 +107,8 @@ export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟
   }
 
 
-  if (!메모들.length) return null
-  const 최근 = 메모들[0]
+  if (!붙인 && !메모들.length) return null
+  const 최근 = 붙인 ? { note: 붙인.note, at: 붙인.at, rating: 0 } : 메모들[0]
 
   // 🎨 종이 = 우리가 이미 가진 메모지 스티커. ⛔새로 그린 게 0장이다.
   //    ⭐ 「가운데는 조용해서 글씨가 읽히고 가장자리엔 장식이 있는 것」으로 골랐다 —
@@ -177,7 +178,7 @@ export default function MemoNote({ recipeId, style, 종이, 글씨, onClick, 횟
       </div>
       <div className="memo-note-body">“{최근.note.trim()}”</div>
       {/* 📌 「몇 번 만들었나」 — 레시피 상세에선 이 줄이 옛 「내 요리 기록」 카드를 대신한다 */}
-      {(횟수 > 1 || 메모들.length > 1) && (
+      {(횟수 > 1 || (!붙인 && 메모들.length > 1)) && (
         <div className="memo-note-more">
           {횟수 > 1 ? `${횟수}번 만들었어요` : `앞서 ${메모들.length - 1}번 더 남겼어요`}
         </div>
