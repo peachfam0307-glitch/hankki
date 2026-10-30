@@ -520,10 +520,11 @@ export function 새소개열쇠() {
   try {
     if (아이폰앱인가()) return true
     const v = new URLSearchParams(location.search).get('소개')
-    if (v === '새') localStorage.setItem('hankki:소개새', '1')
-    if (v === '옛') localStorage.removeItem('hankki:소개새')
-    return localStorage.getItem('hankki:소개새') === '1'
-  } catch { return false }
+    // 🔓 [2026-10-30 아이폰 승인 · 창업자 「승인났어 바로넣어줘」] 모두 «켬»이 기본 — ?소개=옛 만 이 기기에서 끈다(사고 대비)
+    if (v === '옛') localStorage.setItem('hankki:소개새', '0')
+    if (v === '새') localStorage.removeItem('hankki:소개새')
+    return localStorage.getItem('hankki:소개새') !== '0'
+  } catch { return true }
 }
 const OAT = '#F4DEAF', INK = '#3F1D12', KICK = '#9a5b2e'
 const 새글 = { kick: { fontSize: 13, fontWeight: 800, letterSpacing: '.06em', color: KICK }, h: { fontSize: 25, lineHeight: 1.32, fontWeight: 900, letterSpacing: '-.5px', margin: '6px 0 8px', color: INK, textWrap: 'balance' }, p: { fontSize: 15, lineHeight: 1.5, color: INK, opacity: 0.8, margin: 0 } }
