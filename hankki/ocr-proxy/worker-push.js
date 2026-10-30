@@ -54,6 +54,9 @@ const 칸 = {
   임박날: (날) => `push:exp:${날}`,
   임박폰: (해시) => `push:expof:${해시}`,
   임박보냄: (날) => `push:sent:${날}:exp`,   // 값 = 여기까지 보냈다(번호) — 40명씩 끊어 보낸다
+  // 🔔💳 새 구매 알림 (2026-10-30 창업자 「구매 알림 넣자」) — 창업자 폰 주소(최대 3) · 아직 안 읽은 구매(최대 20)
+  창업자폰: 'push:founder:subs',
+  창업자소식: 'push:founder:pending',
 }
 const 임박 = {
   시각: '09:00',        // 창업자 확정 = 토요일 장바구니와 같은 아침 9시(장 보러 가기 전)
@@ -84,6 +87,54 @@ export default {
         이달: (await kv.get(칸.기록(kstDay(new Date()).slice(0, 7)), 'json')) || { 보냄: 0, 성공: 0, 만료삭제: 0, 실행: 0 },
         vapid: 열쇠 ? '있음' : '아직 없음(첫 /vapid 호출 때 생긴다)',
       }, 200, cors)
+    }
+
+    // 🔔💳 새 구매 알림 — 창업자 폰에만 (2026-10-30 · 창업자 「일일이 확인하기 번거로우니까」)
+    //   ① /founder/subscribe = ops.html 「구매 알림 받기」가 이 폰 주소를 넣는다(창업자 열쇠 필요)
+    //   ② /founder/ping      = OCR 워커가 «처음 들어온 진짜 구매»마다 부른다(창업자 열쇠 · 서비스 바인딩 PUSH)
+    //   ③ /founder/inbox     = 서비스워커가 빈 푸시를 받고 «내 폰 몫 소식이 있나» 묻는다 — 창업자 폰이 아니면 404(⛔누가 샀는지는 원래 안 담는다)
+    //   ⭐ 웹 푸시는 «빈 푸시»라(암호화 0줄) 문구는 서비스워커가 가지러 온다 — 매일 알림과 같은 길이다.
+    if (url.pathname.startsWith('/founder/')) {
+      if (!kv) return json({ error: 'no_kv' }, 501, cors)
+      if (url.pathname === '/founder/inbox' && request.method === 'GET') {
+        const h = String(url.searchParams.get('h') || '')
+        const 폰들 = (await kv.get(칸.창업자폰, 'json')) || []
+        let 내폰 = false
+        for (const s of 폰들) if (h && (await 짧은해시(s.endpoint)) === h) 내폰 = true
+        if (!내폰) return json({ error: 'none' }, 404, cors)
+        const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
+        if (!소식.length) return json({ error: 'none' }, 404, cors)
+        await kv.put(칸.창업자소식, '[]')
+        const 셈 = { 구글: 0, 애플: 0, 시험: 0 }
+        for (const x of 소식) 셈[셈[x.가게] != null ? x.가게 : '구글']++
+        const 줄 = [셈.구글 ? `갤럭시 ${셈.구글}건` : '', 셈.애플 ? `아이폰 ${셈.애플}건` : '', 셈.시험 ? `알림 시험 ${셈.시험}건(진짜 구매 아님)` : ''].filter(Boolean).join(' · ')
+        return json({ 제목: '🔑 레시피열쇠가 팔렸어요', 본문: 줄, 길: './ops.html', 표: 'hankki-sale' }, 200, { ...cors, 'Cache-Control': 'no-store' })
+      }
+      if (!env.FOUNDER_SECRET || request.headers.get('x-hankki-founder') !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
+      let body = null
+      try { body = await request.json() } catch { return json({ error: 'bad_json' }, 400, cors) }
+      if (url.pathname === '/founder/subscribe' && request.method === 'POST') {
+        const sub = body?.sub
+        if (!sub || typeof sub.endpoint !== 'string' || !/^https:\/\//.test(sub.endpoint) || sub.endpoint.length > 2048) return json({ error: 'bad_sub' }, 400, cors)
+        const 폰들 = ((await kv.get(칸.창업자폰, 'json')) || []).filter((s) => s.endpoint !== sub.endpoint)
+        폰들.unshift({ endpoint: sub.endpoint, keys: sub.keys || {} })
+        await kv.put(칸.창업자폰, JSON.stringify(폰들.slice(0, 3)))   // 폰 바꾸면 옛 주소는 3개 넘을 때 밀려난다
+        return json({ ok: true, 폰: Math.min(3, 폰들.length) }, 200, cors)
+      }
+      if (url.pathname === '/founder/ping' && request.method === 'POST') {
+        const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
+        소식.push({ 가게: ['애플', '시험'].includes(body?.가게) ? body.가게 : '구글', 때: Date.now() })
+        await kv.put(칸.창업자소식, JSON.stringify(소식.slice(-20)))
+        const 폰들 = (await kv.get(칸.창업자폰, 'json')) || []
+        if (!폰들.length) return json({ ok: true, 보냄: 0, 왜: '창업자 폰이 아직 없다(ops.html 「구매 알림 받기」)' }, 200, cors)
+        const 열쇠 = await 열쇠꺼내기(kv)
+        const 남길 = []
+        let 보냄 = 0
+        for (const s of 폰들) { const r = await 푸시하나(s, 열쇠); if (r === 'ok') 보냄++; if (r !== 'gone') 남길.push(s) }
+        if (남길.length !== 폰들.length) await kv.put(칸.창업자폰, JSON.stringify(남길))
+        return json({ ok: true, 보냄 }, 200, cors)
+      }
+      return json({ error: 'not_found' }, 404, cors)
     }
 
     // 🔑 공개 열쇠 — 앱이 구독을 만들 때 쓴다. 없으면 «지금» 만든다(비밀 열쇠는 KV 밖으로 안 나간다).
