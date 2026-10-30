@@ -58,10 +58,11 @@ function 메모붙이기열쇠() {
   try {
     if (아이폰앱인가()) return true
     const v = new URLSearchParams(location.search).get('메모')
-    if (v === '새') localStorage.setItem('hankki:메모새', '1')
-    if (v === '옛') localStorage.removeItem('hankki:메모새')
-    return localStorage.getItem('hankki:메모새') === '1'
-  } catch { return false }
+    // 🔓 [2026-10-30 아이폰 승인 · 창업자 「승인났어 바로넣어줘」] 모두 «켬»이 기본 — ?메모=옛 만 이 기기에서 끈다(사고 대비)
+    if (v === '옛') localStorage.setItem('hankki:메모새', '0')
+    if (v === '새') localStorage.removeItem('hankki:메모새')
+    return localStorage.getItem('hankki:메모새') !== '0'
+  } catch { return true }
 }
 import { hlColor } from '../components/Stickers'
 // 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
