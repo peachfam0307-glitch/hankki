@@ -435,7 +435,10 @@ function 빈칸들(N) {
     let 판 = ''
     try { 판 = execFileSync(process.execPath, [join(APP, 'scripts/release-prep.mjs'), '--on', 날], { encoding: 'utf8' }) } catch (e) { 판 = String(e.stdout || '') }
     const m = 판.match(/링크를 만들어야 할 재료 = (\d+)개\s*(?:— (.*))?/)
-    if (m && +m[1] > 0) 칸.push(`🔗 레시피 재료 링크 · ${날} ${m[2] || m[1] + '개'}`)
+    // ⏸ [창업자 2026-11-01 「당분감 재료링크는 뺄까봐」] 멈춘날 이후 열리는 편은 재료 링크를 안 청한다 — scripts/재료링크-멈춤.json
+    let 멈춘날 = ''
+    try { 멈춘날 = JSON.parse(readFileSync(join(APP, 'scripts/재료링크-멈춤.json'), 'utf8')).멈춘날 || '' } catch { /* 파일 없으면 = 멈춤 없음 */ }
+    if (m && +m[1] > 0 && !(멈춘날 && 날 >= 멈춘날)) 칸.push(`🔗 레시피 재료 링크 · ${날} ${m[2] || m[1] + '개'}`)
     if (/아이콘없음/.test(판)) 칸.push(`🍽 레시피 음식 아이콘 없음 · ${날}`)
   }
   // 📒 레시피·장바구니 «밖»(꾸미기·레꾸자랑·명절 홈·유료팩…) = 검수장부 (창업자 2026-09-29)
