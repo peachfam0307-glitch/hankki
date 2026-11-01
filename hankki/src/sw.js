@@ -173,6 +173,16 @@ self.addEventListener('activate', (event) => {
 const PUSH_URL = 'https://hankki-push.annyeong-hankki.workers.dev'
 async function 오늘문구(event) {
   try { if (event.data) { const v = event.data.json(); if (v && v.본문) return v } } catch (e) { /* 아래로 */ }
+  // 🔔💳 [2026-10-30] 창업자 폰이면 «새 구매» 소식이 먼저다 — 워커가 이 폰 주소(해시)를 알아보면 구매 문구를, 아니면 404(일반 유저는 늘 404)
+  try {
+    const 구독 = await self.registration.pushManager.getSubscription()
+    if (구독 && 구독.endpoint) {
+      const 낱 = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(구독.endpoint)))
+      let h = ''; for (let i = 0; i < 12; i++) h += 낱[i].toString(16).padStart(2, '0')   // 워커 `짧은해시` 와 같은 꼴
+      const r0 = await fetch(PUSH_URL + '/founder/inbox?h=' + h, { cache: 'no-store' })
+      if (r0.ok) { const v0 = await r0.json(); if (v0 && v0.본문) return { ...v0, 구매: true } }
+    }
+  } catch (e) { /* 아래로 — 매일 알림 그대로 */ }
   try {
     const r = await fetch(PUSH_URL + '/today', { cache: 'no-store' })
     if (r.ok) return await r.json()
@@ -189,6 +199,10 @@ self.addEventListener('push', (event) => {
   //    ⭐ 「없음」(404)과 「못 가져옴」(그물 끊김)은 다르다 — 못 가져온 날은 전처럼 «반드시» 하나 띄운다(크롬이 다음 푸시를 끊지 않게).
   const 냉장고만 = !!값.없음
   if (냉장고만 && !얹을줄) return
+  if (값.구매) return self.registration.showNotification(String(값.제목), {   // 🔔💳 구매 소식엔 냉장고 줄을 안 얹는다
+    body: String(값.본문), icon: new URL('icons/icon-192-v7.png', self.registration.scope).href,
+    badge: new URL('icons/badge-bowl-96.png', self.registration.scope).href, tag: String(값.표 || 'hankki-sale'), renotify: true, data: { 길: String(값.길 || './') },
+  })
   // 🧊 임박 재료가 있으면 한 줄 «얹는다» — 없거나 못 읽으면 원래 본문 그대로(추가 푸시 0 · 하루 한 번 그대로)
   //    🧊 [2026-09-26 창업자 확정] 냉장고 줄 앞에 이모지 하나 — 윗줄(🛒🍳📱🎨)과 짝을 맞춘다. 문장 자체(pantryExpiry)는 안 건드린다.
   const 냉장고줄 = 얹을줄 ? '🧊 ' + 얹을줄 : 얹을줄

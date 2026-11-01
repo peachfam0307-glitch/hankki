@@ -33,6 +33,11 @@
     <button data-q="appletest=sandbox">애플 알림 시험</button>
   </div>
   <div class="box">
+    <div>🔔 새 구매 알림 (이 폰으로 갤럭시·아이폰 구매를 받아요)</div>
+    <button id="saleOn">구매 알림 받기</button>
+    <button class="sub" id="saleTest">알림 시험</button>
+  </div>
+  <div class="box">
     <div>주문 번호 (GPA.… 또는 애플 거래 번호)</div>
     <input id="order" autocomplete="off" />
     <button data-o="order">거래 기록 찾기</button>
@@ -67,6 +72,32 @@
       부르기(b.dataset.o + '=' + encodeURIComponent(o))
     }
   })
+  // 🔔💳 새 구매 알림 (2026-10-30) — 이 폰의 «한끼 알림 주소»를 푸시 워커에 «창업자 폰»으로 적는다.
+  //   ⭐ 한끼를 이 브라우저(=갤럭시 한끼 앱과 같은 크롬)에서 한 번 연 적이 있어야 서비스워커가 있다.
+  const 푸시 = 'https://hankki-push.annyeong-hankki.workers.dev'
+  const b64 = (s) => { const p = '='.repeat((4 - s.length % 4) % 4); const r = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(r, (c) => c.charCodeAt(0)) }
+  async function 푸시부르기 (길, 몸) {
+    const k = 읽기()
+    if (!k) throw new Error('열쇠를 먼저 저장해 주세요')
+    const r = await fetch(푸시 + 길, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-hankki-founder': k }, body: JSON.stringify(몸) })
+    return r.status + '\n' + JSON.stringify(await r.json(), null, 2)
+  }
+  $('saleOn').onclick = async () => {
+    $('out').textContent = '…'
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) throw new Error('이 브라우저는 알림을 못 받아요(갤럭시 크롬에서 열어 주세요)')
+      const reg = await navigator.serviceWorker.getRegistration('./')
+      if (!reg) throw new Error('한끼를 이 브라우저에서 한 번 연 뒤 다시 눌러 주세요')
+      if ((await Notification.requestPermission()) !== 'granted') throw new Error('알림 허용이 필요해요')
+      let sub = await reg.pushManager.getSubscription()
+      if (!sub) { const { pub } = await (await fetch(푸시 + '/vapid')).json(); sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(pub) }) }
+      $('out').textContent = await 푸시부르기('/founder/subscribe', { sub: sub.toJSON() })
+    } catch (e) { $('out').textContent = '안 됐어요: ' + (e && e.message ? e.message : e) }
+  }
+  $('saleTest').onclick = async () => {
+    $('out').textContent = '…'
+    try { $('out').textContent = await 푸시부르기('/founder/ping', { 가게: '시험' }) } catch (e) { $('out').textContent = '안 됐어요: ' + (e && e.message ? e.message : e) }
+  }
   상태()
 </script>
 </body>

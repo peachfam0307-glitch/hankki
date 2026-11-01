@@ -1278,6 +1278,21 @@ async function 결제길(request, env, cors) {
   return json({ error: 'not_found' }, 404, cors)
 }
 
+// 🔔💳 새 구매 알림 — «처음 들어온 진짜 구매»마다 창업자 폰에 알린다(2026-10-30 창업자 「구매 알림 넣자」)
+//   ⭐ 푸시 워커(hankki-push)를 «서비스 바인딩 `PUSH`»로 부른다 — 같은 계정 워커끼리 주소로 부르면 막힐 수 있다(오류 1042).
+//   ⛔ 알림은 덤이다 — 바인딩이 없거나 실패해도 구매는 그대로 끝난다(열쇠·원장 먼저, 알림 나중).
+//   ⛔ 시험 구매(구글 라이선스 테스터 · 애플 Sandbox)는 안 알린다 · 누가 샀는지는 안 보낸다(가게만).
+async function 창업자알림(env, 가게) {
+  if (!env.PUSH || !env.FOUNDER_SECRET) return
+  try {
+    await env.PUSH.fetch('https://hankki-push/founder/ping', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-hankki-founder': env.FOUNDER_SECRET },
+      body: JSON.stringify({ 가게 }),
+    })
+  } catch { /* 알림 실패는 삼킨다 */ }
+}
+
 // ── 영수증 한 장 ──────────────────────────────────────────
 // ①구글에 «진짜냐» 묻고 ②원장에 적고 ③acknowledge ④consume(또 살 수 있게).
 // ⭐ 몇 번을 보내도 결과가 같다 — 앱은 «켤 때마다» 통째로 다시 보내도 된다(돈 냈는데 못 받는 길이 막힌다).
@@ -1324,13 +1339,15 @@ async function 구매하나(env, 통, 상품, 토큰) {
   //   ⭐ 원장 주문 칸에 test: 를 붙여 가른다(계기판·환불 수에서 뺀다)
   const 시험 = g.purchaseType === 0
   let 줄열쇠 = 결제.소모성[상품] * 수량
+  let 처음 = false   // 🔔 이번에 «처음» 원장에 적혔나 — 앱이 같은 영수증을 또 보내도 알림은 한 번
   try {
     if (시험) {
       const c = await db.prepare("SELECT COUNT(*) AS n FROM 산구매 WHERE 통 = ? AND 주문 LIKE 'test:%' AND 처음 > ? AND 토큰 != ?").bind(통, 지금 - 86400000, 토큰).first()
       if (c && c.n >= 1) 줄열쇠 = 0
     }
-    await db.prepare('INSERT OR IGNORE INTO 산구매 (토큰, 상품, 통, 주문, 상태, 확인, 비움, 처음, 때) VALUES (?, ?, ?, ?, 0, 0, 0, ?, ?)')
+    const 새줄 = await db.prepare('INSERT OR IGNORE INTO 산구매 (토큰, 상품, 통, 주문, 상태, 확인, 비움, 처음, 때) VALUES (?, ?, ?, ?, 0, 0, 0, ?, ?)')
       .bind(토큰, 상품, 통, (시험 ? 'test:' : '') + String(g.orderId || ''), 지금, 지금).run()
+    처음 = !!(새줄 && 새줄.meta && 새줄.meta.changes === 1)
     await db.prepare('INSERT OR IGNORE INTO 산열쇠 (토큰, 통, 남음, 처음, 때) VALUES (?, ?, ?, ?, ?)')
       .bind(토큰, 통, 줄열쇠, 지금, 지금).run()
   } catch { return { ok: false, reason: 'db_error' } }
@@ -1349,6 +1366,7 @@ async function 구매하나(env, 통, 상품, 토큰) {
     const c = await playPost(env, `${주소}:consume`, {})
     if (c.ok) { try { await db.prepare('UPDATE 산구매 SET 비움 = 1, 때 = ? WHERE 토큰 = ?').bind(지금, 토큰).run() } catch { /* noop */ } }
   }
+  if (처음 && !시험) await 창업자알림(env, '구글')
   return { ok: true, ...(시험 && 줄열쇠 === 0 ? { 시험한도: true } : {}) }
 }
 
@@ -1573,6 +1591,7 @@ async function 애플구매하나(env, 통, id) {
   }
   const 수량 = Math.max(1, Math.min(50, parseInt(t.quantity, 10) || 1))
   let 줄열쇠 = 결제.소모성[t.productId] * 수량
+  let 처음 = false   // 🔔 이번에 «처음» 원장에 적혔나
   try {
     // 🧪 연습 결제(Sandbox = TestFlight·심사관 · 돈 안 나감)는 «한 계정 하루 한 번»만 열쇠를 준다(창업자 10/24)
     //   ⭐ 심사관은 한 번 사 보면 통과 · 계속 눌러 공짜 열쇠 받기는 막힌다 · 두 번째부터는 기록만(앱은 거래를 끝낸다)
@@ -1580,11 +1599,13 @@ async function 애플구매하나(env, 통, id) {
       const c = await db.prepare("SELECT COUNT(*) AS n FROM 산구매 WHERE 통 = ? AND 주문 = 'apple:Sandbox' AND 처음 > ? AND 토큰 != ?").bind(통, 지금 - 86400000, 토큰).first()
       if (c && c.n >= 1) 줄열쇠 = 0
     }
-    await db.prepare('INSERT OR IGNORE INTO 산구매 (토큰, 상품, 통, 주문, 상태, 확인, 비움, 처음, 때) VALUES (?, ?, ?, ?, 0, 0, 0, ?, ?)')
+    const 새줄 = await db.prepare('INSERT OR IGNORE INTO 산구매 (토큰, 상품, 통, 주문, 상태, 확인, 비움, 처음, 때) VALUES (?, ?, ?, ?, 0, 0, 0, ?, ?)')
       .bind(토큰, t.productId, 통, `apple:${t.environment || ''}`, 지금, 지금).run()
+    처음 = !!(새줄 && 새줄.meta && 새줄.meta.changes === 1)
     await db.prepare('INSERT OR IGNORE INTO 산열쇠 (토큰, 통, 남음, 처음, 때) VALUES (?, ?, ?, ?, ?)')
       .bind(토큰, 통, 줄열쇠, 지금, 지금).run()
   } catch { return { ok: false, reason: 'db_error' } }
+  if (처음 && t.environment !== 'Sandbox') await 창업자알림(env, '애플')
   return { ok: true, sandbox: t.environment === 'Sandbox', ...(줄열쇠 === 0 ? { 시험한도: true } : {}) }
 }
 
