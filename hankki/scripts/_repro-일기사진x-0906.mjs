@@ -28,6 +28,11 @@ const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const 점 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 } })
+// ⭐ 매달 1일엔 샘플 일기(어제)가 «지난달»이라 재현이 엉뚱한 데서 죽는다(2026-11-01 배포 막힘 · 지난 판 374ab025 도 똑같이 죽음)
+//    → 1일에만 «이 재현판의 브라우저 시계»를 다음날로 둔다(앱 날짜는 안 건드린다)
+const 진짜오늘 = new Date()
+const 시계 = 진짜오늘.getDate() === 1 ? new Date(진짜오늘.getTime() + 86400000) : null
+if (시계) await ctx.clock.setFixedTime(시계)
 await ctx.addInitScript(SEED_COACH_SEEN)
 await ctx.addInitScript((사진) => {
   try {
@@ -48,7 +53,7 @@ const 엑스수 = () => p.getByRole('button', { name: '사진 지우기' }).coun
 
 await p.locator('.bottom-nav .nav-item').filter({ hasText: '일기' }).first().click(); await p.waitForTimeout(1200)
 // ⭐ 심은 일기는 앱 초기화가 덮어썼다(저장된 diary = 샘플 하나) → «샘플 일기»(어제 · 불고기 사진 ph_snap)를 그대로 쓴다. 사진이 있는 진짜 일기라 더 맞다.
-const 어제 = new Date(); 어제.setDate(어제.getDate() - 1); const D = 어제.getDate()
+const 어제 = new Date(시계 || 진짜오늘); 어제.setDate(어제.getDate() - 1); const D = 어제.getDate()
 await p.locator('button.cal-day').filter({ has: p.locator('.cal-num', { hasText: new RegExp(`^${D}$`) }) }).first().click(); await p.waitForTimeout(1200)
 const 사진있나 = await p.locator('img[alt=""]').count()
 적기(사진있나 > 0, `사진칸에 사진이 들어 있다(img ${사진있나})`)
