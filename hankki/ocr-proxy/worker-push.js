@@ -105,13 +105,16 @@ export default {
         const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
         if (!소식.length) return json({ error: 'none' }, 404, cors)
         await kv.put(칸.창업자소식, '[]')
-        const 셈 = { 구글: 0, 애플: 0, 시험: 0, 오류: 0 }
+        const 셈 = { 구글: 0, 애플: 0, 시험: 0, 오류: 0, 한도사진: 0, 한도정리: 0 }
         for (const x of 소식) 셈[셈[x.가게] != null ? x.가게 : '구글']++
         const 줄 = [셈.구글 ? `갤럭시 ${셈.구글}건` : '', 셈.애플 ? `아이폰 ${셈.애플}건` : '', 셈.시험 ? `알림 시험 ${셈.시험}건(진짜 구매 아님)` : ''].filter(Boolean).join(' · ')
         // ⚠️ [2026-11-02 운영 2단계] 처음 보는 앱 오류 — 구매 알림과 «같은 길»(창업자 폰 · 빈 푸시 → 여기서 문구)
         const 오류줄 = 셈.오류 ? `처음 보는 오류 ${셈.오류}가지 — Cloudflare 기록(hankki-push 로그)에서 「앱오류」로 찾기` : ''
-        if (오류줄 && !줄) return json({ 제목: '⚠️ 앱에 처음 보는 오류가 났어요', 본문: 오류줄, 길: './ops.html', 표: 'hankki-error' }, 200, { ...cors, 'Cache-Control': 'no-store' })
-        return json({ 제목: '🔑 레시피열쇠가 팔렸어요', 본문: [줄, 오류줄].filter(Boolean).join(' · '), 길: './ops.html', 표: 'hankki-sale' }, 200, { ...cors, 'Cache-Control': 'no-store' })
+        // 📈 [2026-11-02 운영 3단계] 한도 70% — 사진(이번 달 900 중) · 정리(오늘 200 중) · 다 차면 무료 유저가 못 쓴다
+        const 한도줄 = [셈.한도사진 ? '사진 읽기가 이번 달 한도의 70%를 넘었어요' : '', 셈.한도정리 ? 'AI 정리가 오늘 한도의 70%를 넘었어요' : ''].filter(Boolean).join(' · ')
+        if (한도줄 && !줄 && !오류줄) return json({ 제목: '📈 사용량이 한도의 70%를 넘었어요', 본문: 한도줄 + ' — 다 차면 무료 유저가 못 써요', 길: './ops.html', 표: 'hankki-quota' }, 200, { ...cors, 'Cache-Control': 'no-store' })
+        if (오류줄 && !줄) return json({ 제목: '⚠️ 앱에 처음 보는 오류가 났어요', 본문: [오류줄, 한도줄].filter(Boolean).join(' · '), 길: './ops.html', 표: 'hankki-error' }, 200, { ...cors, 'Cache-Control': 'no-store' })
+        return json({ 제목: '🔑 레시피열쇠가 팔렸어요', 본문: [줄, 오류줄, 한도줄].filter(Boolean).join(' · '), 길: './ops.html', 표: 'hankki-sale' }, 200, { ...cors, 'Cache-Control': 'no-store' })
       }
       if (!env.FOUNDER_SECRET || request.headers.get('x-hankki-founder') !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
       let body = null
@@ -126,7 +129,7 @@ export default {
       }
       if (url.pathname === '/founder/ping' && request.method === 'POST') {
         const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
-        소식.push({ 가게: ['애플', '시험'].includes(body?.가게) ? body.가게 : '구글', 때: Date.now() })
+        소식.push({ 가게: ['애플', '시험', '한도사진', '한도정리'].includes(body?.가게) ? body.가게 : '구글', 때: Date.now() })
         await kv.put(칸.창업자소식, JSON.stringify(소식.slice(-20)))
         const 폰들 = (await kv.get(칸.창업자폰, 'json')) || []
         if (!폰들.length) return json({ ok: true, 보냄: 0, 왜: '창업자 폰이 아직 없다(ops.html 「구매 알림 받기」)' }, 200, cors)
