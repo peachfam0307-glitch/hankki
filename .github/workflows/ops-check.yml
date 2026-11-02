@@ -1,0 +1,39 @@
+# 🩺 운영 점검 1단계 (창업자 2026-11-02 「문제가 발생했을때 즉각대응 · 원인파악이 바로」)
+#   매일 아침 08:37 KST 한 번 — 점검하는 곳은 «여기 한 곳»(운영-큰틀-설계안 2판)
+#   실패하면 GitHub 이 저장소 주인에게 메일을 보낸다 = 「조용하면 정상 · 메일 오면 문제」
+#   ⛔ 비밀 열쇠를 쓰지 않는다 — 공개로 보이는 것만 잰다(열쇠 넣는 건 2단계 · 창업자 손)
+name: ops-check
+on:
+  schedule:
+    - cron: '37 23 * * *'   # UTC 23:37 = KST 08:37
+  workflow_dispatch: {}
+permissions:
+  actions: read
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 점검
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          실패=0
+          잰다() {  # 이름 · 주소 · 살아 있다고 볼 응답(정규식)
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$2" || echo 000)
+            if echo "$code" | grep -Eq "$3"; then echo "✅ $1 = $code"; else echo "❌ $1 = $code ($2)"; 실패=1; fi
+          }
+          잰다 '사이트'      'https://peachfam0307-glitch.github.io/hankki/' '^200$'
+          잰다 '푸시 워커'   'https://hankki-push.annyeong-hankki.workers.dev/vapid' '^200$'
+          # 열쇠 없이 계기판을 부르면 401 = 워커가 살아서 문을 지키는 것
+          잰다 '사진 워커'   'https://hankki-ocr.annyeong-hankki.workers.dev/?quota=1' '^(401|500)$'
+          잰다 '정리 워커'   'https://hankki-tidy.annyeong-hankki.workers.dev/?quota=1' '^(401|500)$'
+          # 마지막 웹 배포가 성공했나 (기본 갈래 = 배포 갈래)
+          last=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/$REPO/actions/workflows/deploy-hankki.yml/runs?per_page=1&status=completed" \
+            | python3 -c 'import sys,json; r=json.load(sys.stdin)["workflow_runs"][0]; print(r["conclusion"], r["run_number"], r["head_sha"][:8], r["updated_at"])')
+          echo "마지막 배포 = $last"
+          case "$last" in success*) echo "✅ 배포";; *) echo "❌ 마지막 배포가 실패"; 실패=1;; esac
+          exit $실패
