@@ -25,6 +25,30 @@ const { readFileSync } = await import('node:fs')
 const ocr = readFileSync(new URL('../ocr-proxy/worker.js', import.meta.url), 'utf8')
 const tidy = readFileSync(new URL('../ocr-proxy/worker-tidy.js', import.meta.url), 'utf8')
 잰다(/MONTHLY_GLOBAL \* 0\.7/.test(ocr) && /'한도사진'/.test(ocr) && /qa:\$\{ym\}/.test(ocr), '④ 사진 워커 = 이번 달 70% · 달마다 한 번')
-잰다(/DAILY_GLOBAL \* 0\.7/.test(tidy) && /'한도정리'/.test(tidy) && /qa:\$\{ymd\}/.test(tidy), '⑤ 정리 워커 = 오늘 70% · 하루 한 번')
+// ⑤ 정리 워커를 «실제로» 돌린다 — 가짜 AI·KV·PUSH 바인딩 · 오늘 칸을 139(문턱 140 바로 아래)로 두고 두 번 부른다
+{
+  const 칸 = new Map(); const tkv = { get: async (k) => 칸.get(k) ?? null, put: async (k, v) => { 칸.set(k, String(v)) } }
+  const { default: tw } = await import('../ocr-proxy/worker-tidy.js')
+  const { todayKST } = await import('../src/today.js')
+  const 핑 = []
+  const tenv = { TIDY_KV: tkv, APP_TOKEN: 't', FOUNDER_SECRET: 'f', AI: { run: async () => ({ response: '{"title":"김치찌개","ingredients":[],"steps":[]}' }) },
+    PUSH: { fetch: async (u, o) => { 핑.push(JSON.parse(o.body).가게); return new Response('{}') } } }
+  const 대기 = []; const tctx = { waitUntil: (p) => 대기.push(p) }
+  const 부름 = () => tw.fetch(new Request('https://t.example/', { method: 'POST', headers: { Origin: 'https://peachfam0307-glitch.github.io', 'x-hankki-token': 't', 'Content-Type': 'application/json' }, body: JSON.stringify({ text: '김치찌개\n김치 300g\n돼지고기 200g\n1. 볶는다\n2. 끓인다' }) }), tenv, tctx)
+  // ⚠️ 한 번 부를 때 모델을 «여러 번» 부를 수 있다(앞 모델 실패 → 다음 모델) — 통은 «모델 부른 횟수»로 센다(상한과 같은 잣대).
+  //    그래서 «몇 번 불렀나»가 아니라 «통이 몇이 됐나»로 판정한다(2026-11-02 실측: 가짜 AI 한 번 = 통 +2)
+  const 통 = () => Number(칸.get(`td:${todayKST()}`) || 0)
+  칸.set(`td:${todayKST()}`, '100'); await 부름(); await Promise.all(대기)
+  잰다(통() < 140 && 핑.length === 0, `⑤-1 문턱 아래(통 ${통()}) → 안 울림 (핑 ${핑.length})`)
+  칸.set(`td:${todayKST()}`, '139'); await 부름(); await Promise.all(대기)
+  잰다(통() >= 140 && 핑.length === 1 && 핑[0] === '한도정리', `⑤-2 140 넘음(통 ${통()}) → 1번 「${핑[0]}」`)
+  await 부름(); await 부름(); await Promise.all(대기)
+  잰다(핑.length === 1, `⑤-3 같은 날 더 불러도 안 울림 (통 ${통()} · 핑 ${핑.length})`)
+  // ⑤-4 바인딩이 «있을 때»와 «없을 때» 답이 같아야 한다(가짜 AI 는 빈 답이라 둘 다 «모델 다 실패» 답이 나온다 — 그 답이 같으면 된다)
+  const 있을때 = (await 부름()).status
+  delete tenv.PUSH; 칸.delete(`qa:${todayKST()}`)
+  let 끝 = 0; try { 끝 = (await 부름()).status } catch (e) { 끝 = String(e) }
+  잰다(끝 === 있을때, `⑤-4 PUSH 바인딩이 없어도 답이 같다 (있을 때 ${있을때} · 없을 때 ${끝})`)
+}
 console.log(틀림 ? `⛔ ${틀림}칸 어긋남` : '✅ 한도 70% 알림')
 process.exit(틀림 ? 1 : 0)
