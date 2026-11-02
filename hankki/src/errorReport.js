@@ -61,11 +61,36 @@ export function 오류보내기(err, 종류 = 'error') {
 /** 앱 시작에 한 번 — 잡히지 않은 오류 · 놓친 약속(promise) · 누른 것의 종류 */
 export function 오류받기시작() {
   try {
-    window.addEventListener('error', (e) => 오류보내기(e.error || e.message, 'error'))
+    // 🖼 그림을 못 불러온 것도 «error» 로 온다(바깥 자원 오류 · 잡으려면 capture) — 오류 글이 비어서 따로 갈라 보낸다
+    //    ⛔ 유저 사진(data:·blob:)은 주소를 안 싣는다 — 우리 그림 주소만(파일 이름까지)
+    window.addEventListener('error', (e) => {
+      const t = e.target
+      if (t && t !== window && t.tagName === 'IMG') {
+        const 주소 = String(t.currentSrc || t.src || '')
+        if (/^(data|blob):/.test(주소) || !주소) return
+        return 오류보내기({ message: `그림 못 불러옴: ${주소.replace(/^.*\/assets\//, 'assets/').slice(-120)}` }, '그림')
+      }
+      오류보내기(e.error || e.message, 'error')
+    }, true)
+    // 💾 저장 실패(서랍 가득) — store.jsx 가 이미 알리는 신호를 그대로 받는다(store.jsx:1559)
+    window.addEventListener('hankki:storagefull', () => 오류보내기({ message: '저장 실패(폰 서랍 가득)' }, '저장실패'))
     window.addEventListener('unhandledrejection', (e) => 오류보내기(e.reason, 'promise'))
     document.addEventListener('click', (e) => {
       const t = e.target?.closest?.('button, a, [role="button"]')
       if (t) 행동적기(`누름:${t.tagName.toLowerCase()}.${String(t.className || '').split(' ').filter((c) => c && c !== 'press')[0] || ''}`)
     }, { capture: true, passive: true })
   } catch { /* 무시 */ }
+}
+
+/** ✉️ 「도움말 및 문의」 메일 아래에 붙일 꾸러미 — 유저가 «직접» 보내는 메일이라 켜짐과 무관하다(보기 전에 지울 수 있다)
+ *  ⛔ 개인 내용 없음 — 판 · 기기 · 보던 화면 · 직전 행동(화면 이름·누른 것의 종류)뿐 */
+export function 문의꾸러미() {
+  try {
+    return [
+      '', '', '───────────',
+      '아래는 문제를 찾는 데 쓰는 정보예요. 지우고 보내셔도 돼요.',
+      `판 ${APP_VERSION} · ${기기()} · 화면 ${보던화면 || '-'}`,
+      `직전: ${직전.slice(-6).join(' > ') || '-'}`,
+    ].join('\n')
+  } catch { return '' }
 }
