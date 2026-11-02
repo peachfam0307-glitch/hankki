@@ -26,6 +26,6 @@ console.log('── 메일 본문 ──\n' + 본문)
 // 그림 못 불러옴 · 저장 실패 신호 — 꺼짐이라 안 나가야 한다
 await p.evaluate(() => { const i = new Image(); i.src = './assets/없는그림.png'; document.body.appendChild(i); window.dispatchEvent(new CustomEvent('hankki:storagefull')) })
 await p.waitForTimeout(800)
-const ok = 본문.includes('판 v') && 본문.includes('직전:') && 보냄.length === 0
+const ok = 본문.includes('앱 버전 v') && 본문.includes('확인용 기록:') && 보냄.length === 0
 console.log(`/error 요청 ${보냄.length}개(꺼짐이면 0) · ${ok ? '✅' : '⛔'}`)
 await b.close(); srv.kill(); process.exit(ok ? 0 : 1)
