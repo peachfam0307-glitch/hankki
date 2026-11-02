@@ -37,7 +37,7 @@ if (값) {
         }
         // 재현판이 창에 «제 Date» 를 심으면(addInitScript 안에 Date) 그것도 «스스로 만진 것»이다 — 겹치면 둘이 싸운다(실측 11월카드)
         const 심기 = c.addInitScript.bind(c)
-        c.addInitScript = (s, ...b) => { if (/\bDate\b/.test(typeof s === 'function' ? String(s) : JSON.stringify(s ?? ''))) 만짐 = true; return 심기(s, ...b) }
+        c.addInitScript = (s, ...b) => { if (/\bDate\s*=(?!=)|defineProperty\([^)]*['"]Date/.test(typeof s === 'function' ? String(s) : JSON.stringify(s ?? ''))) 만짐 = true; return 심기(s, ...b) }
         const 창 = c.newPage.bind(c)
         // ⚠️ clock.install 은 창마다 «같은 시각에서» 다시 출발한다 → 창 둘이 같은 「지금」을 가져 순서가 뒤집혔다(실측 공유사진크기)
         //    그래서 창 안의 Date 를 «진짜 시계 ＋ 차이»로 바꿔 심는다 — 창이 몇 개든 시간이 한 줄로 흐른다
