@@ -9,8 +9,8 @@
 // ⛔ 통계 끄기를 켠 사람 = 안 보낸다 (창업자 결정 3 · 2026-11-02)
 // ⛔ 개인 내용은 «담지 않는다» — 글·사진·레시피 제목·메일. 직전 행동은 «화면 이름»과 «누른 것의 종류»(태그·첫 class)뿐.
 // ⛔ 이 코드가 터져도 앱은 안 죽는다 — 전부 try 로 감싸고, 보내기는 답을 안 기다린다.
-import { APP_VERSION } from './version'
-import { todayKST } from './today'
+import { APP_VERSION } from './version.js'   // ⛔ .js 를 붙인다 — 재현판이 node 로 직접 불러온다(안 붙이면 스모크 10여 판이 죽는다 · 2026-11-02 실측)
+import { todayKST } from './today.js'
 // ⛔ stats·ocr·pushSubscribe 를 «위에서» 부르지 않는다 — main 조각이 무거워진다(ocr = tesseract · stats 는 늦게 불러오는 조각)
 //    통계 끔은 같은 열쇠를 직접 읽고(stats.js:35 와 같은 값), 앱 열쇠는 보낼 때만 불러온다
 const PUSH_URL = 'https://hankki-push.annyeong-hankki.workers.dev'   // pushSubscribe.js:16 · sw.js:173 과 같은 값
@@ -53,7 +53,7 @@ export function 오류보내기(err, 종류 = 'error') {
     const 위치 = String(err?.stack || '').split('\n').slice(0, 8).join('\n').slice(0, 1500)
     if (오늘몇번(`${종류}|${메시지}`.slice(0, 120)) > 3) return false
     const 몸 = JSON.stringify({ 판: APP_VERSION, 기기: 기기(), 화면: 보던화면, 종류, 메시지, 위치, 직전: [...직전] })
-    import('./ocr').then(({ OCR_APP_TOKEN }) => fetch(`${PUSH_URL}/error`, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }, body: 몸 })).catch(() => {})
+    import('./ocr.js').then(({ OCR_APP_TOKEN }) => fetch(`${PUSH_URL}/error`, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }, body: 몸 })).catch(() => {})
     return true
   } catch { return false }
 }
