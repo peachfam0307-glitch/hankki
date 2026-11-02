@@ -29,7 +29,8 @@ export function 화면적기(이름) { 보던화면 = String(이름 || ''); 행�
 function 기기() {
   try {
     if (window.Capacitor?.isNativePlatform?.()) return 'ios'
-    if (document.referrer.startsWith('android-app://') || matchMedia('(display-mode: standalone)').matches) return 'android'
+    // ⛔ 「홈 화면에 설치」만으로 갤럭시라 하지 않는다 — 아이폰 사파리·컴퓨터 설치판도 standalone 이다(2026-11-02 검토)
+    if (document.referrer.startsWith('android-app://') || (/Android/i.test(navigator.userAgent) && matchMedia('(display-mode: standalone)').matches)) return 'android'
   } catch { /* 무시 */ }
   return 'web'
 }
@@ -49,7 +50,8 @@ function 오늘몇번(지문) {
 export function 오류보내기(err, 종류 = 'error') {
   try {
     if (!켜짐 || 통계꺼짐()) return false
-    const 메시지 = String(err?.message || err || '').slice(0, 300)
+    // ⛔ 따옴표 안은 가린다 — 크롬 JSON.parse 오류는 «입력 앞부분»(레시피 글·붙여넣은 글)을 메시지에 싣는다(2026-11-02 검토)
+    const 메시지 = String(err?.message || err || '').replace(/"[^"]*"/g, '"…"').replace(/'[^']{12,}'/g, "'…'").slice(0, 300)
     const 위치 = String(err?.stack || '').split('\n').slice(0, 8).join('\n').slice(0, 1500)
     if (오늘몇번(`${종류}|${메시지}`.slice(0, 120)) > 3) return false
     const 몸 = JSON.stringify({ 판: APP_VERSION, 기기: 기기(), 화면: 보던화면, 종류, 메시지, 위치, 직전: [...직전] })
@@ -65,10 +67,15 @@ export function 오류받기시작() {
     //    ⛔ 유저 사진(data:·blob:)은 주소를 안 싣는다 — 우리 그림 주소만(파일 이름까지)
     window.addEventListener('error', (e) => {
       const t = e.target
-      if (t && t !== window && t.tagName === 'IMG') {
-        const 주소 = String(t.currentSrc || t.src || '')
-        if (/^(data|blob):/.test(주소) || !주소) return
-        return 오류보내기({ message: `그림 못 불러옴: ${주소.replace(/^.*\/assets\//, 'assets/').slice(-120)}` }, '그림')
+      if (t && t !== window && t.tagName) {
+        // 🖼 그림·스크립트·글씨체 같은 «자원» 못 불러옴 — 오류 글이 비어 있으니 우리가 이름을 붙인다
+        //   ⛔ 우리 사이트의 /assets/ 주소만 싣는다 — 남의 주소(레시피 썸네일·SNS)는 «어떤 레시피를 담았나»가 드러나서 고정 글로(2026-11-02 검토)
+        if (t.tagName !== 'IMG' && t.tagName !== 'SCRIPT' && t.tagName !== 'LINK') return
+        const 주소 = String(t.currentSrc || t.src || t.href || '')
+        if (!주소 || /^(data|blob):/.test(주소)) return
+        let 우리것 = ''
+        try { const u = new URL(주소, location.href); if (u.origin === location.origin && u.pathname.includes('/assets/')) 우리것 = u.pathname.replace(/^.*\/assets\//, 'assets/').slice(-120) } catch { /* 무시 */ }
+        return 오류보내기({ message: `${t.tagName === 'IMG' ? '그림' : '자원'} 못 불러옴: ${우리것 || '바깥 주소'}` }, t.tagName === 'IMG' ? '그림' : '자원')
       }
       오류보내기(e.error || e.message, 'error')
     }, true)
