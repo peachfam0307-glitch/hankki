@@ -35,6 +35,9 @@ if (값) {
             return f(x, ...b)
           }
         }
+        // 재현판이 창에 «제 Date» 를 심으면(addInitScript 안에 Date) 그것도 «스스로 만진 것»이다 — 겹치면 둘이 싸운다(실측 11월카드)
+        const 심기 = c.addInitScript.bind(c)
+        c.addInitScript = (s, ...b) => { if (/\bDate\b/.test(typeof s === 'function' ? String(s) : JSON.stringify(s ?? ''))) 만짐 = true; return 심기(s, ...b) }
         const 창 = c.newPage.bind(c)
         // setSystemTime 은 install 없이는 안 먹는다(실측) → install 로 옮긴다(시계는 계속 흐른다)
         c.newPage = async (...b) => { if (!만짐) await c.clock.install({ time: 진짜.now() + 차이 }); return 창(...b) }

@@ -6,12 +6,20 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 const 인자 = process.argv.slice(2), 값 = (k) => { const i = 인자.indexOf(k); return i < 0 ? null : 인자[i + 1] }
+// ⚠️ 위험한 날은 «앞으로 올» 날만 — 지난 날로 돌리면 이미 열린 레시피·카드가 «아직 안 열린» 것이 돼서
+//    날짜 탓이 아닌데 다 죽는다(2026-11-02 실측: 1월·3월로 돌리니 멀쩡한 판까지 전부 빨강).
+//    그래서 «오늘(KST)» 기준으로 다가오는 달 끝·달 첫날·해 끝·새해를 그때그때 만든다.
+const { todayKST } = await import('../src/today.js')
+const [Y, M] = todayKST().split('-').map(Number)
+const 두자리 = (n) => String(n).padStart(2, '0')
+const 말일 = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate()   // m = 1~12
+const 다음달 = M === 12 ? [Y + 1, 1] : [Y, M + 1]
 const 위험날 = 값('--날') ? [값('--날')] : [
-  '2026-01-31T23:30:00+09:00',   // 달 끝 · 밤
-  '2026-03-01T00:10:00+09:00',   // 달 첫날 · 자정 직후(2월 다음)
-  '2026-12-31T23:50:00+09:00',   // 해 끝
-  '2027-01-01T08:30:00+09:00',   // 새해 첫날 · KST 오전(UTC 는 전날)
-]
+  `${Y}-${두자리(M)}-${말일(Y, M)}T23:30:00+09:00`,                 // 이번 달 끝 · 밤
+  `${다음달[0]}-${두자리(다음달[1])}-01T00:10:00+09:00`,            // 다음 달 첫날 · 자정 직후
+  `${Y}-12-31T23:50:00+09:00`,                                      // 해 끝
+  `${Y + 1}-01-01T08:30:00+09:00`,                                  // 새해 첫날 · KST 오전(UTC 는 전날)
+].filter((v, i, a) => a.indexOf(v) === i)
 const 스모크 = readFileSync(new URL('../package.json', import.meta.url), 'utf8')
 const 판들 = readdirSync(new URL('.', import.meta.url)).filter((f) => /^_repro-.*\.mjs$/.test(f))
   .filter((f) => 스모크.includes(`scripts/${f}`))
