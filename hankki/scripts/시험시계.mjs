@@ -26,12 +26,12 @@ if (값) {
         // ⚠️ 가짜 Date 객체를 그대로 넘기면 playwright 가 엉뚱한 시각으로 읽는다(실측 10/17) → 숫자로 바꿔 넘긴다
         //    ＋ playwright 는 «node 쪽 지금»과의 차이로 창 시각을 잡는다(실측: 창 = 진짜지금 + (준값 − 가짜지금))
         //      → 시각(절대값)을 넘길 땐 «차이»를 더해 상쇄한다. 길이(runFor·fastForward)는 그대로.
-        const 시각으로 = (v) => { const t = v instanceof 진짜 ? v.getTime() : typeof v === 'string' ? 진짜.parse(v) : v; return typeof t === 'number' ? t + 차이 : v }
+        const 시각으로 = (v) => { const t = v instanceof 진짜 ? v.getTime() : typeof v === 'string' ? 진짜.parse(v) : v; return typeof t === 'number' ? t : v }   // 숫자로만 넘기면 playwright 가 그대로 쓴다(실측 2026-11-02 · 더하면 미래 날짜에서 어긋남)
         for (const k of ['install', 'setFixedTime', 'setSystemTime', 'pauseAt', 'runFor', 'fastForward']) {
           const f = c.clock[k].bind(c.clock), 길이 = k === 'runFor' || k === 'fastForward'
           c.clock[k] = (x, ...b) => {
             만짐 = true
-            if (!길이) { if (k === 'install') x = x && 'time' in x ? { ...x, time: 시각으로(x.time) } : { ...(x || {}), time: 진짜.now() + 차이 + 차이 }; else x = 시각으로(x) }
+            if (!길이) { if (k === 'install') x = x && 'time' in x ? { ...x, time: 시각으로(x.time) } : { ...(x || {}), time: 진짜.now() + 차이 }; else x = 시각으로(x) }
             return f(x, ...b)
           }
         }
@@ -39,8 +39,12 @@ if (값) {
         const 심기 = c.addInitScript.bind(c)
         c.addInitScript = (s, ...b) => { if (/\bDate\b/.test(typeof s === 'function' ? String(s) : JSON.stringify(s ?? ''))) 만짐 = true; return 심기(s, ...b) }
         const 창 = c.newPage.bind(c)
-        // setSystemTime 은 install 없이는 안 먹는다(실측) → install 로 옮긴다(시계는 계속 흐른다)
-        c.newPage = async (...b) => { if (!만짐) await c.clock.install({ time: 진짜.now() + 차이 }); return 창(...b) }
+        // ⚠️ clock.install 은 창마다 «같은 시각에서» 다시 출발한다 → 창 둘이 같은 「지금」을 가져 순서가 뒤집혔다(실측 공유사진크기)
+        //    그래서 창 안의 Date 를 «진짜 시계 ＋ 차이»로 바꿔 심는다 — 창이 몇 개든 시간이 한 줄로 흐른다
+        c.newPage = async (...b) => {
+          if (!만짐) { 만짐 = true; await 심기(`(()=>{const R=Date,D=${차이};class F extends R{constructor(...a){a.length?super(...a):super(R.now()+D)}static now(){return R.now()+D}};Date=F})()`) }
+          return 창(...b)
+        }
         return c
       }
       const 원래쪽 = 브라우저.newPage.bind(브라우저)
