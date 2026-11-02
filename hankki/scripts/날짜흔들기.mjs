@@ -36,12 +36,20 @@ const 돌림 = (f, 날) => spawnSync('node', [`scripts/${f}`], {
   cwd: new URL('..', import.meta.url).pathname, env: { ...process.env, HANKKI_NOW: 날 || '', NODE_OPTIONS: `${process.env.NODE_OPTIONS || ''} --import=${시계}`.trim() }, encoding: 'utf8', timeout: 240000,
 }).status
 console.log(`🗓 대상 ${판들.length}판 × 날짜 ${위험날.length}개`)
-const 흔들 = []
+const 흔들 = [], 흔들림 = []
 for (const f of 판들) {
   const 오늘 = 돌림(f, '')
-  if (오늘 !== 0) { console.log(`⚪ ${f} — 오늘부터 실패(exit ${오늘}) · 날짜 탓 아님 · 따로 본다`); continue }
+  // 🎲 흔들리는 판 표시 — 오늘 실패하면 한 번만 더 돌린다. 두 번째에 통과하면 «가끔 실패»(코드가 아니라 느림·순서 탓일 수 있다)
+  //    ⛔ 「가끔」이라도 원인은 찾는다 — 표시는 «덮는» 게 아니라 «보이게» 하는 것이다
+  if (오늘 !== 0) {
+    const 다시 = 돌림(f, '')
+    if (다시 === 0) { 흔들림.push(f); console.log(`🎲 ${f} — 가끔 실패(1번째 exit ${오늘} · 2번째 통과) · 원인 따로 본다`) }
+    else console.log(`⚪ ${f} — 오늘부터 실패(두 번 다 exit ${다시}) · 날짜 탓 아님 · 따로 본다`)
+    continue
+  }
   const 죽은날 = 위험날.filter((d) => 돌림(f, d) !== 0)
   if (죽은날.length) { 흔들.push([f, 죽은날]); console.log(`🔴 ${f} — 죽는 날: ${죽은날.join(' · ')}`) } else console.log(`✅ ${f}`)
 }
 console.log(흔들.length ? `\n⛔ 날짜 탓으로 죽는 판 ${흔들.length}개 — 그날이 오면 배포가 막힌다` : '\n✅ 날짜 탓으로 죽는 판 없음')
+if (흔들림.length) console.log(`🎲 가끔 실패하는 판 ${흔들림.length}개: ${흔들림.join(' · ')}`)
 process.exit(흔들.length ? 1 : 0)
