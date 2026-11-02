@@ -20,13 +20,20 @@ const 위험날 = 값('--날') ? [값('--날')] : [
   `${Y}-12-31T23:50:00+09:00`,                                      // 해 끝
   `${Y + 1}-01-01T08:30:00+09:00`,                                  // 새해 첫날 · KST 오전(UTC 는 전날)
 ].filter((v, i, a) => a.indexOf(v) === i)
+// 🚫 뺄 판 = «저장소의 실제 상태»(문서 날짜·git 이력)를 보는 판 — 시계만 옮기면 그 상태가 안 따라와서 «날짜 탓이 아닌데» 죽는다. ⛔이유 없이 넣지 말 것
+const 제외 = {
+  '_repro-문서다이어트-0903.mjs': 'hello-read 가 «최근 14일 문서»를 실제 파일 날짜로 고른다 — 가짜 11/30 엔 11/2 문서가 밀려나 표가 바뀐다(실측 2026-11-02)',
+}
 const 스모크 = readFileSync(new URL('../package.json', import.meta.url), 'utf8')
 const 판들 = readdirSync(new URL('.', import.meta.url)).filter((f) => /^_repro-.*\.mjs$/.test(f))
   .filter((f) => 스모크.includes(`scripts/${f}`))
   .filter((f) => /new Date\(\)|Date\.now\(\)/.test(readFileSync(new URL(f, import.meta.url), 'utf8')))
   .filter((f) => !값('--판') || f.includes(값('--판')))
-const 돌림 = (f, 날) => spawnSync('node', ['--import', './scripts/시험시계.mjs', `scripts/${f}`], {
-  cwd: new URL('..', import.meta.url).pathname, env: { ...process.env, HANKKI_NOW: 날 || '' }, encoding: 'utf8', timeout: 240000,
+  .filter((f) => !(f in 제외))
+// ⚠️ 시계는 NODE_OPTIONS 로 심는다 — 재현판이 띄우는 «자식 node» 까지 같은 날이어야 한다(실측 문서다이어트: 자식만 진짜 오늘이라 어긋났다)
+const 시계 = new URL('./시험시계.mjs', import.meta.url).href
+const 돌림 = (f, 날) => spawnSync('node', [`scripts/${f}`], {
+  cwd: new URL('..', import.meta.url).pathname, env: { ...process.env, HANKKI_NOW: 날 || '', NODE_OPTIONS: `${process.env.NODE_OPTIONS || ''} --import=${시계}`.trim() }, encoding: 'utf8', timeout: 240000,
 }).status
 console.log(`🗓 대상 ${판들.length}판 × 날짜 ${위험날.length}개`)
 const 흔들 = []
