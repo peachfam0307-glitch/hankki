@@ -2,6 +2,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import ErrorBoundary from './ErrorBoundary'
+import { 오류받기시작 } from './errorReport'   // ⚠️ 운영 2단계 — 켜는 날 전엔 «직전 행동»만 메모리에 적는다(보내지 않음)
 import { StoreProvider } from './store'
 import { TimerProvider } from './timer'
 import { applyTheme, getTheme } from './theme'
@@ -127,6 +128,7 @@ Promise.resolve()
 //   ⭐ 안에서 requestIdleCallback 으로 한 번 더 미룬다. measurementId 가 비어 있으면 아무 일도 안 한다.
 //   ⛔ 여기서 await 하거나 오류를 위로 던지지 않는다 — 통계가 죽어도 앱은 그대로 돌아야 한다.
 import('./stats').then((m) => m.통계시작()).catch(() => {})
+오류받기시작()
 
 // 💳 [2026-10-22] 산 열쇠 따라붙이기 — 살 때 놓친 구매를 워커에 다시 보낸다(3초 뒤 · 결제 되는 기기에서만).
 //   ⭐ 아무도 안 샀으면 구글 목록이 비어 있어 아무 일도 안 한다.

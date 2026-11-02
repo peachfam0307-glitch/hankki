@@ -6,7 +6,7 @@
   "description": "한끼 — 흩어진 레시피를, 한곳에. 나만의 레시피 아카이브.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/소스맵옮기기.mjs",
     "postbuild": "node scripts/push-schedule.mjs",
     "preview": "vite preview",
     "test:link": "node scripts/test-linkrules.mjs",

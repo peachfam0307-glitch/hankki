@@ -103,6 +103,14 @@ jobs:
         env:
           SMOKE_JOBS: 2
         run: npm run smoke
+      # 🗺 [2026-11-02 운영 2단계] 숨긴 소스맵을 «사이트 밖»에 90일 보관 — 받은 오류 위치를 풀 때 그 판 지도를 받는다
+      #    (`npm run build` 가 dist 밖 .sourcemaps/<판>/ 으로 옮긴다 · 사이트엔 안 올라간다)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sourcemaps-${{ github.run_number }}
+          path: hankki/.sourcemaps/
+          retention-days: 90
+          if-no-files-found: warn
       - uses: actions/upload-pages-artifact@v3
         with:
           path: hankki/dist

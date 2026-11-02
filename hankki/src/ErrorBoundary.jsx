@@ -1,4 +1,5 @@
 import React from 'react'
+import { 오류보내기 } from './errorReport'
 
 // 🛟 앱이 통째로 하얘지는 걸 막는 마지막 안전망.
 //
@@ -32,6 +33,9 @@ export default class ErrorBoundary extends React.Component {
         before: log && log.at,
       }))
     } catch { /* 저장이 꽉 찼어도 화면은 떠야 한다 */ }
+    // ⚠️ [2026-11-02 운영 2단계] 켜는 날부터 꾸러미를 보낸다 — 그 전엔 아무것도 안 나간다(errorReport.js `켜짐`)
+    //    ⛔ 위 「어디로도 전송하지 않는다」 약속은 «켜는 날 신고·privacy.html 을 같이 고칠 때» 함께 바뀐다
+    오류보내기(err, 'render')
   }
 
   render() {
