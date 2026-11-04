@@ -1,7 +1,7 @@
 # 🩺 운영 점검 (창업자 2026-11-02 「문제가 발생했을때 즉각대응 · 원인파악이 바로」)
 #   ⏩ 2026-11-04 창업자 「매일아침말고 매일 저녁으로」 → 「8시로 하자」 = 매일 KST 20:00 · 결과를 «창업자 폰»으로
-#   고장 = 「❌ ○○ 고장」 그날 바로 · 정상 = «일요일에만» 「✅ 다 정상」(창업자 2026-11-04 「정상일때는 안와야」→ 2번 «주 1회»)
-#   ⭐ 일요일 저녁에 정상 알림이 «안 오면» 그 자체가 신호(점검이 죽었거나 알림 길이 죽음)
+#   고장 = 「❌ ○○ 고장」 그날 바로 · 정상 = «수요일에만» 「✅ 다 정상」(창업자 2026-11-04 「정상일때는 안와야」→ 2번 «주 1회»)
+#   ⭐ 수요일 저녁에 정상 알림이 «안 오면» 그 자체가 신호(점검이 죽었거나 알림 길이 죽음)
 #   실패하면 GitHub 메일도 그대로 간다(폰 알림 길이 죽어도 메일로 안다)
 #   🔑 FOUNDER_SECRET(GitHub 비밀칸) = hankki-push 워커의 FOUNDER_SECRET 과 같은 값 · 없으면 폰 알림만 건너뛴다
 name: ops-check
@@ -51,9 +51,9 @@ jobs:
         run: |
           if [ -z "$FOUNDER_SECRET" ]; then echo "⚠️ FOUNDER_SECRET 비밀칸이 비어 폰 알림을 건너뛴다"; exit 0; fi
           # 📮 창업자 2026-11-04 「고장났을때는 오고 · 일주일에 한번씩 정상이라고 오고(매일 검사는 하지만)」
-          #    정상 = «일요일(KST)»에만 보낸다(점검이 살아 있다는 표시) · 고장 = 매일 그날 바로
-          dow=$(TZ=Asia/Seoul date +%u)   # 7 = 일요일
-          if [ "$OUTCOME" = "success" ] && [ "$dow" != "7" ]; then echo "✅ 정상 · 일요일이 아니라 폰 알림 안 보냄(dow=$dow)"; exit 0; fi
+          #    정상 = «수요일(KST)»에만 보낸다(창업자 「일요일말고 수요일에」)(점검이 살아 있다는 표시) · 고장 = 매일 그날 바로
+          dow=$(TZ=Asia/Seoul date +%u)   # 3 = 수요일
+          if [ "$OUTCOME" = "success" ] && [ "$dow" != "3" ]; then echo "✅ 정상 · 수요일이 아니라 폰 알림 안 보냄(dow=$dow)"; exit 0; fi
           if [ "$OUTCOME" = "success" ]; then kind="점검정상"; msg="사이트 · 워커 셋 · 마지막 배포 모두 정상"; else kind="점검실패"; msg="고장:${BAD:- 점검 자체가 죽음} — GitHub Actions ops-check 기록을 보세요"; fi
           body=$(python3 -c 'import json,sys; print(json.dumps({"가게": sys.argv[1], "내용": sys.argv[2]}, ensure_ascii=False))' "$kind" "$msg")
           code=$(curl -s -o /tmp/r.txt -w '%{http_code}' --max-time 20 -X POST \
