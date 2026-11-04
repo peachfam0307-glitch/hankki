@@ -56,7 +56,14 @@ let p, 오류 = []
 async function 새화면() {
   if (p) await p.close().catch(() => {})
   p = await ctx.newPage(); 오류 = []
-  p.on('pageerror', (e) => 오류.push(String(e).split('\n')[0].slice(0, 160)))
+  p.on('pageerror', (e) => {
+    const 글 = String(e).split('\n')[0].slice(0, 160)
+    // 🌐 «바깥 서버에 못 닿은 것»은 앱 고장이 아니다 — 점검 기계의 주소(127.0.0.1)는 워커가 허락한 주소가 아니라서
+    //    webkit 이 「access control checks」로 막는다(2026-11-04 첫 시험 실측). 진짜 아이폰(capacitor://localhost)은 허락돼 있다.
+    //    ⛔ 화면이 안 뜨거나 단추가 안 눌리면 그건 따로 «시간 초과»로 잡힌다 — 여기서 빼도 고장은 안 숨는다.
+    if (/access control checks|Fetch API cannot load|Failed to fetch|Load failed|NetworkError/i.test(글)) return
+    오류.push(글)
+  })
   await p.goto(주소, { waitUntil: 'domcontentloaded', timeout: 초(45) })
   await p.locator('.bottom-nav .nav-item').first().waitFor({ timeout: 초(30) })
   await p.waitForTimeout(1200)
