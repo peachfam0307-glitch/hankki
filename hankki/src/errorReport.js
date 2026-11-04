@@ -16,7 +16,7 @@ import { todayKST } from './today.js'
 const PUSH_URL = 'https://hankki-push.annyeong-hankki.workers.dev'   // pushSubscribe.js:16 · sw.js:173 과 같은 값
 const 통계꺼짐 = () => { try { return localStorage.getItem('hankki:stats:off') === '1' } catch { return true } }
 
-export const 켜짐 = false   // ⛔ 켜는 날에만 true (위 참고)
+export const 켜짐 = true   // ✅ 2026-11-05 창업자 「켜자」 — Play 데이터 보안·ASC 진단 신고 «뒤에» 켬 · 방침 6-2·8-바 같은 판
 
 const 직전 = []   // 최근 10개 — 폰 메모리에만(저장 안 함)
 export function 행동적기(무엇) {
