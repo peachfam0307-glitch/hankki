@@ -64,13 +64,13 @@ for (const [n] of 자막) {
   const 늘림 = Math.max(1, 초 / 2.95).toFixed(3)
   const 길이 = String(초)
   const out = join(W, `조각${n}.mp4`)
-  ff('-i', src, '-i', join(W, `자막${n}.png`), '-filter_complex', `[0]setpts=${늘림}*PTS,scale=1080:1920,setsar=1,fps=30[v];[v][1]overlay=0:0,format=yuv420p`, '-t', 길이, '-an', out)
+  ff('-i', src, '-i', join(W, `자막${n}.png`), '-filter_complex', `[0]setpts=${늘림}*PTS,scale=1080:1920,setsar=1,fps=30[v];[v][1]overlay=0:0,format=yuv420p`, '-t', 길이, '-an', '-crf', '14', '-preset', 'slow', out)
   조각.push(out)
 }
 const 끝 = join(W, '조각끝.mp4')
-ff('-loop', '1', '-t', '2.47', '-i', join(W, '끝장.png'), '-vf', "scale=1080:1920,setsar=1,fps=30,zoompan=z='min(1+0.0008*on,1.05)':d=1:s=1080x1920:fps=30,format=yuv420p", '-an', 끝)
+ff('-loop', '1', '-t', '2.47', '-i', join(W, '끝장.png'), '-vf', "scale=1080:1920,setsar=1,fps=30,zoompan=z='min(1+0.0008*on,1.05)':d=1:s=1080x1920:fps=30,format=yuv420p", '-an', '-crf', '14', 끝)
 조각.push(끝)
 writeFileSync(join(W, 'list.txt'), 조각.map((f) => `file '${f}'`).join('\n'))
 const 소리 = process.argv[3]
-ff('-f', 'concat', '-safe', '0', '-i', join(W, 'list.txt'), ...(소리 ? ['-i', 소리, '-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-shortest'] : []), '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-r', '30', join(W, '대표릴스-1판.mp4'))
+ff('-f', 'concat', '-safe', '0', '-i', join(W, 'list.txt'), ...(소리 ? ['-i', 소리, '-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-shortest'] : []), '-c:v', 'libx264', '-crf', '16', '-preset', 'slow', '-b:a', '192k', '-pix_fmt', 'yuv420p', '-r', '30', join(W, '대표릴스-1판.mp4'))
 console.log('✅', join(W, '대표릴스-1판.mp4'))
