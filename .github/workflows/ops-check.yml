@@ -1,11 +1,12 @@
-# 🩺 운영 점검 1단계 (창업자 2026-11-02 「문제가 발생했을때 즉각대응 · 원인파악이 바로」)
-#   매일 아침 08:37 KST 한 번 — 점검하는 곳은 «여기 한 곳»(운영-큰틀-설계안 2판)
-#   실패하면 GitHub 이 저장소 주인에게 메일을 보낸다 = 「조용하면 정상 · 메일 오면 문제」
-#   ⛔ 비밀 열쇠를 쓰지 않는다 — 공개로 보이는 것만 잰다(열쇠 넣는 건 2단계 · 창업자 손)
+# 🩺 운영 점검 (창업자 2026-11-02 「문제가 발생했을때 즉각대응 · 원인파악이 바로」)
+#   ⏩ 2026-11-04 창업자 「매일아침말고 매일 저녁으로」 → 「8시로 하자」 = 매일 KST 20:00 · 결과를 «창업자 폰»으로
+#   정상 = 「✅ 오늘 다 정상」 / 실패 = 「❌ ○○ 고장」 — ⭐ 저녁에 알림이 «안 오면» 그 자체가 신호(점검이 죽었거나 알림 길이 죽음)
+#   실패하면 GitHub 메일도 그대로 간다(폰 알림 길이 죽어도 메일로 안다)
+#   🔑 FOUNDER_SECRET(GitHub 비밀칸) = hankki-push 워커의 FOUNDER_SECRET 과 같은 값 · 없으면 폰 알림만 건너뛴다
 name: ops-check
 on:
   schedule:
-    - cron: '37 23 * * *'   # UTC 23:37 = KST 08:37
+    - cron: '0 11 * * *'   # UTC 11:00 = KST 20:00
   workflow_dispatch: {}
 permissions:
   actions: read
@@ -16,14 +17,16 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: 점검
+        id: check
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
           fail=0   # ⛔ bash 변수 이름은 ASCII 로(한글이면 「command not found」로 매일 실패 · CLAUDE.md 규칙 24 · 2026-11-02 검토에서 잡음)
+          bad=""
           잰다() {  # 이름 · 주소 · 살아 있다고 볼 응답(정규식)
             code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$2" || echo 000)
-            if echo "$code" | grep -Eq "$3"; then echo "✅ $1 = $code"; else echo "❌ $1 = $code ($2)"; fail=1; fi
+            if echo "$code" | grep -Eq "$3"; then echo "✅ $1 = $code"; else echo "❌ $1 = $code ($2)"; fail=1; bad="$bad $1($code)"; fi
           }
           잰다 '사이트'      'https://peachfam0307-glitch.github.io/hankki/' '^200$'
           잰다 '푸시 워커'   'https://hankki-push.annyeong-hankki.workers.dev/vapid' '^200$'
@@ -35,5 +38,21 @@ jobs:
             "https://api.github.com/repos/$REPO/actions/workflows/deploy-hankki.yml/runs?per_page=10&status=completed" \
             | python3 -c 'import sys,json; r=[x for x in json.load(sys.stdin)["workflow_runs"] if x["conclusion"] not in ("cancelled","skipped")][0]; print(r["conclusion"], r["run_number"], r["head_sha"][:8], r["updated_at"])')
           echo "마지막 배포 = $last"
-          case "$last" in success*) echo "✅ 배포";; *) echo "❌ 마지막 배포가 실패"; fail=1;; esac
+          case "$last" in success*) echo "✅ 배포";; *) echo "❌ 마지막 배포가 실패"; fail=1; bad="$bad 웹배포";; esac
+          echo "bad=$bad" >> "$GITHUB_OUTPUT"
           exit $fail
+      - name: 창업자 폰 알림
+        if: always()
+        env:
+          FOUNDER_SECRET: ${{ secrets.FOUNDER_SECRET }}
+          OUTCOME: ${{ steps.check.outcome }}
+          BAD: ${{ steps.check.outputs.bad }}
+        run: |
+          if [ -z "$FOUNDER_SECRET" ]; then echo "⚠️ FOUNDER_SECRET 비밀칸이 비어 폰 알림을 건너뛴다"; exit 0; fi
+          if [ "$OUTCOME" = "success" ]; then kind="점검정상"; msg="사이트 · 워커 셋 · 마지막 배포 모두 정상"; else kind="점검실패"; msg="고장:${BAD:- 점검 자체가 죽음} — GitHub Actions ops-check 기록을 보세요"; fi
+          body=$(python3 -c 'import json,sys; print(json.dumps({"가게": sys.argv[1], "내용": sys.argv[2]}, ensure_ascii=False))' "$kind" "$msg")
+          code=$(curl -s -o /tmp/r.txt -w '%{http_code}' --max-time 20 -X POST \
+            -H "Content-Type: application/json" -H "x-hankki-founder: $FOUNDER_SECRET" \
+            --data "$body" https://hankki-push.annyeong-hankki.workers.dev/founder/ping || echo 000)
+          echo "폰 알림 = $code $(cat /tmp/r.txt 2>/dev/null)"
+          # ⛔ 알림이 실패해도 점검 결과를 덮지 않는다(점검이 정상인데 이 단계로 빨간불을 켜면 헷갈린다) — 대신 기록에 남긴다
