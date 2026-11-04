@@ -56,13 +56,15 @@ const ff = (...a) => execFileSync('ffmpeg', ['-v', 'error', '-y', ...a])
 const 조각 = []
 for (const [n] of 자막) {
   const src = n === '0' ? join(IN, '장면0-로고.mp4') : n === '8' ? join(IN, '장면8-앱홈.mp4') : join(IN, `장면${n}.mp4`)
-  const 길이 = n === '9' || n === '7' ? '3' : '2.4'
+  // ⏱ 퉁키 음성 길이에 맞춘다 — 창업자 실측 「아직도 우리 앱을 모르세요?」 = 1.11초(12음절 ≈ 초당 10.8음절)
+  //    나머지 줄은 그 속도로 음절을 세서 잡고 + 숨 0.3초 (2026-11-04 · 실제 음성 파일을 받으면 그 길이로 바꾼다)
+  const 길이 = String({ 0: 1.4, 1: 1.9, 2: 1.3, 3: 2.2, 4: 2.3, 5: 1.8, 6: 1.8, 7: 2.8, 8: 2.0, 9: 3.0, 10: 1.7 }[n])
   const out = join(W, `조각${n}.mp4`)
   ff('-i', src, '-i', join(W, `자막${n}.png`), '-filter_complex', '[0]scale=1080:1920,setsar=1,fps=30[v];[v][1]overlay=0:0,format=yuv420p', '-t', 길이, '-an', out)
   조각.push(out)
 }
 const 끝 = join(W, '조각끝.mp4')
-ff('-loop', '1', '-t', '2.5', '-i', join(W, '끝장.png'), '-vf', "scale=1080:1920,setsar=1,fps=30,zoompan=z='min(1+0.0008*on,1.05)':d=1:s=1080x1920:fps=30,format=yuv420p", '-an', 끝)
+ff('-loop', '1', '-t', '1.6', '-i', join(W, '끝장.png'), '-vf', "scale=1080:1920,setsar=1,fps=30,zoompan=z='min(1+0.0008*on,1.05)':d=1:s=1080x1920:fps=30,format=yuv420p", '-an', 끝)
 조각.push(끝)
 writeFileSync(join(W, 'list.txt'), 조각.map((f) => `file '${f}'`).join('\n'))
 ff('-f', 'concat', '-safe', '0', '-i', join(W, 'list.txt'), '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-r', '30', join(W, '대표릴스-1판.mp4'))
