@@ -10,17 +10,17 @@ const IN = join(ROOT, 'design/promo/대표릴스-2611/장면영상')
 const W = process.argv[2] || '/tmp/claude-0/-home-user-hankki/2414fcda-d05a-5b79-84dc-8c748bfda84b/scratchpad/대표릴스/조립'
 mkdirSync(W, { recursive: true })
 const 자막 = [
-  ['0', '아직도 우리 앱을', '모르세요???'],
-  ['1', '한끼는 아직 100일도 안 된', '아기 앱이지만요,'],
+  ['0', '아직도 우리 앱을', '모르세용?'],
+  ['1', '한끼는 아직 100일도 안 된', '아기 앱이지만요'],
   ['2', '매주 새 레시피가', '올라오고'],
-  ['3', '귀여운 친구들로 MZ 감성', '꾸미기와 일기를 쓰고'],
-  ['4', '꽂이로 구별해 꽂고,', '메모로 나만의 레시피를 저장하고'],
-  ['5', '고딩 키우는 주부가', '써 본 템도 추천받고'],
-  ['6', '식비 가계부랑', '장보기까지 한 번에 하고'],
-  ['7', '레시피를 귀여운 카드로 친구들과', '공유할 수도 있어요. 신박 그 자체'],
+  ['3', 'MZ 감성 꾸미기와', '일기를 쓰고'],
+  ['4', '꽂이와 메모로', '나만의 레시피를 저장해요.'],
+  ['5', '고딩 키우는 주부가 쓰는', '찐 템도 추천받고'],
+  ['6', '식비 가계부랑', '장보기도 된답니당'],
+  ['7', '레시피를 귀여운 카드로 공유할 수도 있어요.', '신박 그 잡채!'],
   ['8', '추석, 핼러윈엔', '홈 테마도 이렇게 바뀌었어요.'],
-  ['9', '한끼 가족이 많아지면 레시피, 살림템도', '나누는 공간을 만들고 싶은 꿈이 있어요.'],
-  ['10', '이렇게 좋은 앱,', '아직도 안 쓰실 거예요?'],
+  ['9', '제 꿈은', '한끼 가족이 많아지는 거예요.'],
+  ['10', '심지어', '다 무료라니!'],
 ]
 // ⛔ setContent 페이지는 file:// 를 못 읽는다(1판에서 글꼴·그림이 다 빠졌다) → data: 로 넣는다
 const 데이터 = (f, t) => `data:${t};base64,` + readFileSync(join(ROOT, f)).toString('base64')
@@ -46,7 +46,7 @@ body{background:#FFFDF7}.end{position:absolute;inset:0;display:flex;flex-directi
 .end img.lg{width:640px}.end .t{font-size:100px;margin-top:40px}
 .pill{display:flex;align-items:center;gap:22px;margin-top:70px;background:#3B2C25;color:#fff;border-radius:999px;padding:22px 44px 22px 22px;font-size:46px;font-family:system-ui,sans-serif;font-weight:700}
 .pill img{width:96px;height:96px;border-radius:24px}</style>
-<div class=end><img class=lg src="${로고}"><div class=t>지금 바로 깔아 보세요!</div>
+<div class=end><img class=lg src="${로고}"><div class=t>지금 바로 깔아 보세용!</div>
 <div class=pill><img src="${아이콘}"><span>App Store · Google Play 에서<br>「한끼 레시피북」 검색</span></div></div>`)
 await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(300)
 await p.screenshot({ path: join(W, '끝장.png') })
@@ -60,7 +60,7 @@ for (const [n] of 자막) {
   //    나머지 줄은 그 속도로 음절을 세서 잡고 + 숨 0.3초 (2026-11-04 · 실제 음성 파일을 받으면 그 길이로 바꾼다)
   // 📮 창업자 2026-11-04 「30초짜리도 영상이 모자르네.. 40초정도짜리로」 → 장면 합 37초 + 끝장 3초 = 40초
   //    원본 클립은 3초뿐이라, 3초보다 긴 장면은 천천히 늘려 재생한다(setpts)
-  const 초 = { 0: 2.3, 1: 3.2, 2: 2.2, 3: 3.7, 4: 3.8, 5: 3.0, 6: 3.0, 7: 4.7, 8: 3.3, 9: 5.0, 10: 2.8 }[n]
+  const 초 = { 0: 1.83, 1: 2.71, 2: 1.96, 3: 2.21, 4: 2.56, 5: 3.19, 6: 2.48, 7: 4.45, 8: 2.76, 9: 2.39, 10: 1.72 }[n]  // ⏱ 창업자 퉁키 녹음(11-04 18:44) 숨 구간 실측
   const 늘림 = Math.max(1, 초 / 2.95).toFixed(3)
   const 길이 = String(초)
   const out = join(W, `조각${n}.mp4`)
@@ -68,8 +68,9 @@ for (const [n] of 자막) {
   조각.push(out)
 }
 const 끝 = join(W, '조각끝.mp4')
-ff('-loop', '1', '-t', '1.6', '-i', join(W, '끝장.png'), '-vf', "scale=1080:1920,setsar=1,fps=30,zoompan=z='min(1+0.0008*on,1.05)':d=1:s=1080x1920:fps=30,format=yuv420p", '-an', 끝)
+ff('-loop', '1', '-t', '2.47', '-i', join(W, '끝장.png'), '-vf', "scale=1080:1920,setsar=1,fps=30,zoompan=z='min(1+0.0008*on,1.05)':d=1:s=1080x1920:fps=30,format=yuv420p", '-an', 끝)
 조각.push(끝)
 writeFileSync(join(W, 'list.txt'), 조각.map((f) => `file '${f}'`).join('\n'))
-ff('-f', 'concat', '-safe', '0', '-i', join(W, 'list.txt'), '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-r', '30', join(W, '대표릴스-1판.mp4'))
+const 소리 = process.argv[3]
+ff('-f', 'concat', '-safe', '0', '-i', join(W, 'list.txt'), ...(소리 ? ['-i', 소리, '-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-shortest'] : []), '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-r', '30', join(W, '대표릴스-1판.mp4'))
 console.log('✅', join(W, '대표릴스-1판.mp4'))
