@@ -4,6 +4,10 @@
 #   ⭐ 수요일 저녁에 정상 알림이 «안 오면» 그 자체가 신호(점검이 죽었거나 알림 길이 죽음)
 #   실패하면 GitHub 메일도 그대로 간다(폰 알림 길이 죽어도 메일로 안다)
 #   🔑 FOUNDER_SECRET(GitHub 비밀칸) = hankki-push 워커의 FOUNDER_SECRET 과 같은 값 · 없으면 폰 알림만 건너뛴다
+#
+#   ➕ 2026-11-04 「기능 점검」 — 창업자 *"레꾸, 일꾸, 레꾸자랑, 장보기, 식비가계부등등"* · *"아이폰은 안돼??"* → *"좋아."*
+#      갤럭시 = 진짜 사이트를 chromium 으로 한 바퀴 · 아이폰 = «마지막 TestFlight 판에 구운 웹»을 webkit 으로 한 바퀴
+#      (scripts/ops-기능점검.mjs · 통계 끄고 들어간다 · 쿠팡은 안 누른다 · 실패하면 한 번 더)
 name: ops-check
 on:
   schedule:
@@ -16,6 +20,8 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      bad: ${{ steps.check.outputs.bad }}
     steps:
       - name: 점검
         id: check
@@ -42,22 +48,126 @@ jobs:
           case "$last" in success*) echo "✅ 배포";; *) echo "❌ 마지막 배포가 실패"; fail=1; bad="$bad 웹배포";; esac
           echo "bad=$bad" >> "$GITHUB_OUTPUT"
           exit $fail
+
+  # 🤖 갤럭시 = 진짜 사이트(갤럭시 앱이 그대로 띄우는 것)를 chromium 으로
+  galaxy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      result: ${{ steps.run.outputs.result }}
+    defaults:
+      run:
+        working-directory: hankki
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            /hankki/package.json
+            /hankki/package-lock.json
+            /hankki/scripts/ops-기능점검.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: playwright 만 설치
+        run: |
+          v=$(node -p "require('./package-lock.json').packages['node_modules/playwright'].version")
+          mkdir -p /tmp/pw && cd /tmp/pw && npm init -y >/dev/null && npm i --no-save "playwright@$v" >/dev/null
+          timeout 300 npx playwright install --with-deps chromium || timeout 240 npx playwright install chromium
+      - name: 한 바퀴
+        id: run
+        run: |
+          cp scripts/ops-기능점검.mjs /tmp/pw/점검.mjs
+          set +e; node /tmp/pw/점검.mjs --엔진 chromium --사진 /tmp/pw | tee /tmp/pw/out.txt; set -e
+          echo "result=$(tail -1 /tmp/pw/out.txt)" >> "$GITHUB_OUTPUT"
+          grep -q '^결과: 정상' /tmp/pw/out.txt
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: 갤럭시-고장사진, path: /tmp/pw/*.png, if-no-files-found: ignore }
+
+  # 🍎 아이폰 = 마지막 [testflight] 판에 «구운» 웹을 그대로 지어 webkit 으로
+  #   ⚠️ TestFlight 판 ≠ 스토어에 «출시된» 판일 수 있다(심사 중·대기 중) — 그걸 가리는 건 App Store Connect 뿐이다
+  iphone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      result: ${{ steps.run.outputs.result }}
+    steps:
+      - name: 마지막 TestFlight 판 찾기
+        id: ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          sha=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/$REPO/actions/workflows/release-ios.yml/runs?per_page=50&status=success" \
+            | python3 -c 'import sys,json; r=[x for x in json.load(sys.stdin)["workflow_runs"] if "[testflight]" in (x.get("head_commit") or {}).get("message","")]; print(r[0]["head_sha"] if r else "")')
+          echo "판 = $sha"; echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          [ -n "$sha" ]
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.sha }}
+          sparse-checkout: |
+            /*
+            !/hankki/docs/stickers/**/*.png
+            !/hankki/docs/stickers/**/*.jpg
+            !/hankki/docs/stickers/**/*.jpeg
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: hankki/package-lock.json
+      - run: npm ci && npm run build
+        working-directory: hankki
+      - name: webkit 설치
+        working-directory: hankki
+        run: timeout 400 npx playwright install --with-deps webkit
+      - name: 오늘 점검 판 가져오기(점검 단계는 «지금» 것으로)
+        run: git fetch -q --depth 1 origin ${{ github.sha }} && git show ${{ github.sha }}:hankki/scripts/ops-기능점검.mjs > hankki/scripts/ops-기능점검-오늘.mjs
+      - name: 한 바퀴
+        id: run
+        working-directory: hankki
+        run: |
+          set +e; node scripts/ops-기능점검-오늘.mjs --엔진 webkit --dist dist --사진 /tmp | tee /tmp/out.txt; set -e
+          echo "result=$(tail -1 /tmp/out.txt)" >> "$GITHUB_OUTPUT"
+          grep -q '^결과: 정상' /tmp/out.txt
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: 아이폰-고장사진, path: /tmp/*.png, if-no-files-found: ignore }
+
+  notify:
+    needs: [check, galaxy, iphone]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
       - name: 창업자 폰 알림
-        if: always()
         env:
           FOUNDER_SECRET: ${{ secrets.FOUNDER_SECRET }}
-          OUTCOME: ${{ steps.check.outcome }}
-          BAD: ${{ steps.check.outputs.bad }}
+          C: ${{ needs.check.result }}
+          G: ${{ needs.galaxy.result }}
+          I: ${{ needs.iphone.result }}
+          BAD: ${{ needs.check.outputs.bad }}
+          GR: ${{ needs.galaxy.outputs.result }}
+          IR: ${{ needs.iphone.outputs.result }}
         run: |
+          echo "서버 $C · 갤럭시 $G ($GR) · 아이폰 $I ($IR)"
           if [ -z "$FOUNDER_SECRET" ]; then echo "⚠️ FOUNDER_SECRET 비밀칸이 비어 폰 알림을 건너뛴다"; exit 0; fi
-          # 📮 창업자 2026-11-04 「고장났을때는 오고 · 일주일에 한번씩 정상이라고 오고(매일 검사는 하지만)」
-          #    정상 = «수요일(KST)»에만 보낸다(창업자 「일요일말고 수요일에」)(점검이 살아 있다는 표시) · 고장 = 매일 그날 바로
+          # 📮 창업자 2026-11-04 「고장났을때는 오고 · 일주일에 한번씩 정상이라고 오고(매일 검사는 하지만)」 → 「일요일말고 수요일에」
           dow=$(TZ=Asia/Seoul date +%u)   # 3 = 수요일
-          if [ "$OUTCOME" = "success" ] && [ "$dow" != "3" ]; then echo "✅ 정상 · 수요일이 아니라 폰 알림 안 보냄(dow=$dow)"; exit 0; fi
-          if [ "$OUTCOME" = "success" ]; then kind="점검정상"; msg="사이트 · 워커 셋 · 마지막 배포 모두 정상"; else kind="점검실패"; msg="고장:${BAD:- 점검 자체가 죽음} — GitHub Actions ops-check 기록을 보세요"; fi
-          body=$(python3 -c 'import json,sys; print(json.dumps({"가게": sys.argv[1], "내용": sys.argv[2]}, ensure_ascii=False))' "$kind" "$msg")
+          if [ "$C" = "success" ] && [ "$G" = "success" ] && [ "$I" = "success" ]; then
+            if [ "$dow" != "3" ]; then echo "✅ 정상 · 수요일이 아니라 폰 알림 안 보냄(dow=$dow)"; exit 0; fi
+            kind="점검정상"; msg="서버 · 갤럭시 기능 · 아이폰 기능 모두 정상"
+          else
+            kind="점검실패"; msg=""
+            [ "$C" != "success" ] && msg="$msg 서버:${BAD:- 점검이 죽음} /"
+            [ "$G" != "success" ] && msg="$msg 갤럭시:${GR:-점검이 죽음} /"
+            [ "$I" != "success" ] && msg="$msg 아이폰:${IR:-점검이 죽음} /"
+            msg="$msg 점검 판이 낡았을 수도 — Actions ops-check 기록을 보세요"
+          fi
+          body=$(python3 -c 'import json,sys; print(json.dumps({"가게": sys.argv[1], "내용": sys.argv[2][:190]}, ensure_ascii=False))' "$kind" "$msg")
           code=$(curl -s -o /tmp/r.txt -w '%{http_code}' --max-time 20 -X POST \
             -H "Content-Type: application/json" -H "x-hankki-founder: $FOUNDER_SECRET" \
             --data "$body" https://hankki-push.annyeong-hankki.workers.dev/founder/ping || echo 000)
           echo "폰 알림 = $code $(cat /tmp/r.txt 2>/dev/null)"
-          # ⛔ 알림이 실패해도 점검 결과를 덮지 않는다(점검이 정상인데 이 단계로 빨간불을 켜면 헷갈린다) — 대신 기록에 남긴다
