@@ -40,13 +40,13 @@ for (const [n, a, c] of 자막) {
   await p.evaluate(맞추기); await p.evaluate(() => document.fonts.ready)
   await p.screenshot({ path: join(W, `자막${n}.png`), omitBackground: true })
 }
-// 끝 장 — 로고 + 「얼른 깔아 주세요!」 + 두 스토어 알약(꼬르곰 아이콘 앞)
+// 끝 장 — 로고 + 「지금 바로 깔아 보세요!」 + 두 스토어 알약(꼬르곰 아이콘 앞)
 await p.setContent(`<style>${css}
 body{background:#FFFDF7}.end{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:BH;color:#3B2C25}
 .end img.lg{width:640px}.end .t{font-size:100px;margin-top:40px}
 .pill{display:flex;align-items:center;gap:22px;margin-top:70px;background:#3B2C25;color:#fff;border-radius:999px;padding:22px 44px 22px 22px;font-size:46px;font-family:system-ui,sans-serif;font-weight:700}
 .pill img{width:96px;height:96px;border-radius:24px}</style>
-<div class=end><img class=lg src="${로고}"><div class=t>얼른 깔아 주세요!</div>
+<div class=end><img class=lg src="${로고}"><div class=t>지금 바로 깔아 보세요!</div>
 <div class=pill><img src="${아이콘}"><span>App Store · Google Play 에서<br>「한끼 레시피북」 검색</span></div></div>`)
 await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(300)
 await p.screenshot({ path: join(W, '끝장.png') })
