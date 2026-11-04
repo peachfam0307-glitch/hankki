@@ -58,9 +58,13 @@ for (const [n] of 자막) {
   const src = n === '0' ? join(IN, '장면0-로고.mp4') : n === '8' ? join(IN, '장면8-앱홈.mp4') : join(IN, `장면${n}.mp4`)
   // ⏱ 퉁키 음성 길이에 맞춘다 — 창업자 실측 「아직도 우리 앱을 모르세요?」 = 1.11초(12음절 ≈ 초당 10.8음절)
   //    나머지 줄은 그 속도로 음절을 세서 잡고 + 숨 0.3초 (2026-11-04 · 실제 음성 파일을 받으면 그 길이로 바꾼다)
-  const 길이 = String({ 0: 1.4, 1: 1.9, 2: 1.3, 3: 2.2, 4: 2.3, 5: 1.8, 6: 1.8, 7: 2.8, 8: 2.0, 9: 3.0, 10: 1.7 }[n])
+  // 📮 창업자 2026-11-04 「30초짜리도 영상이 모자르네.. 40초정도짜리로」 → 장면 합 37초 + 끝장 3초 = 40초
+  //    원본 클립은 3초뿐이라, 3초보다 긴 장면은 천천히 늘려 재생한다(setpts)
+  const 초 = { 0: 2.3, 1: 3.2, 2: 2.2, 3: 3.7, 4: 3.8, 5: 3.0, 6: 3.0, 7: 4.7, 8: 3.3, 9: 5.0, 10: 2.8 }[n]
+  const 늘림 = Math.max(1, 초 / 2.95).toFixed(3)
+  const 길이 = String(초)
   const out = join(W, `조각${n}.mp4`)
-  ff('-i', src, '-i', join(W, `자막${n}.png`), '-filter_complex', '[0]scale=1080:1920,setsar=1,fps=30[v];[v][1]overlay=0:0,format=yuv420p', '-t', 길이, '-an', out)
+  ff('-i', src, '-i', join(W, `자막${n}.png`), '-filter_complex', `[0]setpts=${늘림}*PTS,scale=1080:1920,setsar=1,fps=30[v];[v][1]overlay=0:0,format=yuv420p`, '-t', 길이, '-an', out)
   조각.push(out)
 }
 const 끝 = join(W, '조각끝.mp4')
