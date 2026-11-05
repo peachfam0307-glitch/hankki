@@ -117,7 +117,7 @@ export default {
         }
         const 줄 = [셈.구글 ? `갤럭시 ${셈.구글}건` : '', 셈.애플 ? `아이폰 ${셈.애플}건` : '', 셈.시험 ? `알림 시험 ${셈.시험}건(진짜 구매 아님)` : ''].filter(Boolean).join(' · ')
         // ⚠️ [2026-11-02 운영 2단계] 처음 보는 앱 오류 — 구매 알림과 «같은 길»(창업자 폰 · 빈 푸시 → 여기서 문구)
-        const 오류줄 = 셈.오류 ? `처음 보는 오류 ${셈.오류}가지 — Cloudflare 기록(hankki-push 로그)에서 「앱오류」로 찾기` : ''
+        const 오류줄 = 셈.오류 ? `처음 보는 오류 ${셈.오류}가지 — 운영 화면(ops) 「최근 오류」에서 보기` : ''
         // 📈 [2026-11-02 운영 3단계] 한도 70% — 사진(이번 달 900 중) · 정리(오늘 200 중) · 다 차면 무료 유저가 못 쓴다
         const 한도줄 = [셈.한도사진 ? '사진 읽기가 이번 달 한도의 70%를 넘었어요' : '', 셈.한도정리 ? 'AI 정리가 오늘 한도의 70%를 넘었어요' : ''].filter(Boolean).join(' · ')
         if (한도줄 && !줄 && !오류줄) return json({ 제목: '📈 사용량이 한도의 70%를 넘었어요', 본문: 한도줄 + ' — 다 차면 무료 유저가 못 써요', 길: './ops.html', 표: 'hankki-quota' }, 200, { ...cors, 'Cache-Control': 'no-store' })
@@ -125,6 +125,18 @@ export default {
         return json({ 제목: '🔑 레시피열쇠가 팔렸어요', 본문: [줄, 오류줄, 한도줄, 점검줄].filter(Boolean).join(' · '), 길: './ops.html', 표: 'hankki-sale' }, 200, { ...cors, 'Cache-Control': 'no-store' })
       }
       if (!env.FOUNDER_SECRET || request.headers.get('x-hankki-founder') !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
+      // 🗂 [2026-11-06] 최근 오류 보기 — ops.html 「최근 오류」 단추(창업자 열쇠) · 7일치 · 많이 난 순
+      if (url.pathname === '/founder/errors' && request.method === 'GET') {
+        const 전부 = []
+        for (let i = 0; i < 7; i++) {
+          const 날 = kstDay(new Date(Date.now() - i * 86400000))
+          let 목록 = []
+          try { 목록 = (await kv.get(`err:recent:${날}`, 'json')) || [] } catch { 목록 = [] }
+          for (const e of 목록) 전부.push({ 날, ...e })
+        }
+        전부.sort((a, c) => c.마지막 - a.마지막)
+        return json({ 오류: 전부.slice(0, 100) }, 200, { ...cors, 'Cache-Control': 'no-store' })
+      }
       let body = null
       try { body = await request.json() } catch { return json({ error: 'bad_json' }, 400, cors) }
       if (url.pathname === '/founder/subscribe' && request.method === 'POST') {
@@ -165,27 +177,63 @@ export default {
       let b = null
       try { b = JSON.parse(글) } catch { return json({ error: 'bad_json' }, 400, cors) }
       const 자름 = (v, n) => String(v ?? '').slice(0, n)
-      const 꾸러미 = {
-        판: 자름(b?.판, 20), 기기: 자름(b?.기기, 10), 화면: 자름(b?.화면, 40), 종류: 자름(b?.종류, 30),
-        메시지: 자름(b?.메시지, 300), 위치: 자름(b?.위치, 1500),
-        직전: Array.isArray(b?.직전) ? b.직전.slice(-10).map((x) => 자름(x, 60)) : [],
+      // 📦 [2026-11-06] 묶음으로 받는다 — 11/6 02:29 한 폰이 2초에 17번 보내 KV 가 429 로 튕겼다(같은 칸 1초 1번 · 무료 하루 1,000번 = Cloudflare KV 한도 문서 2026-11-06 열람)
+      //    새 앱 = { 묶음: [...] } (최대 20) · 옛 앱(아이폰 88판 등) = 꾸러미 하나 — 둘 다 받는다
+      const 받은것 = Array.isArray(b?.묶음) ? b.묶음.slice(0, 20) : [b]
+      const 꾸러미들 = []
+      for (const x of 받은것) {
+        const 꾸러미 = {
+          판: 자름(x?.판, 20), 기기: 자름(x?.기기, 10), 화면: 자름(x?.화면, 40), 종류: 자름(x?.종류, 30),
+          메시지: 자름(x?.메시지, 300), 위치: 자름(x?.위치, 1500), 몇번: Math.max(1, Math.min(999, Number(x?.몇번) || 1)),
+          직전: Array.isArray(x?.직전) ? x.직전.slice(-10).map((y) => 자름(y, 60)) : [],
+        }
+        꾸러미.지문 = await 짧은해시(`${꾸러미.판}|${꾸러미.종류}|${꾸러미.메시지}|${꾸러미.위치.split('\n')[0]}`)
+        console.log(JSON.stringify({ 앱오류: 꾸러미.지문, ...꾸러미 }))
+        꾸러미들.push(꾸러미)
       }
-      const 지문 = await 짧은해시(`${꾸러미.판}|${꾸러미.종류}|${꾸러미.메시지}|${꾸러미.위치.split('\n')[0]}`)
-      console.log(JSON.stringify({ 앱오류: 지문, ...꾸러미 }))
-      if (kv) {
-        const 본키 = `err:seen:${지문}`
-        if (!(await kv.get(본키))) {
-          await kv.put(본키, '1', { expirationTtl: 30 * 86400 })   // 같은 오류는 30일 동안 다시 안 울린다
-          const 오늘키 = `err:alert:${kstDay(new Date())}`
-          const 오늘수 = Number(await kv.get(오늘키)) || 0
-          if (오늘수 < 20) {
-            await kv.put(오늘키, String(오늘수 + 1), { expirationTtl: 2 * 86400 })
-            ctx.waitUntil(창업자알림(kv, '오류'))
-          }
-          return json({ ok: true, 처음: true }, 200, cors)
+      if (!kv) return json({ ok: true }, 200, cors)
+      // 🗂 「최근 오류」 = 날짜별 칸 «하나»(최대 50가지 · 7일) — ops.html 이 읽는다. ⛔ 요청 하나에 쓰기는 «최대 한 번씩»
+      //    횟수만 늘 때는 «10분에 한 번»만 다시 쓴다 → 이 칸 쓰기 = 하루 최대 144 ＋ 새 오류 50(유저 수와 무관 · 무료 하루 1,000 안)
+      //    ⚠️ 그래서 «몇번»은 «적어도»다 — 10분 안에 같은 오류가 또 오면 그 몫은 셈에서 빠질 수 있다(ops 에 「적어도」로 적는다)
+      const 날 = kstDay(new Date())
+      const 칸키 = `err:recent:${날}`
+      let 목록 = []
+      try { 목록 = (await kv.get(칸키, 'json')) || [] } catch { 목록 = [] }
+      let 써야 = false
+      const 마지막쓴때 = Math.max(0, ...목록.map((e) => e.마지막 || 0))
+      const 새것 = []
+      for (const k of 꾸러미들) {
+        const 있던 = 목록.find((e) => e.지문 === k.지문)
+        if (있던) {
+          있던.몇번 = Math.min(99999, 있던.몇번 + k.몇번)
+          if (Date.now() - 마지막쓴때 > 10 * 60000) 써야 = true
+          있던.마지막 = Date.now()
+        } else if (목록.length < 50) {
+          목록.push({ 지문: k.지문, 판: k.판, 기기: k.기기, 화면: k.화면, 종류: k.종류, 메시지: k.메시지, 위치: k.위치.split('\n').slice(0, 3).join('\n'), 직전: k.직전, 몇번: k.몇번, 처음: Date.now(), 마지막: Date.now() })
+          새것.push(k); 써야 = true
         }
       }
-      return json({ ok: true }, 200, cors)
+      if (써야) { try { await kv.put(칸키, JSON.stringify(목록), { expirationTtl: 8 * 86400 }) } catch (e) { console.log('err:recent 쓰기 실패 ' + String(e).slice(0, 80)) } }
+      // 🔔 처음 보는 오류 = 30일 «본 것» 표 하나(최대 400) — 같은 오류는 다시 안 울린다
+      let 처음수 = 0
+      if (새것.length) {
+        let 본표 = {}
+        try { 본표 = (await kv.get('err:seen', 'json')) || {} } catch { 본표 = {} }
+        const 지금 = Date.now()
+        for (const [k, t] of Object.entries(본표)) if (지금 - t > 30 * 86400000) delete 본표[k]
+        for (const k of 새것) if (!본표[k.지문]) { 본표[k.지문] = 지금; 처음수++ }
+        if (처음수) {
+          const 줄들 = Object.entries(본표).sort((a, c) => c[1] - a[1]).slice(0, 400)
+          try { await kv.put('err:seen', JSON.stringify(Object.fromEntries(줄들))) } catch (e) { console.log('err:seen 쓰기 실패 ' + String(e).slice(0, 80)) }
+          const 오늘키 = `err:alert:${날}`
+          const 오늘수 = Number(await kv.get(오늘키)) || 0
+          if (오늘수 < 20) {
+            try { await kv.put(오늘키, String(오늘수 + 1), { expirationTtl: 2 * 86400 }) } catch { /* 넘어간다 */ }
+            ctx.waitUntil(창업자알림(kv, '오류'))
+          }
+        }
+      }
+      return json({ ok: true, 처음: 처음수 > 0, 처음수 }, 200, cors)
     }
 
     // 🔑 공개 열쇠 — 앱이 구독을 만들 때 쓴다. 없으면 «지금» 만든다(비밀 열쇠는 KV 밖으로 안 나간다).

@@ -15,8 +15,9 @@ await p.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'networkidle' }); await p
 await p.screenshot({ path: `${OUT}/눈-홈.png` })
 // 일부러 오류를 던져 본다 — ⏩ 2026-11-05 켜짐=true 뒤로는 «나가야» 한다(받는 워커는 이 주소(127.0.0.1)를 403 으로 막는다 — 창업자 폰은 안 울린다)
 await p.evaluate(() => { setTimeout(() => { throw new Error('눈검사 일부러') }, 0); Promise.reject(new Error('눈검사 약속')) })
-await p.waitForTimeout(800)
-console.log(`pageerror ${에러.length}개(일부러 던진 것 포함) · /error 로 나간 요청 ${보냄.length}개 (켜짐이면 1개 이상)`)
+await p.waitForTimeout(2800)   // 📦 2026-11-06 부터 2초 모아 «한 번에» 보낸다
+console.log(`pageerror ${에러.length}개(일부러 던진 것 포함) · /error 로 나간 요청 ${보냄.length}개 (켜짐이면 «딱 1개» — 둘이 한 묶음)`)
+if (보냄.length !== 1) { console.log('⛔ 묶음이 안 됐다'); process.exit(1) }
 // 🔕 통계를 끈 폰은 «하나도» 안 나가야 한다(방침 6-2 「같은 스위치로 멈춥니다」)
 const c2 = await b.newContext({ viewport: { width: 390, height: 844 } })
 await c2.addInitScript(SEED_COACH_SEEN)
