@@ -105,10 +105,24 @@ export default {
         const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
         if (!소식.length) return json({ error: 'none' }, 404, cors)
         await kv.put(칸.창업자소식, '[]')
-        const 셈 = { 구글: 0, 애플: 0, 시험: 0 }
+        const 셈 = { 구글: 0, 애플: 0, 시험: 0, 오류: 0, 한도사진: 0, 한도정리: 0, 점검정상: 0, 점검실패: 0 }
         for (const x of 소식) 셈[셈[x.가게] != null ? x.가게 : '구글']++
+        // 🩺 [2026-11-04 창업자 「매일 저녁 8시」 · 「폰으로」] 저녁 점검 결과 — 정상도 «보낸다»(안 오면 그 자체가 신호)
+        const 점검 = [...소식].reverse().find((x) => x.가게 === '점검정상' || x.가게 === '점검실패')
+        const 점검줄 = 점검 ? String(점검.내용 || '').slice(0, 200) : ''
+        if (점검 && !셈.구글 && !셈.애플 && !셈.시험 && !셈.오류 && !셈.한도사진 && !셈.한도정리) {
+          return json(점검.가게 === '점검실패'
+            ? { 제목: '❌ 한끼 점검 — 고장난 곳이 있어요', 본문: 점검줄 || 'GitHub Actions 「ops-check」 기록을 보세요', 길: './ops.html', 표: 'hankki-check' }
+            : { 제목: '✅ 한끼 점검 — 오늘 다 정상', 본문: 점검줄 || '사이트 · 워커 셋 · 마지막 배포 모두 정상', 길: './ops.html', 표: 'hankki-check' }, 200, { ...cors, 'Cache-Control': 'no-store' })
+        }
         const 줄 = [셈.구글 ? `갤럭시 ${셈.구글}건` : '', 셈.애플 ? `아이폰 ${셈.애플}건` : '', 셈.시험 ? `알림 시험 ${셈.시험}건(진짜 구매 아님)` : ''].filter(Boolean).join(' · ')
-        return json({ 제목: '🔑 레시피열쇠가 팔렸어요', 본문: 줄, 길: './ops.html', 표: 'hankki-sale' }, 200, { ...cors, 'Cache-Control': 'no-store' })
+        // ⚠️ [2026-11-02 운영 2단계] 처음 보는 앱 오류 — 구매 알림과 «같은 길»(창업자 폰 · 빈 푸시 → 여기서 문구)
+        const 오류줄 = 셈.오류 ? `처음 보는 오류 ${셈.오류}가지 — Cloudflare 기록(hankki-push 로그)에서 「앱오류」로 찾기` : ''
+        // 📈 [2026-11-02 운영 3단계] 한도 70% — 사진(이번 달 900 중) · 정리(오늘 200 중) · 다 차면 무료 유저가 못 쓴다
+        const 한도줄 = [셈.한도사진 ? '사진 읽기가 이번 달 한도의 70%를 넘었어요' : '', 셈.한도정리 ? 'AI 정리가 오늘 한도의 70%를 넘었어요' : ''].filter(Boolean).join(' · ')
+        if (한도줄 && !줄 && !오류줄) return json({ 제목: '📈 사용량이 한도의 70%를 넘었어요', 본문: 한도줄 + ' — 다 차면 무료 유저가 못 써요', 길: './ops.html', 표: 'hankki-quota' }, 200, { ...cors, 'Cache-Control': 'no-store' })
+        if (오류줄 && !줄) return json({ 제목: '⚠️ 앱에 처음 보는 오류가 났어요', 본문: [오류줄, 한도줄].filter(Boolean).join(' · '), 길: './ops.html', 표: 'hankki-error' }, 200, { ...cors, 'Cache-Control': 'no-store' })
+        return json({ 제목: '🔑 레시피열쇠가 팔렸어요', 본문: [줄, 오류줄, 한도줄, 점검줄].filter(Boolean).join(' · '), 길: './ops.html', 표: 'hankki-sale' }, 200, { ...cors, 'Cache-Control': 'no-store' })
       }
       if (!env.FOUNDER_SECRET || request.headers.get('x-hankki-founder') !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
       let body = null
@@ -123,7 +137,8 @@ export default {
       }
       if (url.pathname === '/founder/ping' && request.method === 'POST') {
         const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
-        소식.push({ 가게: ['애플', '시험'].includes(body?.가게) ? body.가게 : '구글', 때: Date.now() })
+        const 점검인가 = ['점검정상', '점검실패'].includes(body?.가게)
+        소식.push({ 가게: ['애플', '시험', '한도사진', '한도정리', '점검정상', '점검실패'].includes(body?.가게) ? body.가게 : '구글', 때: Date.now(), ...(점검인가 ? { 내용: String(body?.내용 || '').slice(0, 200) } : {}) })
         await kv.put(칸.창업자소식, JSON.stringify(소식.slice(-20)))
         const 폰들 = (await kv.get(칸.창업자폰, 'json')) || []
         if (!폰들.length) return json({ ok: true, 보냄: 0, 왜: '창업자 폰이 아직 없다(ops.html 「구매 알림 받기」)' }, 200, cors)
@@ -135,6 +150,42 @@ export default {
         return json({ ok: true, 보냄 }, 200, cors)
       }
       return json({ error: 'not_found' }, 404, cors)
+    }
+
+    // ⚠️ 앱 오류 받기 (2026-11-02 운영 2단계 · 창업자 「문제가 발생했을때 즉각대응 · 원인파악이 바로」)
+    //   ① 받은 꾸러미를 «로그에 한 줄» 찍는다 → Cloudflare 기록 화면에서 「앱오류」로 찾는다(표·묶기 코드를 안 만든다)
+    //   ② 처음 보는 오류(판+종류+위치)면 창업자 폰에 알림 — 하루 20가지까지(폭주 때 폰이 터지지 않게)
+    //   ⛔ 개인 내용은 «안 받는다» — 글·사진·메일 칸이 없다. 앱이 그렇게 보내고, 여기서도 칸을 골라 받는다.
+    //   ⛔ 이 문이 죽어도 앱은 안 죽는다 — 앱은 답을 안 기다린다.
+    if (url.pathname === '/error' && request.method === 'POST') {
+      if (!ALLOWED_ORIGINS.includes(origin)) return json({ error: 'forbidden' }, 403, cors)
+      if (env.APP_TOKEN && request.headers.get('x-hankki-token') !== env.APP_TOKEN) return json({ error: 'unauthorized' }, 401, cors)
+      const 글 = await request.text()
+      if (글.length > 8000) return json({ error: 'too_big' }, 413, cors)
+      let b = null
+      try { b = JSON.parse(글) } catch { return json({ error: 'bad_json' }, 400, cors) }
+      const 자름 = (v, n) => String(v ?? '').slice(0, n)
+      const 꾸러미 = {
+        판: 자름(b?.판, 20), 기기: 자름(b?.기기, 10), 화면: 자름(b?.화면, 40), 종류: 자름(b?.종류, 30),
+        메시지: 자름(b?.메시지, 300), 위치: 자름(b?.위치, 1500),
+        직전: Array.isArray(b?.직전) ? b.직전.slice(-10).map((x) => 자름(x, 60)) : [],
+      }
+      const 지문 = await 짧은해시(`${꾸러미.판}|${꾸러미.종류}|${꾸러미.메시지}|${꾸러미.위치.split('\n')[0]}`)
+      console.log(JSON.stringify({ 앱오류: 지문, ...꾸러미 }))
+      if (kv) {
+        const 본키 = `err:seen:${지문}`
+        if (!(await kv.get(본키))) {
+          await kv.put(본키, '1', { expirationTtl: 30 * 86400 })   // 같은 오류는 30일 동안 다시 안 울린다
+          const 오늘키 = `err:alert:${kstDay(new Date())}`
+          const 오늘수 = Number(await kv.get(오늘키)) || 0
+          if (오늘수 < 20) {
+            await kv.put(오늘키, String(오늘수 + 1), { expirationTtl: 2 * 86400 })
+            ctx.waitUntil(창업자알림(kv, '오류'))
+          }
+          return json({ ok: true, 처음: true }, 200, cors)
+        }
+      }
+      return json({ ok: true }, 200, cors)
     }
 
     // 🔑 공개 열쇠 — 앱이 구독을 만들 때 쓴다. 없으면 «지금» 만든다(비밀 열쇠는 KV 밖으로 안 나간다).
@@ -306,6 +357,18 @@ async function 임박보내기(kv, 날, now) {
   }
   await 기록더하기(kv, 날.slice(0, 7), { 임박보냄: 까지 - 부터, 임박성공: 성공, 실행: 1 })
   return { 했나: true, 임박: true, 보냄: 까지 - 부터, 성공, 만료, 부터, 까지, 전체: 목록.length }
+}
+/** 창업자 폰에 빈 푸시 — /founder/ping 과 같은 길(소식 칸에 적고 → 폰이 /founder/inbox 로 문구를 가지러 온다) */
+async function 창업자알림(kv, 가게) {
+  const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
+  소식.push({ 가게, 때: Date.now() })
+  await kv.put(칸.창업자소식, JSON.stringify(소식.slice(-20)))
+  const 폰들 = (await kv.get(칸.창업자폰, 'json')) || []
+  if (!폰들.length) return { 보냄: 0 }
+  const 열쇠 = await 열쇠꺼내기(kv)
+  let 보냄 = 0
+  for (const s of 폰들) if ((await 푸시하나(s, 열쇠)) === 'ok') 보냄++
+  return { 보냄 }
 }
 function 남은초(ymd) { const [y, mo, d] = ymd.split('-').map(Number); return Math.max(60, Math.floor((Date.UTC(y, mo - 1, d) - 9 * 3600000 - Date.now()) / 1000) + 86400) }
 async function 짧은해시(s) { const b = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))); let h = ''; for (let i = 0; i < 12; i++) h += b[i].toString(16).padStart(2, '0'); return h }

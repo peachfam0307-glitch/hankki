@@ -8,6 +8,10 @@ import webp from './vite-webp.js'   // 🖼 빌드 때 src/assets PNG → WebP q
 export default defineConfig({
   base: './',
   build: {
+    // 🗺 [2026-11-02 운영 2단계] 숨긴 소스맵 — 지도(.map)는 만들되 사이트엔 안 올린다(코드에 주소 줄도 안 넣는다)
+    //   빌드 뒤 `scripts/소스맵옮기기.mjs` 가 dist 밖(.sourcemaps/<판>/)으로 옮긴다 → 받은 오류 위치를 «파일·줄»로 푼다
+    //   ⛔ precache 에도 안 든다(globPatterns 에 map 없음)
+    sourcemap: 'hidden',
     rollupOptions: {
       output: {
         // ☁️ 파이어베이스를 «이름이 있는 한 덩어리»로 묶는다.

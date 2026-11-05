@@ -474,5 +474,22 @@ console.log('\n㉛ 영수증 다시 확인(운영자 · 무효 목록에 안 뜨
   잰다(r.ok && r.찾음 === false, '없는 주문 → 찾음 false', r)
 }
 
+// 📈 [2026-11-02 운영 3단계] 이번 달 전역 통 70%(630/900) 알림 — 사진 워커를 «실제로» 돌린다
+console.log('\n📈 한도 70% 알림')
+{
+  const 핑 = []
+  const 바인딩 = { fetch: async (u, o) => { 핑.push(JSON.parse(o.body).가게); return new Response('{}') } }
+  새판({ PUSH: 바인딩, FOUNDER_SECRET: 'f' })
+  const 칸 = env.OCR_KV._m
+  칸.set(`m:${YM}`, '500'); await 사진(엄마)
+  잰다(핑.length === 0, `문턱 아래(통 ${칸.get(`m:${YM}`)}) → 안 울림`, 핑)
+  칸.set(`m:${YM}`, '629'); await 사진(엄마)
+  잰다(핑.length === 1 && 핑[0] === '한도사진', `630 닿음(통 ${칸.get(`m:${YM}`)}) → 1번`, 핑)
+  await 사진(엄마); await 사진(엄마)
+  잰다(핑.length === 1, '같은 달 더 읽어도 안 울림', 핑)
+  새판({ FOUNDER_SECRET: 'f' }); env.OCR_KV._m.set(`m:${YM}`, '629')
+  잰다((await 사진(엄마)).깎음 === true, 'PUSH 바인딩이 없어도 읽기는 그대로')
+}
+
 console.log(`\n${실패 === 0 ? '✅' : '⛔'} ${통과}/${통과 + 실패} 통과\n`)
 process.exit(실패 === 0 ? 0 : 1)

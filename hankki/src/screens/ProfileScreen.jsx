@@ -65,6 +65,7 @@ import { AI동의상태, AI동의쓰기, 바뀜이벤트 } from '../aiConsent'  
 // 🔔 [2026-09-19] 알림 켜기/끄기 — 시트가 「언제든 설정에서 끌 수 있어요」라고 «약속»한다. 이 줄이 그 약속이다(창업자 *"알림켤수있는 것도 설정에 따로 넣어야겠네"*).
 import { 알림동의상태, 알림바뀜, 푸시가능, 브라우저권한 } from '../pushConsent'
 import { 알림켜기, 알림끄기 } from '../pushSubscribe'
+import { 문의꾸러미 } from '../errorReport'   // ✉️ 문의 메일 아래에 판·화면·직전 행동(운영 2단계 · 유저가 직접 보내는 메일)
 
 export default function ProfileScreen() {
   const store = useStore()
@@ -446,7 +447,7 @@ export default function ProfileScreen() {
         nav.showToast('각 화면에 들어가면 반짝 안내가 다시 나와요')
       },
     },
-    { icon: 'help', label: '도움말 및 문의', 밖: true, onClick: () => { try { const a = document.createElement('a'); a.href = 'mailto:annyeong.hankki@gmail.com'; a.click() } catch { /* noop */ } nav.showToast('문의: annyeong.hankki@gmail.com') } },
+    { icon: 'help', label: '도움말 및 문의', 밖: true, onClick: () => { try { const a = document.createElement('a'); a.href = `mailto:annyeong.hankki@gmail.com?body=${encodeURIComponent(문의꾸러미())}`; a.click() } catch { /* noop */ } nav.showToast('문의: annyeong.hankki@gmail.com') } },
     // 🔬 한끼연구소 — 옛 '의견 보내기' 자리를 승격시켰다(창업자 아이디어 2026-07-30).
     // "의견 보내기"는 민원 창구처럼 읽히는데, 연구소는 유저를 연구원으로 만든다 → 참여 동기가 다르다.
     // 창구 셋(의견·설문·오류) 중 주소가 하나라도 있을 때만 노출(전부 비면 빈 방이 된다).

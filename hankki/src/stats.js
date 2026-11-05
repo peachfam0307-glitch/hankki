@@ -31,6 +31,7 @@ export const MEASUREMENT_ID = 'G-L20V2VE1CS'
 // 📅 「오늘(KST)」은 «한 곳»에서만 만든다 — 절대원칙 27.
 //   ⛔ 여기서 new Date() 로 날짜를 지어내지 말 것. 0~9시에 «어제»가 되는 사고가 그래서 났다.
 import { todayKST } from './today.js'
+import { 화면적기 } from './errorReport.js'
 
 const 열쇠 = 'hankki:stats:off'
 
@@ -360,6 +361,7 @@ let 지난화면 = null
  * ⛔ 통계를 끈 사람에게는 아무 일도 안 일어난다.
  */
 export function 화면봄(이름) {
+  화면적기(이름)   // ⚠️ 오류 꾸러미의 「보던 화면」 — 통계 자물쇠와 무관하게 «폰 메모리에만» 적는다(보내는 건 errorReport 가 정한다)
   if (!MEASUREMENT_ID) return
   if (!보내도되는화면.has(이름)) return   // 🔒 자물쇠
   if (이름 === 지난화면) return

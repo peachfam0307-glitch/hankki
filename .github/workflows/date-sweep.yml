@@ -1,0 +1,41 @@
+# 🗓 날짜 흔들기 — 주 1회 (창업자 2026-11-02 「주1회」)
+#   날짜 쓰는 재현판을 «다가올» 위험한 날 넷(이번 달 끝 밤 · 다음 달 1일 · 12/31 · 1/1)으로 돌린다
+#   → 그날이 오기 «전»에 「그날 배포가 막힐 판」을 찾는다. 실패하면 GitHub 이 저장소 주인에게 메일.
+#   한 판 ≈ 2시간(2026-11-02 실측 40판) → 매일은 무겁다. 일요일 새벽 02:17 KST.
+#   ⛔ 배포·푸시 안 함 — 재기만 한다.
+name: date-sweep
+on:
+  schedule:
+    - cron: '17 17 * * 6'   # UTC 토 17:17 = KST 일 02:17
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    defaults:
+      run:
+        working-directory: hankki
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            /*
+            !/hankki/docs/stickers/**/*.png
+            !/hankki/docs/stickers/**/*.jpg
+            !/hankki/docs/stickers/**/*.jpeg
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: hankki/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Install Chromium
+        timeout-minutes: 10
+        run: |
+          timeout 300 npx playwright install --with-deps chromium || timeout 240 npx playwright install chromium
+      - name: 날짜 흔들기
+        run: node scripts/날짜흔들기.mjs

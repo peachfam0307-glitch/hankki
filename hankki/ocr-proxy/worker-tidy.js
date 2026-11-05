@@ -456,10 +456,10 @@ export default {
       } catch (e) {
         마지막오류 = String((e && e.message) || e).slice(0, 200)
         console.log('AI_FAILED', model, (Date.now() - 시작) + 'ms', 마지막오류.slice(0, 300))
-        await 통세기(kv, ymd, founder, 눈, 까닭)
+        await 통세기(kv, ymd, founder, 눈, 까닭, env, ctx)
         continue
       }
-      await 통세기(kv, ymd, founder, 눈, 까닭)   // ⛔ 실패해도 뉴런은 나갔다 — 성공만 세면 통이 조용히 샌다
+      await 통세기(kv, ymd, founder, 눈, 까닭, env, ctx)   // ⛔ 실패해도 뉴런은 나갔다 — 성공만 세면 통이 조용히 샌다
 
       const parsed = pickJson(out)
       if (!parsed) {
@@ -757,9 +757,16 @@ async function num(kv, key) {
 //         그래서 「오늘 16건」이 **사람이 쓴 것인지 앱이 돈 것인지 못 갈랐다.**
 //         👉 유료를 켤지·값을 얼마로 할지가 이 숫자에 달려 있다.
 //      🔒 갈래를 «넷으로 못 박는다** — 자유 글자를 받으면 KV 키가 유저 수만큼 늘어난다.
-async function 통세기(kv, ymd, founder, 눈, 까닭) {
+async function 통세기(kv, ymd, founder, 눈, 까닭, env, ctx) {
   if (!kv) return
-  await inc(kv, `td:${ymd}`, 60 * 60 * 48)
+  const 오늘 = await inc(kv, `td:${ymd}`, 60 * 60 * 48)
+  // 📈 [2026-11-02 운영 3단계] 오늘 정리 통이 70%에 닿으면 창업자 폰에 «하루 한 번» 알린다(이 워커는 하루 상한뿐)
+  //   ⭐ 푸시 워커를 서비스 바인딩 `PUSH` 로 부른다(사진 워커와 같은 길) · ⛔ 바인딩이 없거나 실패해도 정리는 그대로
+  if (env?.PUSH && env.FOUNDER_SECRET && 오늘 >= Math.ceil(LIMITS.DAILY_GLOBAL * 0.7) && !(await kv.get(`qa:${ymd}`))) {
+    await kv.put(`qa:${ymd}`, '1', { expirationTtl: 60 * 60 * 48 })
+    const 알림 = env.PUSH.fetch('https://hankki-push/founder/ping', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-hankki-founder': env.FOUNDER_SECRET }, body: JSON.stringify({ 가게: '한도정리' }) }).catch(() => {})
+    if (ctx?.waitUntil) ctx.waitUntil(알림); else await 알림
+  }
   if (founder) await inc(kv, `tdf:${ymd}`, 60 * 60 * 48)
   if (눈) await inc(kv, `tv:${ymd}`, 60 * 60 * 48)
   // ⛔ 허용목록 밖은 전부 '모름' 으로 접는다 — ⛔«막지 않는다»(옛 앱이 그대로 돌아야 한다)

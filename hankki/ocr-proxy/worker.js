@@ -317,7 +317,7 @@ export default {
     ctx.waitUntil(오년지움(env))       // 🧾 계정 지운 사람의 구매 기록 — 5년 지나면 지운다(전자상거래법 시행령 6조 · 2026-10-23)
   },
 
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin') || ''
     const cors = corsHeaders(origin)
 
@@ -883,6 +883,14 @@ export default {
           inc(kv, `mf:${ym}`, 60 * 60 * 24 * 40),
         ] : []),
       ])
+      // 📈 [2026-11-02 운영 3단계] 이번 달 전역 통이 70%에 닿으면 창업자 폰에 «한 달에 한 번» 알린다
+      //   ⛔ 다 차면 무료 유저 «전원»이 사진 읽기를 못 쓴다(global_quota) — 그 전에 알아야 손쓸 시간이 생긴다
+      //   ⛔ 알림은 덤 — 실패해도 읽기는 그대로 간다(답을 안 기다린다)
+      if ((await num(kv, `m:${ym}`)) >= Math.ceil(LIMITS.MONTHLY_GLOBAL * 0.7) && !(await kv.get(`qa:${ym}`))) {
+        await kv.put(`qa:${ym}`, '1', { expirationTtl: 60 * 60 * 24 * 40 })
+        const 알림 = 창업자알림(env, '한도사진')
+        if (ctx?.waitUntil) ctx.waitUntil(알림); else await 알림
+      }
     }
 
     // 💰💰 **[2026-09-01 고침] 유저 열쇠는 Vision 이 «성공한 뒤»에 깎는다.**
