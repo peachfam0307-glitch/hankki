@@ -229,7 +229,9 @@ export default {
           const 오늘수 = Number(await kv.get(오늘키)) || 0
           if (오늘수 < 20) {
             try { await kv.put(오늘키, String(오늘수 + 1), { expirationTtl: 2 * 86400 }) } catch { /* 넘어간다 */ }
-            ctx.waitUntil(창업자알림(kv, '오류'))
+            // 🌙 [창업자 2026-11-06 「한국시간으로 오후 6시 이후에 보내줘」] 18시 전이면 소식만 적어 두고 «울리지 않는다» → 18시 넘어 5분마다 깨는 cron 이 한 번에 울린다
+            if (kstMinutes(new Date()) >= 18 * 60) ctx.waitUntil(창업자알림(kv, '오류'))
+            else ctx.waitUntil(오류미루기(kv, 날))
           }
         }
       }
@@ -296,6 +298,7 @@ export default {
   // ⏰ 5분마다 깨어난다 — 보낼 때인지·보낼 묶음이 남았는지는 여기서 스스로 본다
   async scheduled(event, env, ctx) {
     ctx.waitUntil(보내기(env, new Date()))
+    ctx.waitUntil(미룬오류울리기(env.PUSH_KV, new Date()))
   },
 }
 
@@ -406,6 +409,29 @@ async function 임박보내기(kv, 날, now) {
   await 기록더하기(kv, 날.slice(0, 7), { 임박보냄: 까지 - 부터, 임박성공: 성공, 실행: 1 })
   return { 했나: true, 임박: true, 보냄: 까지 - 부터, 성공, 만료, 부터, 까지, 전체: 목록.length }
 }
+/** 🌙 18시 전 오류 — 소식 칸에만 적고(폰이 다른 알림을 받으면 같이 보인다) «미룸» 표시를 남긴다 */
+async function 오류미루기(kv, 날) {
+  try {
+    const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
+    소식.push({ 가게: '오류', 때: Date.now() })
+    await kv.put(칸.창업자소식, JSON.stringify(소식.slice(-20)))
+    await kv.put(`err:defer:${날}`, '1', { expirationTtl: 2 * 86400 })
+  } catch { /* 다음 오류 때 다시 */ }
+}
+/** 🌙 cron(5분마다) — 18시가 넘었고 오늘 미룬 오류가 있으면 «한 번» 울린다 */
+export async function 미룬오류울리기(kv, now) {
+  if (!kv || kstMinutes(now) < 18 * 60) return { 했나: false }
+  const 키 = `err:defer:${kstDay(now)}`
+  if (!(await kv.get(키))) return { 했나: false }
+  await kv.delete(키)
+  const 폰들 = (await kv.get(칸.창업자폰, 'json')) || []
+  if (!폰들.length) return { 했나: false, 왜: '창업자 폰 없음' }
+  const 열쇠 = await 열쇠꺼내기(kv)
+  let 보냄 = 0
+  for (const s of 폰들) if ((await 푸시하나(s, 열쇠)) === 'ok') 보냄++
+  return { 했나: true, 보냄 }
+}
+
 /** 창업자 폰에 빈 푸시 — /founder/ping 과 같은 길(소식 칸에 적고 → 폰이 /founder/inbox 로 문구를 가지러 온다) */
 async function 창업자알림(kv, 가게) {
   const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
