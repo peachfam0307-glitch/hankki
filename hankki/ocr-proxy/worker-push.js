@@ -229,9 +229,9 @@ export default {
           const 오늘수 = Number(await kv.get(오늘키)) || 0
           if (오늘수 < 20) {
             try { await kv.put(오늘키, String(오늘수 + 1), { expirationTtl: 2 * 86400 }) } catch { /* 넘어간다 */ }
-            // 🌙 [창업자 2026-11-06 「한국시간으로 오후 6시 이후에 보내줘」] 18시 전이면 소식만 적어 두고 «울리지 않는다» → 18시 넘어 5분마다 깨는 cron 이 한 번에 울린다
-            if (kstMinutes(new Date()) >= 18 * 60) ctx.waitUntil(창업자알림(kv, '오류'))
-            else ctx.waitUntil(오류미루기(kv, 날))
+            // 🌙 [창업자 2026-11-06 「자고있는데 계속 알람오면 좀 그래」 → 「1번하자」] 오류 알림은 «하루 두 번 모아서»
+            //    19:00~07:00 에 난 것 → 아침 7시 · 07:00~19:00 에 난 것 → 저녁 7시 — 바로 울리지 않는다(소식만 적고 다음 울릴 때를 남긴다)
+            ctx.waitUntil(오류미루기(kv, new Date()))
           }
         }
       }
@@ -409,21 +409,28 @@ async function 임박보내기(kv, 날, now) {
   await 기록더하기(kv, 날.slice(0, 7), { 임박보냄: 까지 - 부터, 임박성공: 성공, 실행: 1 })
   return { 했나: true, 임박: true, 보냄: 까지 - 부터, 성공, 만료, 부터, 까지, 전체: 목록.length }
 }
-/** 🌙 18시 전 오류 — 소식 칸에만 적고(폰이 다른 알림을 받으면 같이 보인다) «미룸» 표시를 남긴다 */
-async function 오류미루기(kv, 날) {
+/** 🌙 오류 알림 «울릴 때» = 다음 07:00 또는 19:00(KST) — 지금보다 «뒤»의 가장 가까운 것 */
+export function 다음울릴때(now) {
+  const k = now.getTime() + 9 * 3600000                         // KST 를 UTC 처럼 다룬다(서머타임 없음)
+  const 자정 = Math.floor(k / 86400000) * 86400000
+  for (const h of [7, 19, 31]) { const t = 자정 + h * 3600000; if (t > k) return t - 9 * 3600000 }
+  return 자정 + 31 * 3600000 - 9 * 3600000
+}
+/** 🌙 오류 — 소식 칸에만 적고(폰이 다른 알림을 받으면 같이 보인다) «울릴 때»를 남긴다(이미 있으면 그대로) */
+async function 오류미루기(kv, now) {
   try {
     const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
     소식.push({ 가게: '오류', 때: Date.now() })
     await kv.put(칸.창업자소식, JSON.stringify(소식.slice(-20)))
-    await kv.put(`err:defer:${날}`, '1', { expirationTtl: 2 * 86400 })
+    if (!(await kv.get('err:due'))) await kv.put('err:due', String(다음울릴때(now)), { expirationTtl: 3 * 86400 })
   } catch { /* 다음 오류 때 다시 */ }
 }
-/** 🌙 cron(5분마다) — 18시가 넘었고 오늘 미룬 오류가 있으면 «한 번» 울린다 */
+/** 🌙 cron(5분마다) — 울릴 때(07:00·19:00)가 지났고 모아 둔 오류가 있으면 «한 번» 울린다 */
 export async function 미룬오류울리기(kv, now) {
-  if (!kv || kstMinutes(now) < 18 * 60) return { 했나: false }
-  const 키 = `err:defer:${kstDay(now)}`
-  if (!(await kv.get(키))) return { 했나: false }
-  await kv.delete(키)
+  if (!kv) return { 했나: false }
+  const 때 = Number(await kv.get('err:due')) || 0
+  if (!때 || now.getTime() < 때) return { 했나: false }
+  await kv.delete('err:due')
   const 폰들 = (await kv.get(칸.창업자폰, 'json')) || []
   if (!폰들.length) return { 했나: false, 왜: '창업자 폰 없음' }
   const 열쇠 = await 열쇠꺼내기(kv)
