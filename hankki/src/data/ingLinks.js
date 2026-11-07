@@ -177,7 +177,6 @@ export const ING_LINKS = {
   '갈치': 'https://brand.naver.com/fallinlovefish/category/435f21f6b43246a1ad7c12760e3c5078',
   '국간장': 'https://smartstore.naver.com/thebat/products/5108613448',
   '거창한 쌀수제비믹스': 'https://smartstore.naver.com/naturalnoodle/products/11241783851', // 창업자 2026-09-27 (10분 쌀수제비)
-  '수제비 반죽': 'https://smartstore.naver.com/naturalnoodle/products/11241783851', // 창업자 2026-11-08 「수제비는 우리 거창한 수제비 링크넣으면 돼」(들깨수제비 11/30)
   '소금': 'https://www.oasis.co.kr/product/detail/1557', // ⛇묶음: 소금 / 굵은소금
   '올리브유': 'https://www.costco.co.kr/Foods/Processed-Food/Oils/KS-Siurana-Extra-Virgin-Olive-Oil-1L/p/892188', // ⛇묶음: 올리브유 / 식용유
   '식용유': 'https://www.costco.co.kr/Foods/Processed-Food/Oils/KS-Siurana-Extra-Virgin-Olive-Oil-1L/p/892188', // ⛇묶음: 올리브유 / 식용유
@@ -246,6 +245,7 @@ export const ING_LINKS = {
   '냉면육수': 'https://link.coupang.com/a/hXG4dPWEGy',   // 창업자 2026-10-19
   '땅콩버터': 'https://link.coupang.com/a/hXG9PbQZY4',   // 창업자 2026-10-19
   '볶음탕용 닭': 'https://link.coupang.com/a/hXHlqsxN4S',   // 창업자 2026-10-19
+  '수제비 반죽': 'https://smartstore.naver.com/naturalnoodle/products/11241783851', // ⛇묶음: 거창한 쌀수제비믹스 / 수제비 반죽
 }
 
 // 🚱 사는 물건이 아닌 재료 — 목록에도 안 올리고, 링크도 안 붙인다 (창업자 *"밥면수이런건 말고"*)
