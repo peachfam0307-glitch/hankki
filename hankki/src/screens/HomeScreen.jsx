@@ -8,7 +8,7 @@ import { useNav } from '../App'
 import Icon from '../components/Icon'
 import { openExternal } from '../utils'
 import { INSTAGRAM_URL, INSTA_NEW_AT, INSTA_NEW_DAYS } from '../version'
-import { 인스타로감 } from '../stats'   // 🚪 insta_go — 홈 인스타 칸을 누른 사람
+import { 인스타로감, 홈누름 } from '../stats'   // 🚪 insta_go — 홈 인스타 칸을 누른 사람
 import { SNS인가, SNS표 } from '../embed'
 import Thumb from '../components/Thumb'
 import { 얹은틀있나 } from '../components/Stickers'
@@ -114,7 +114,7 @@ function WeekBox({ w, 기본, open, 요일, 줄컷, 가로 }) {
       {/* 🗓 `weekly-row` = 밀지 않고 한 화면에 딱 맞는 격자 (2026-08-03 오징어 상자 사고 → 잘림 0) */}
       <div className={`weekly-row${가로 ? ' rail' : ''}`}>
         {w.items.map((r) => (
-          <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
+          <button key={r.id} className="mini-card press" onClick={() => { 홈누름('week'); open(r.id) }}>
             {/* 🍱 [2026-08-23 창업자] *"자주해먹는요리 요리이모지들어간 그림 크기 다른칸이비해 작음.
                 조금만더크게수정."* — 맞다. 판은 넓은데 그림만 `56%` 라 가운데가 휑했다.
                 ⛔ 카드 폭을 키우지 않는다 — 한 줄에 세 칸 보이는 게 이 줄의 값어치다.
@@ -466,7 +466,7 @@ export default function HomeScreen() {
          *    ⭐ 오히려 낫다 — 하단바 단추는 «어느 탭에서든» 있다.
          */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <button className="icon-btn press" onClick={() => nav.go('search')} aria-label="검색">
+          <button className="icon-btn press" onClick={() => { 홈누름('search'); nav.go('search') }} aria-label="검색">
             <Icon name="search" size={22} />
           </button>
           {/* 🗃 임시보관함 — 📮 *"INBOX 나도 어딨는지 모르는데"*(2026-08-21) 라 «늘» 보여야 한다.
@@ -586,7 +586,7 @@ export default function HomeScreen() {
           <div className="news-row">
           <button
             className="press news-card"
-            onClick={() => { 소식봤음(); setPreview(true) }}
+            onClick={() => { 홈누름('news'); 소식봤음(); setPreview(true) }}
             data-coach="preview"
           >
             {/* 🐻 [2026-08-13 창업자] *"한끼소식 옆에 캐릭터 하나 넣으면 되겠다"*
@@ -669,7 +669,7 @@ export default function HomeScreen() {
                 <div className={`next-card${i > 0 ? ' sub' : ''}`} key={it.키} role="listitem">
                   {/* 🐻 카드 «전체»가 눌려 상세로 간다. 단추는 그 위에 얹어 따로 잡는다.
                       ⛔ button 안에 button 을 넣지 않는다(HTML 규칙 위반 · 안드로이드에서 안 눌린다) */}
-                  <button className="next-open press" onClick={() => it.recipe && open(it.recipe.id)}>
+                  <button className="next-open press" onClick={() => { if (!it.recipe) return; 홈누름('next'); open(it.recipe.id) }}>
                     {/* 🐧 펭펭은 갈래와 무관하게 «한 컷»이다 — 이 카드가 한 장뿐이라 갈래마다 바꿀 이유가 없고,
                         찾는 포즈(`pn_search`)가 「다음에 뭐 할까」와 뜻이 맞는다.
                         ⛔ 펭펭을 웃기지 않는다(정본 규칙) — `pn_search` 는 무표정이라 그대로 쓴다. */}
@@ -713,7 +713,7 @@ export default function HomeScreen() {
                  ⑵누를 단추가 안 보이고 ⑶베이지 카드 셋 중 하나가 되어 그냥 묻혔다. */}
           {todayPick && (
             <div className="today-card" data-coach="today">
-              <button className="today-main press" onClick={() => open(todayPick.id)}>
+              <button className="today-main press" onClick={() => { 홈누름('today'); open(todayPick.id) }}>
                 {/* ⛔⛔ 크기를 클래스로만 주면 «안 먹는다» — `Thumb` 이 `width: 100%` 를 **인라인**으로 넣기 때문.
                     2026-08-10 에 이걸로 카드가 통째로 깨졌다(썸네일이 전폭 · 글자가 세로로 쌓임).
                     ⭐ 그래서 인라인이 **CSS 변수를 읽게** 한다 — 넓은 화면에선 `.today-card` 가 그 변수만 바꾼다. */}
@@ -725,7 +725,7 @@ export default function HomeScreen() {
                 </div>
               </button>
               {today.list.length > 1 && (
-                <button className="today-refresh press" onClick={() => setPick((p) => p + 1)}>다른<br />추천</button>
+                <button className="today-refresh press" onClick={() => { 홈누름('today_more'); setPick((p) => p + 1) }}>다른<br />추천</button>
               )}
             </div>
           )}
@@ -775,13 +775,13 @@ export default function HomeScreen() {
           <>
             <div className="sec-head">
               <div className="h-section">자주 해먹는 요리</div>
-              <button className="t-more press" onClick={() => nav.push({ name: 'cooked' })}>
+              <button className="t-more press" onClick={() => { 홈누름('cooked'); nav.push({ name: 'cooked' }) }}>
                 더보기 <Icon name="chevron-right" size={14} color="var(--text-sub)" />
               </button>
             </div>
             <div className="hscroll">
               {often.map((r) => (
-                <button key={r.id} className="mini-card press" onClick={() => open(r.id)}>
+                <button key={r.id} className="mini-card press" onClick={() => { 홈누름('cooked'); open(r.id) }}>
                   {/* 🍱 [2026-08-23 창업자] *"자주해먹는요리 요리이모지들어간 그림 크기 다른칸이비해 작음.
                       조금만더크게수정."* — 맞다. 판은 넓은데 그림만 `56%` 라 가운데가 휑했다.
                       ⛔ 카드 폭을 키우지 않는다 — 한 줄에 세 칸 보이는 게 이 줄의 값어치다.
@@ -798,7 +798,7 @@ export default function HomeScreen() {
         {/* 3. 최근 저장 */}
         <div className="sec-head">
           <div className="h-section">최근 저장</div>
-          <button className="t-more press" onClick={() => nav.go('myrecipes')}>
+          <button className="t-more press" onClick={() => { 홈누름('recent'); nav.go('myrecipes') }}>
             더보기 <Icon name="chevron-right" size={14} color="var(--text-sub)" />
           </button>
         </div>
@@ -810,7 +810,7 @@ export default function HomeScreen() {
               {/* 탭=열기 / 길게 누르기=삭제 확인. 길게 눌러 뜬 경우엔 탭 동작(열기)을 막는다. */}
               <button
                 className="press" style={{ textAlign: 'left', width: '100%' }}
-                onClick={() => { if (!longFired.current) open(r.id) }}
+                onClick={() => { if (!longFired.current) { 홈누름('recent'); open(r.id) } }}
                 onPointerDown={() => startPress(r)}
                 onPointerUp={endPress}
                 onPointerLeave={endPress}
@@ -827,7 +827,7 @@ export default function HomeScreen() {
             예전엔 홈에 전체 그리드를 통째로 얹어 '남의 요리책'처럼 어수선했다. */}
         <button
           className="press"
-          onClick={() => nav.go('myrecipes')}
+          onClick={() => { 홈누름('recent'); nav.go('myrecipes') }}
           style={{
             width: '100%', marginTop: 22, padding: 15, borderRadius: 'var(--r-md)',
             background: 'var(--cream)', color: 'var(--brown)', fontSize: 16.5, fontWeight: 700,
