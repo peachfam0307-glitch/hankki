@@ -65,6 +65,20 @@ if (명령 === 'daily') {
   const metrics = (옵션('--metrics', 'activeUsers')).split(',').map((name) => ({ name }))
   표(보고서({ dateRanges: 기간, dimensions: dims, metrics, limit: Number(옵션('--limit', 50)), dimensionFilter: 거르기(),
     orderBys: [{ metric: { metricName: metrics[0].name }, desc: true }] }))
+} else if (명령 === 'cohort') {
+  // 📅 주 단위 재방문(코호트) — 2026-11-08 창업자 「재방문율 잴 수 있음 재보자」
+  //    묶음 = 첫 방문 주(firstSessionDate) · 칸 = 그 뒤 N주째 그 화면을 연 사람(cohortActiveUsers)
+  //    --weeks 8 (몇 묶음) · --filter 와 --country 는 «둘 다» 건다(andGroup)
+  const 주 = Number(옵션('--weeks', 8)), 나라 = 옵션('--country')
+  const 오늘 = new Date(Date.now() + 9 * 3600e3); 오늘.setUTCDate(오늘.getUTCDate() - 오늘.getUTCDay() - 1)   // 지난 토요일(KST) = 주 끝
+  const 날 = (d) => d.toISOString().slice(0, 10)
+  const cohorts = []
+  for (let i = 주 - 1; i >= 0; i--) { const e = new Date(오늘); e.setUTCDate(e.getUTCDate() - 7 * i); const s = new Date(e); s.setUTCDate(s.getUTCDate() - 6)
+    cohorts.push({ name: `${날(s)}주`, dimension: 'firstSessionDate', dateRange: { startDate: 날(s), endDate: 날(e) } }) }
+  const 조건 = [거르기()?.filter, 나라 && { fieldName: 'country', stringFilter: { matchType: 'EXACT', value: 나라 } }].filter(Boolean).map((filter) => ({ filter }))
+  표(보고서({ cohortSpec: { cohorts, cohortsRange: { granularity: 'WEEKLY', startOffset: 0, endOffset: 주 - 1 } },
+    dimensions: [{ name: 'cohort' }, { name: 'cohortNthWeek' }], metrics: [{ name: 'cohortActiveUsers' }],
+    dimensionFilter: 조건.length ? { andGroup: { expressions: 조건 } } : undefined }))
 } else {
-  console.error('쓰기: ga4.mjs daily | report --dims a,b --metrics x,y [--from] [--to] [--limit] [--filter 이름=~값]'); process.exit(1)
+  console.error('쓰기: ga4.mjs daily | cohort [--weeks 8] [--country "South Korea"] | report --dims a,b --metrics x,y [--from] [--to] [--limit] [--filter 이름=~값]'); process.exit(1)
 }
