@@ -684,6 +684,19 @@ export function 새계정인가(metadata) {
 //    ⛔ `openExternal`(utils.js) 한 곳에 심으면 「원문 보기」까지 섞인다 → 사러가기 자리에서만 부른다.
 //    ⛔ 한살림 줄은 사러가기를 «안 그린다»(noBuy) — 그려지는 안쪽에서만 부르므로 헛세지 않는다.
 //    📌 같은 줄을 두 번 누르면 두 번 세진다. 그게 맞다 — 사람이 두 번 나간 것이다(쿠팡도 그렇게 센다).
+// 🏠 [2026-11-08] 홈에서 «어느 자리»를 눌렀나 — 창업자 「홈 누름기록을 넣어줘」
+//    전엔 화면이 바뀔 때만 보내서 「홈 103명 → 어디로 갔나」를 못 갈랐다(docs/재방문-기능-실측-2026-11-08.md).
+//    🔒 나가는 건 자리 이름뿐 — ⛔어느 레시피인지는 안 보낸다. 목록 밖 이름은 버린다.
+const 홈자리 = ['today', 'today_more', 'week', 'next', 'cooked', 'recent', 'search', 'news']
+export function 홈누름(자리) {
+  if (!홈자리.includes(자리)) return
+  지난화면 = null
+  행동보내기(`h_${자리}`)
+}
+// 📜 [2026-11-08] 레시피 상세에서 「만드는 법」 칸까지 내려왔나 — 「봤다(detail)」와 「읽었다」를 가른다
+//    한 번 열 때 한 번만(부르는 쪽이 지킨다) · 레시피 이름은 안 보낸다
+export function 만드는법봄() { 지난화면 = null; 행동보내기('detail_steps') }
+
 export function 사러나감(자리) {
   if (!['pick_detail', 'pick_shop', 'cart'].includes(자리)) return
   지난화면 = null
