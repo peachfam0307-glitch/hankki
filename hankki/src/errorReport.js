@@ -53,11 +53,31 @@ export function 오류보내기(err, 종류 = 'error') {
     // ⛔ 따옴표 안은 가린다 — 크롬 JSON.parse 오류는 «입력 앞부분»(레시피 글·붙여넣은 글)을 메시지에 싣는다(2026-11-02 검토)
     const 메시지 = String(err?.message || err || '').replace(/"[^"]*"/g, '"…"').replace(/'[^']{12,}'/g, "'…'").slice(0, 300)
     const 위치 = String(err?.stack || '').split('\n').slice(0, 8).join('\n').slice(0, 1500)
+    // 📦 [2026-11-06] 바로 보내지 않고 «2초 모아» 한 번에 — 11/6 02:29 한 폰이 2초에 17번 보내 받는 쪽(KV)이 429 로 튕겼다
+    //    같은 오류는 묶음 안에서 «몇번»만 늘린다 · 앱을 켜서 끌 때까지 최대 20가지(세션 상한)
+    const 같은것 = 대기.find((x) => x.종류 === 종류 && x.메시지 === 메시지)
+    if (같은것) { 같은것.몇번++; return true }
     if (오늘몇번(`${종류}|${메시지}`.slice(0, 120)) > 3) return false
-    const 몸 = JSON.stringify({ 판: APP_VERSION, 기기: 기기(), 화면: 보던화면, 종류, 메시지, 위치, 직전: [...직전] })
-    import('./ocr.js').then(({ OCR_APP_TOKEN }) => fetch(`${PUSH_URL}/error`, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }, body: 몸 })).catch(() => {})
+    if (보낸수 >= 세션상한) return false
+    보낸수++
+    대기.push({ 판: APP_VERSION, 기기: 기기(), 화면: 보던화면, 종류, 메시지, 위치, 직전: [...직전], 몇번: 1 })
+    if (!타이머) 타이머 = setTimeout(내보내기, 2000)
     return true
   } catch { return false }
+}
+
+const 대기 = []
+let 타이머 = null
+let 보낸수 = 0
+const 세션상한 = 20
+function 내보내기() {
+  타이머 = null
+  try {
+    const 묶음 = 대기.splice(0, 대기.length)
+    if (!묶음.length) return
+    const 몸 = JSON.stringify({ 묶음 })
+    import('./ocr.js').then(({ OCR_APP_TOKEN }) => fetch(`${PUSH_URL}/error`, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json', 'x-hankki-token': OCR_APP_TOKEN }, body: 몸 })).catch(() => {})
+  } catch { /* 무시 */ }
 }
 
 /** 앱 시작에 한 번 — 잡히지 않은 오류 · 놓친 약속(promise) · 누른 것의 종류 */
@@ -75,7 +95,10 @@ export function 오류받기시작() {
         if (!주소 || /^(data|blob):/.test(주소)) return
         let 우리것 = ''
         try { const u = new URL(주소, location.href); if (u.origin === location.origin && u.pathname.includes('/assets/')) 우리것 = u.pathname.replace(/^.*\/assets\//, 'assets/').slice(-120) } catch { /* 무시 */ }
-        return 오류보내기({ message: `${t.tagName === 'IMG' ? '그림' : '자원'} 못 불러옴: ${우리것 || '바깥 주소'}` }, t.tagName === 'IMG' ? '그림' : '자원')
+        // 🌐 [2026-11-06] 남의 사이트 그림(SNS 썸네일·링크 미리보기)을 못 불러온 건 «보고 안 한다» — 우리 고장이 아니고, 레시피가 많으면 한꺼번에 수십 개가 터진다
+        if (!우리것) return
+        // 🖼 우리 그림 여러 장이 한꺼번에 안 뜨면(인터넷 끊김 등) «한 가지»로 묶는다 — 파일 이름은 위치 칸에
+        return 오류보내기({ message: `${t.tagName === 'IMG' ? '그림' : '자원'} 못 불러옴`, stack: 우리것 }, t.tagName === 'IMG' ? '그림' : '자원')
       }
       오류보내기(e.error || e.message, 'error')
     }, true)

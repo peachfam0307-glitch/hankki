@@ -38,6 +38,10 @@
     <button class="sub" id="saleTest">알림 시험</button>
   </div>
   <div class="box">
+    <div>⚠️ 앱 오류 (유저 폰에서 난 것 · 최근 7일)</div>
+    <button id="errs">최근 오류 보기</button>
+  </div>
+  <div class="box">
     <div>주문 번호 (GPA.… 또는 애플 거래 번호)</div>
     <input id="order" autocomplete="off" />
     <button data-o="order">거래 기록 찾기</button>
@@ -97,6 +101,22 @@
   $('saleTest').onclick = async () => {
     $('out').textContent = '…'
     try { $('out').textContent = await 푸시부르기('/founder/ping', { 가게: '시험' }) } catch (e) { $('out').textContent = '안 됐어요: ' + (e && e.message ? e.message : e) }
+  }
+  // ⚠️ [2026-11-06] 최근 오류 — 창업자 「번거로웡」(Cloudflare 기록을 하나씩 펼치지 않고 여기서 바로)
+  //   ⛔ 개인 내용은 원래 안 온다(화면 이름 · 오류 글 · 누른 것의 «종류»뿐) · 위치는 scripts/오류위치풀기.mjs 로 푼다
+  $('errs').onclick = async () => {
+    const k = 읽기()
+    if (!k) { $('out').textContent = '열쇠를 먼저 저장해 주세요'; return }
+    $('out').textContent = '…'
+    try {
+      const r = await fetch(푸시 + '/founder/errors', { headers: { 'x-hankki-founder': k } })
+      const j = await r.json()
+      if (!r.ok) { $('out').textContent = r.status + ' ' + JSON.stringify(j); return }
+      const 시 = (t) => { const d = new Date(t + 9 * 3600000); return d.toISOString().slice(5, 16).replace('T', ' ') }
+      $('out').textContent = (j.오류 || []).length
+        ? j.오류.map((e, i) => `${i + 1}. [적어도 ${e.몇번}번] ${e.메시지 || '(글 없음)'}\n   화면 ${e.화면 || '-'} · ${e.판} · ${({ ios: '아이폰', android: '갤럭시', web: '웹' })[e.기기] || e.기기} · ${시(e.처음)}~${시(e.마지막)}\n   직전 ${(e.직전 || []).slice(-4).join(' > ') || '-'}${e.위치 ? '\n   위치 ' + e.위치.split('\n')[0].slice(0, 140) : ''}`).join('\n\n')
+        : '최근 7일 오류 없음 🎉'
+    } catch (e) { $('out').textContent = '연결 실패: ' + e }
   }
   상태()
 </script>

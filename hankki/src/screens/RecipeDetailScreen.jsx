@@ -4,7 +4,7 @@ import { COACH } from '../coach'
 //   🔢 창업자 = *"요 며칠 통계에 레꾸자랑 보낸 사람있어?"* → 장부 15일치 brag_shared **0**.
 //   ⛔ 9/21 에 BragScreen 의 이름 겹침을 고쳤지만 그건 «네 길 중 한 길»이었다. 나머지 셋(여기 둘 · SendNowSheet 하나)은 그대로였다.
 //   📌 detail 은 어제 조회 52로 제일 많이 본 화면이다 — 여기서 보낸 사람이 통째로 빠져 있었다.
-import { 사러나감, 장보기담음, 요리끝냄, 픽펼침, 자랑보냄, 자랑고름, 자랑사진저장, 자랑보내기누름, 자랑창닫음, 기본레시피표시 } from '../stats'
+import { 사러나감, 장보기담음, 요리끝냄, 픽펼침, 자랑보냄, 자랑고름, 자랑사진저장, 자랑보내기누름, 자랑창닫음, 기본레시피표시, 만드는법봄 } from '../stats'
 import { useStore, newId } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
@@ -193,6 +193,26 @@ export default function RecipeDetailScreen({ id }) {
   const coverRef = useRef(null) // 꾸민 표지(레꾸) 캡처용
   const recipeCardRef = useRef(null) // 2장째 레시피카드(재료·만드는 법) 캡처용
   const r = recipes.find((x) => x.id === id)
+  // 📜 [2026-11-08] 「만드는 법」 칸까지 «사람이 손으로» 내려오면 한 번 센다(레시피마다 한 번 · 이름은 안 보냄)
+  //    ⛔ 화면에 들어온 것만으로 세면 안 된다 — 처음 쓰는 사람에겐 안내(코치)가 「장보기 담기」까지 «저절로» 내려 줘서
+  //       만드는 법이 바로 보인다(2026-11-08 재현판 ③ 실측). 그래서 손가락·휠이 움직인 «뒤»의 스크롤만 본다.
+  const stepsRef = useRef(null)
+  useEffect(() => {
+    let 손댐 = false, 봤다 = false
+    const 손 = () => { 손댐 = true }
+    const 봄 = () => {
+      const el = stepsRef.current
+      if (봤다 || !손댐 || !el) return
+      const t = el.getBoundingClientRect().top
+      if (t < window.innerHeight && t > -el.offsetHeight - 2000) { 봤다 = true; 끝(); try { 만드는법봄() } catch { /* noop */ } }
+    }
+    const 끝 = () => { window.removeEventListener('touchmove', 손, true); window.removeEventListener('wheel', 손, true); window.removeEventListener('keydown', 손, true); window.removeEventListener('scroll', 봄, true) }
+    window.addEventListener('touchmove', 손, { capture: true, passive: true })
+    window.addEventListener('wheel', 손, { capture: true, passive: true })
+    window.addEventListener('keydown', 손, true)
+    window.addEventListener('scroll', 봄, { capture: true, passive: true })
+    return 끝
+  }, [id])
   const baseServings = r?.servings || 0
   const [servings, setServings] = useState(baseServings || 1)
   const ratio = baseServings ? servings / baseServings : 1
@@ -1230,7 +1250,7 @@ export default function RecipeDetailScreen({ id }) {
           <>
             {/* 📐 [창업자 2026-09-15] 틈 26 → **40**. 📮 *"만드는법을 아래로 살짝만 내리자 알약이랑 너무 붙어있으니까 답답해보여"*
                 (바로 위가 「이 레시피에 쓴 제품 보기」 알약이다) */}
-            <div className="sec-head" style={{ marginTop: 40, marginBottom: 6 }}>
+            <div ref={stepsRef} className="sec-head" style={{ marginTop: 40, marginBottom: 6 }}>
               <div className="sec-title-row" style={{ display: 'flex', alignItems: 'center' }}>
                 <DetailDecor where="head-만드는법" />
                 <SecTitle>만드는 법</SecTitle>
