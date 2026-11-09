@@ -40,6 +40,7 @@ body{width:1080px;height:1350px;overflow:hidden;position:relative;font-family:'J
 .줄 small{display:block;font-size:34px;opacity:.6;margin-top:10px}
 .알약{display:inline-flex;align-items:center;gap:16px;background:${종이};border-radius:999px;padding:16px 34px;font-size:34px;box-shadow:0 10px 0 rgba(0,0,0,.08)}
 .알약 img{width:60px;height:60px;border-radius:14px}`
+const 앞수=(all,k)=>all.slice(0,k).reduce((n,a)=>n+a.length,0)   // ⛔ [2026-11-09] k*3 으로 셌더니 3·2·2 로 나뉜 7편에서 6번이 빠지고 7–8 이 됐다 → 앞 묶음 길이를 더한다
 const 장=[], 셋씩=(a)=>{const n=Math.ceil(a.length/3),o=[];let s=0;for(let k=0;k<n;k++){const m=Math.ceil((a.length-s)/(n-k));o.push(a.slice(s,s+m));s+=m}return o}   // 고르게 나눈다(4 → 2·2 · 홀로 남는 장 없게)
 const 쪽=()=>`<span class="쪽">__쪽__</span>`
 // 한 장에 3줄 — 그림 380 × 3 = 화면 대부분
@@ -59,11 +60,11 @@ h1{font-size:170px;line-height:.95;margin:30px 0 18px;letter-spacing:-.04em;text
 <div class="접시">${표지셋.map((r,i)=>{const 자=[[20,120,420],[330,10,440],[640,120,420],[180,250,0]][i];return 자[2]?`<img src="${컷(r.icon)}" style="left:${자[0]}px;top:${자[1]}px;width:${자[2]}px;height:${자[2]}px">`:''}).join('')}</div>
 <div class="넘김">넘겨 보세요 →</div>`)
 // ② 월 새 레시피 — 3편씩
-셋씩(월편).forEach((묶,k,all)=>장.push(줄판(`<div class="머리"><div class="왼"><span class="요일">월</span><div><div class="제목">새 레시피</div><div class="날">${md(월)} · ${월편.length}편 중 ${k*3+1}–${k*3+묶.length}</div></div></div>${쪽()}</div>`,묶,r=>컷(r.icon),(r,i)=>`<span class="번">${String(k*3+i+1).padStart(2,'0')}</span><b>${r.title}</b>`)))
+셋씩(월편).forEach((묶,k,all)=>장.push(줄판(`<div class="머리"><div class="왼"><span class="요일">월</span><div><div class="제목">새 레시피</div><div class="날">${md(월)} · ${월편.length}편 중 ${앞수(all,k)+1}–${앞수(all,k)+묶.length}</div></div></div>${쪽()}</div>`,묶,r=>컷(r.icon),(r,i)=>`<span class="번">${String(앞수(all,k)+i+1).padStart(2,'0')}</span><b>${r.title}</b>`)))
 // ③ 수 SNS — 3편씩
-셋씩(수편).forEach((묶,k)=>장.push(줄판(`<div class="머리"><div class="왼"><span class="요일">수</span><div><div class="제목">SNS 레시피</div><div class="날">${md(수)} · 요즘 많이 해 먹는</div></div></div>${쪽()}</div>`,묶,r=>컷(r.icon),(r,i)=>`<span class="번">${String(k*3+i+1).padStart(2,'0')}</span><b>${r.title}</b>`)))
+셋씩(수편).forEach((묶,k,all)=>장.push(줄판(`<div class="머리"><div class="왼"><span class="요일">수</span><div><div class="제목">SNS 레시피</div><div class="날">${md(수)} · 요즘 많이 해 먹는</div></div></div>${쪽()}</div>`,묶,r=>컷(r.icon),(r,i)=>`<span class="번">${String(앞수(all,k)+i+1).padStart(2,'0')}</span><b>${r.title}</b>`)))
 // ④ 장바구니 — 3개씩
-셋씩(장편).forEach((묶)=>장.push(줄판(`<div class="머리"><div class="왼"><span class="요일" style="font-size:40px">장</span><div><div class="제목">주부의 장바구니</div><div class="날">직접 사서 써 본 것만</div></div></div>${쪽()}</div>`,묶,p=>b64(join(ROOT,`src/assets/curation/${p.icon}.png`)),p=>`<small style="margin:0 0 8px">${요일(p.from)} ${md(p.from)} · ${p.brand}</small><b style="font-size:58px">${p.name}</b>`)))
+셋씩(장편).forEach((묶)=>장.push(줄판(`<div class="머리"><div class="왼"><span class="요일" style="font-size:40px">장</span><div><div class="제목">주부의 장바구니</div><div class="날">직접 사서 써 본 것만</div></div></div>${쪽()}</div>`,묶,p=>b64(join(ROOT,`src/assets/curation/${p.icon}.png`)),p=>`<small style="margin:0 0 8px">${요일(p.from)} ${md(p.from)}${p.brand?` · ${p.brand}`:``}</small><b style="font-size:58px">${p.name}</b>`)))
 // ⑤ 끝
 장.push(`<style>${공통}.끝{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .끝 h2{font-size:120px;line-height:1.02;letter-spacing:-.03em}.끝 p{font-size:44px;line-height:1.5;margin:28px 0 56px}</style>
