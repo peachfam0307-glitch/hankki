@@ -12,7 +12,9 @@ export function useSeasonCuts() {
     // 📅 앱을 며칠씩 켜 두는 사람이 있다 — 다시 볼 때마다 오늘을 다시 잰다.
     const 다시재기 = () => set철(이번명절())
     document.addEventListener('visibilitychange', 다시재기)
-    return () => document.removeEventListener('visibilitychange', 다시재기)
+    // 🎄 설정에서 「크리스마스」 테마를 켜고 끌 때 — 다시 그린다(앱을 다시 안 열어도)
+    window.addEventListener('hankki-season-change', 다시재기)
+    return () => { document.removeEventListener('visibilitychange', 다시재기); window.removeEventListener('hankki-season-change', 다시재기) }
   }, [])
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export function useSeasonCuts() {
   // 🎃 [창업자 2026-09-29 「다른 탭들도 보자 (색은 보라로)」] 명절 색은 «앱 전체»에 — 홈만이 아니다.
   //    ⭐ 떼지 않는다(탭을 옮길 때마다 붙였다 뗐다 하면 깜빡인다) — 철이 끝나면(철=null) 그때 뗀다.
   useEffect(() => {
-    if (철 === 'hw') document.documentElement.setAttribute('data-season', 철)
+    if (철 === 'hw' || 철 === 'xmas') document.documentElement.setAttribute('data-season', 철)
     else document.documentElement.removeAttribute('data-season')
   }, [철])
 

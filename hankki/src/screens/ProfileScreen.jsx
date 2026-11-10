@@ -54,6 +54,7 @@ const PROFILE_COACH_STEPS = [
   { sel: '[data-coach="lab"]', label: '한끼연구소', desc: '의견·설문·안 되는 것을 받는 방이에요 여러분 한 줄이 저에겐 진짜 큰 힘이 돼요. 익명이니까 편하게 남겨 주세요!' },
 ]
 import { THEMES, getTheme, setTheme } from '../theme'
+import { 철테마창, 철꺼짐, 철켜기끄기 } from '../data/seasonDecor.js'
 import { Avatar } from './HomeScreen'
 // 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
 import { FAV_NAME } from '../favName'
@@ -104,6 +105,9 @@ export default function ProfileScreen() {
   useLayerBack(avatarSheet, () => setAvatarSheet(false))
   const [coach, setCoach] = useState(() => needsCoach(PROFILE_COACH_KEY))
   const [theme, setThemeState] = useState(getTheme())
+  // 🎄 철 테마(크리스마스) — 기간에만 테마 칸 «맨 앞»에 뜬다 · 처음엔 켜져 있다
+  const 철칸 = 철테마창()
+  const [철켬, set철켬] = useState(() => !!철칸 && !철꺼짐(철칸.key))
   const [pasteOpen, setPasteOpen] = useState(false)
   const [checking, setChecking] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
@@ -899,13 +903,17 @@ export default function ProfileScreen() {
                 `1fr`(＝`minmax(auto, 1fr)`)이면 **안 끊기는 낱말이 칸을 벌려 좌우가 짝짝이가 된다**(v11.24 사고 그대로).
              ⭐ 테마가 더 늘어도 저절로 2·3·4·… 줄로 쌓인다 — 다음에 또 안 고친다. */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
-            {THEMES.map((t) => {
-              const on = theme === t.key
+            {[...(철칸 ? [{ key: '__철', label: 철칸.label, desc: '12월 한정 · 쿠키 마을', bg: 'linear-gradient(160deg,#f6e3cc,#e9cdb0)', point: '#c8402f' }] : []), ...THEMES].map((t) => {
+              const on = t.key === '__철' ? 철켬 : (!철켬 && theme === t.key)
               return (
                 <button
                   key={t.key}
                   className="press"
-                  onClick={() => { setTheme(t.key); setThemeState(t.key); nav.showToast(`${t.label} 테마로 바꿨어요`) }}
+                  onClick={() => {
+                    if (t.key === '__철') { 철켜기끄기(철칸.key, true); set철켬(true) }
+                    else { if (철칸) { 철켜기끄기(철칸.key, false); set철켬(false) } setTheme(t.key); setThemeState(t.key) }
+                    nav.showToast(`${t.label} 테마로 바꿨어요`)
+                  }}
                   aria-label={`${t.label} 테마`}
                   style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
