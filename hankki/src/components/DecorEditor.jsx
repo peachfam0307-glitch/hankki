@@ -176,6 +176,9 @@ const PAPER_AXES = [
 // 🕗 「최근 쓴 것」을 띄우는 탭 — 스티커를 «고르는» 탭만.
 //   ⛔ `notetext`(글자) 제외 = 맨 위가 「직접 쓰기」여야 한다는 창업자 확정 순서(2026-07-30)를 안 흔든다.
 //   ⛔ `paper`(속지) 제외 = 열두 장뿐이라 찾을 게 없다.
+// 🎁 원본이 작아(긴변 137px) 0.22(238px)면 1.7배 넘게 뭉개지는 컷 — 0.15(162px)로 작게 붙인다
+//   (고정메모 「162px 로 등록하면 통과」 · 2026-11-10 배포 스모크에서 걸림) ⛔ scripts/check-sticker-res.mjs 에도 같은 목록
+const 작게붙는컷 = new Set(['xd13'])
 const RECENT_TABS = new Set(['bgtape', 'frame', 'tape', 'deco', 'buddies', 'food'])
 
 // ── 표지 꾸미기 에디터 ──
@@ -781,7 +784,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
       //      → 0.32 는 0.34 보다 6% 작을 뿐인데 뭉개짐을 확실히 피한다.
       //   📌 더 키우려면 «시트를 뽑을 때 글자를 크게» 하는 수밖에 없다 — 확대는 화질을 못 살린다.
       //   ⚠️ 여기 값을 고치면 `scripts/check-sticker-res.mjs` 의 `defaultScale()` «도» 고칠 것(복사본이다).
-      s: isFrame ? 그릇폭 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : (key.startsWith('rs_v') || key.startsWith('rs_k')) ? 0.32 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_')) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
+      s: isFrame ? 그릇폭 : key === 'yum' ? 0.34 : isKf ? 0.28 : key.startsWith('gp_duo') ? 0.34 : key.startsWith('gp_') ? 0.26 : (key.startsWith('rs_v') || key.startsWith('rs_k')) ? 0.32 : PHOTO_IDS.has(key) ? ((key.startsWith('dc_') || key.startsWith('ch_') || 작게붙는컷.has(key)) ? 0.15 : 0.22) : FACE_KEYS.has(key) ? 0.11 : 0.2,
       r: isFrame ? 0 : ((n % 5) - 2) * 4,
       // 🐻🐧 친구들(캐릭터)은 붙자마자 통통 움직인다 — 소품·음식은 가만히.
       //    ⚠️ 여기도 `gp_` 접두어로 골랐었다 → 여름·가을 곰펭은 붙여도 모션이 안 박혔다.
