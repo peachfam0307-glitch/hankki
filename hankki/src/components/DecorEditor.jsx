@@ -2103,6 +2103,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                 무늬 테이프(CSS)는 길이를 늘일 수 있어 먼저, 손그림 워시 스티커가 그다음. */}
             {cat === 'tape' && (
               <>
+                {/* 🎄 [창업자 2026-11-10 「맨 위로 올리고」] 명절 창(또는 열쇠 미리보기) 안의 명절 마테는 무늬 테이프보다도 «위» — 다른 탭과 같게 */}
+                {groupsByTab('tape').filter(명절위).map(renderStickerGroup)}
                 {/* 🎗 CSS 띠는 «공용 기본»이라 일기 선반엔 안 그린다 — 거긴 일기 세트만 있어야 한다.
                     ⛔ 없애는 게 아니다. 「레꾸 꾸미기」 칸에 그대로 있다. */}
                 {(!isDiary || shelf === 'all') && (
@@ -2116,7 +2118,7 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                   </div>
                 </div>
                 )}
-                {groupsByTab('tape').map(renderStickerGroup)}
+                {groupsByTab('tape').filter((g) => !명절위(g)).map(renderStickerGroup)}
               </>
             )}
             {/* 🗒️ 메모·글자 */}
