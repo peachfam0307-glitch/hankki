@@ -5,7 +5,7 @@
 //      지금도 음수 여백으로 줄 밖에 나와 있어서, 키운 만큼 음수 여백을 키우면
 //      줄에 «기여하는» 높이가 그대로다. 그래서 아래 내용이 하나도 안 밀린다.
 //   📄 실측·판정 전문 = `docs/명절-탭상단바-창업자확정-2026-09-09.md`
-import { 탭컷, 키움, 내림 } from '../data/seasonDecor.js'
+import { 탭컷, 키움 as 기본키움, 내림 as 기본내림, 철키움, 철내림 } from '../data/seasonDecor.js'
 import { useSeasonCuts } from '../season/useSeasonCuts.js'
 
 export default function SeasonHeadCut({ 탭, 기본, 폭, 높이, 여백, 모션, style }) {
@@ -22,6 +22,7 @@ export default function SeasonHeadCut({ 탭, 기본, 폭, 높이, 여백, 모션
   }
 
   // 🎑🎃 명절 — 높이만 키우고 폭은 «그림 비율대로» 늘어나게 둔다(찌그러지면 안 된다).
+  const 키움 = 철키움[철] || 기본키움, 내림 = 철내림[철] ?? 기본내림
   const 새높이 = Math.round(높이 * 키움)
   // 줄에 «기여하는» 높이 = 높이 + 여백×2. 그 값을 그대로 유지하는 새 여백.
   const 기여 = 높이 + 여백 * 2

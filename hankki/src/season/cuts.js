@@ -32,8 +32,29 @@ import 한복펭 from '../assets/stickers/season/한복펭.webp'
 import xmas_house from '../assets/season/xmas-house.webp'
 import xmas_house_night from '../assets/season/xmas-house-night.webp'
 
+// 🎄 탭·홈 코스튬(xk_ = 겨울크리스마스-캐릭터 낱개 «x 를 뺀» 이름 · ⛔유료팩 접두어 xn 과 안 겹치게) ＋ 진저 소품 xg
+import xk_n09_03 from '../assets/stickers/season/xk_n09_03.webp'
+import xk_n05_02 from '../assets/stickers/season/xk_n05_02.webp'
+import xk_c02_01 from '../assets/stickers/season/xk_c02_01.webp'
+import xk_n012_02 from '../assets/stickers/season/xk_n012_02.webp'
+import xk_c02_05 from '../assets/stickers/season/xk_c02_05.webp'
+import xk_n012_03 from '../assets/stickers/season/xk_n012_03.webp'
+import xk_n05_05 from '../assets/stickers/season/xk_n05_05.webp'
+import xk_c02_02 from '../assets/stickers/season/xk_c02_02.webp'
+import xk_c02_03 from '../assets/stickers/season/xk_c02_03.webp'
+import xg01 from '../assets/stickers/season/xg01.webp'
+import xg02 from '../assets/stickers/season/xg02.webp'
+import xg03 from '../assets/stickers/season/xg03.webp'
+import xg04 from '../assets/stickers/season/xg04.webp'
+import xg06 from '../assets/stickers/season/xg06.webp'
+import xg07 from '../assets/stickers/season/xg07.webp'
+import xg08 from '../assets/stickers/season/xg08.webp'
+import xg09 from '../assets/stickers/season/xg09.webp'
+
 export default {
   xmas_house, xmas_house_night,
+  xk_n09_03, xk_n05_02, xk_c02_01, xk_n012_02, xk_c02_05, xk_n012_03, xk_n05_05, xk_c02_02, xk_c02_03,
+  xg01, xg02, xg03, xg04, xg06, xg07, xg08, xg09,
   추석소품01, duo301, duo401, duo101, 거미줄02, 거미줄03,
   박쥐짙은02, 박쥐짙은03, 박쥐짙은04,
   cs_b02, hb09, hb12, hw_02, hw_03, hw_06, hw_09, hw_13, hw_11, hw_16, hw_15,

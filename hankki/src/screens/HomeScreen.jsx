@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import { COACH } from '../coach'
 import { todayKST } from '../today'
 import { nextUpList } from '../nextUp'
@@ -422,6 +422,7 @@ export default function HomeScreen() {
       {/* 🎑🎃 명절 장식 — 철이 아니면 아무것도 안 그리고 그림도 «안 받는다»(useSeasonCuts).
           ⛔ 반드시 «맨 앞»에 둔다 — 담는 칸의 자리가 통 맨 위여야 창업자가 놓은 y 가 맞는다. */}
       <SeasonDecor />
+      {명절 === 'xmas' && 명절컷?.xg01 && <XmasProps 컷={명절컷} />}
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           {/* 곰 자리에 내 아바타를 넣었다(창업자 2026-07-29). 인사하는 곰은 '레시피' 탭으로 옮김.
@@ -964,6 +965,9 @@ function XmasVillage({ 컷 }) {
   return (
     <div className="xmas-village" aria-hidden="true">
       <img src={밤 ? 컷.xmas_house_night : 컷.xmas_house} alt="" draggable={false} />
+      {/* 🐻🐧 끝마을 친구 둘 — 산타옷 꼬르곰(진저쿠키) · 루돌프 펭펭 (창업자 「맨 아래는 꼬르곰 두마리라 좀 이상해」 → 펭펭) */}
+      <img className="xmas-friend" src={컷.xk_c02_02} alt="" draggable={false} style={{ left: '22%', bottom: '4%', width: '30%' }} />
+      <img className="xmas-friend" src={컷.xk_c02_03} alt="" draggable={false} style={{ left: '54%', bottom: '3%', width: '24%' }} />
     </div>
   )
 }
@@ -976,4 +980,47 @@ const 눈들 = Array.from({ length: 28 }, (_, i) => {
 })
 function XmasSnow() {
   return <div className="xmas-snow" aria-hidden="true">{눈들.map((s, i) => <i key={i} style={s} />)}</div>
+}
+
+// 🍪 진저 소품 — 창업자 확정 자리(2026-11-09 시안 `홈시안-자리.cjs` PROPS·SPOTS 값 그대로)
+//   · 가장자리 다섯 = 홈 «맨 위»에서 잰 y(px)·x(%) · 글과 같이 굴러간다(높이 0 닻에 박는다 · ⛔`.screen` 에 relative 를 주지 않는다)
+//   · 카드 셋 = «글자»로 카드를 찾아 그 카드에 붙인다 — 카드 문구가 바뀌면 그 소품만 안 나온다(앱은 그대로)
+const 가장자리 = [
+  { k: 'xg04', x: 86, y: 80, w: 46, r: 12 }, { k: 'xg06', x: -1, y: 760, w: 46, r: -6 }, { k: 'xg03', x: 89, y: 1010, w: 40, r: 14 },
+  { k: 'xg07', x: 88, y: 1620, w: 44, r: -12 }, { k: 'xg09', x: -1, y: 1950, w: 48, r: 6 },
+]
+const 카드자리 = [
+  { 찾기: '.today-label', k: 'xg02', w: 50, dx: -78, dy: 14 },                 // 오늘 뭐 해먹지 — 「다른 추천」 왼쪽 하트
+  { 찾기: '.weekly-day', 옆: true, k: 'xg01', w: 40, dx: 6, dy: -10 },        // 이번 주 재료 「월」 바로 옆 진저맨
+  { 글: 'SNS 요리', k: 'xg08', w: 64, dx: -14, dy: -4 },                       // SNS 요리 제목 줄 오른쪽 과자집
+]
+function XmasProps({ 컷 }) {
+  const 닻 = useRef(null)
+  const [잰, set잰] = useState([])
+  useEffect(() => {
+    const 재기 = () => {
+      const a = 닻.current; if (!a) return
+      const ar = a.getBoundingClientRect(), sc = a.closest('.screen'); if (!sc) return
+      const 나온 = []
+      for (const f of 카드자리) {
+        const t = f.찾기 ? sc.querySelector(f.찾기) : [...sc.querySelectorAll('*')].find((e) => e.childElementCount === 0 && e.textContent.trim() === f.글)
+        if (!t) continue
+        let card = t; for (let i = 0; i < 8 && card; i++) { if (card.getBoundingClientRect().width > 300) break; card = card.parentElement }
+        if (!card) continue
+        const tr = t.getBoundingClientRect(), cr = card.getBoundingClientRect()
+        나온.push({ ...f, top: (f.옆 ? tr.top : cr.top) - ar.top + f.dy, left: f.옆 ? tr.right - ar.left + f.dx : cr.right - ar.left - f.w + f.dx })
+      }
+      set잰(나온)
+    }
+    재기(); const id = setTimeout(재기, 600)
+    window.addEventListener('resize', 재기)
+    return () => { clearTimeout(id); window.removeEventListener('resize', 재기) }
+  }, [])
+  const 그림 = { position: 'absolute', pointerEvents: 'none', filter: 'drop-shadow(0 3px 4px rgba(80,50,20,.25))' }
+  return (
+    <div ref={닻} aria-hidden="true" style={{ position: 'relative', height: 0, zIndex: 5 }}>
+      {가장자리.map((f) => <img key={f.k} src={컷[f.k]} alt="" draggable={false} style={{ ...그림, left: f.x + '%', top: f.y, width: f.w, transform: `rotate(${f.r}deg)` }} />)}
+      {잰.map((f) => <img key={f.k} src={컷[f.k]} alt="" draggable={false} style={{ ...그림, left: f.left, top: f.top, width: f.w, zIndex: 6 }} />)}
+    </div>
+  )
 }

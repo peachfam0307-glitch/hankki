@@ -340,8 +340,12 @@ img {
 .xmas-snow i { position: absolute; top: -12px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px rgba(120, 90, 60, .45); animation: xmas-fall linear infinite; }
 @keyframes xmas-fall { to { transform: translate(var(--dx), 110vh); } }
 @media (prefers-reduced-motion: reduce) { .xmas-snow { display: none; } }
+/* 🎄 홈 두 자리 ×1.4 — 높이로 키우고 여백으로 줄 높이는 그대로(시안 `홈시안-자리.cjs` SWAP 값 · 원래 44·41px 실측) */
+:root[data-season='xmas'] .news-gom { width: auto !important; height: 62px !important; margin: -3px 0 -15px; }
+:root[data-season='xmas'] .next-peng { width: auto; height: 57px; margin: -3px 0 -13px; }
 .xmas-village { position: relative; margin: 8px -20px 0; }
 .xmas-village > img { display: block; width: 100%; pointer-events: none; }
+.xmas-village > img.xmas-friend { position: absolute; display: block; height: auto; filter: drop-shadow(0 4px 6px rgba(80, 50, 20, .25)); }
 
 .app-frame {
   max-width: 440px;
