@@ -97,8 +97,17 @@ export function 오류받기시작() {
         try { const u = new URL(주소, location.href); if (u.origin === location.origin && u.pathname.includes('/assets/')) 우리것 = u.pathname.replace(/^.*\/assets\//, 'assets/').slice(-120) } catch { /* 무시 */ }
         // 🌐 [2026-11-06] 남의 사이트 그림(SNS 썸네일·링크 미리보기)을 못 불러온 건 «보고 안 한다» — 우리 고장이 아니고, 레시피가 많으면 한꺼번에 수십 개가 터진다
         if (!우리것) return
+        // 🔁 [창업자 2026-11-11 「조치해볼래」] 우리 그림은 «한 번 더» 불러본다 — 잠깐 끊긴 거면 유저 화면 빈칸이 저절로 메워진다.
+        //    다시 해도 안 될 때만 보고하고, 그때 인터넷이 켜져 있었는지를 같이 싣는다(원인 가르기).
+        if (t.tagName === 'IMG' && !t.dataset.한번더) {
+          t.dataset.한번더 = '1'
+          const 원주소 = t.getAttribute('src') || 주소
+          setTimeout(() => { try { t.src = 원주소 + (원주소.includes('?') ? '&' : '?') + 'r=1' } catch { /* 무시 */ } }, 1500)
+          return
+        }
+        const 인터넷 = navigator.onLine === false ? ' · 인터넷 꺼짐' : ' · 인터넷 켜짐'
         // 🖼 우리 그림 여러 장이 한꺼번에 안 뜨면(인터넷 끊김 등) «한 가지»로 묶는다 — 파일 이름은 위치 칸에
-        return 오류보내기({ message: `${t.tagName === 'IMG' ? '그림' : '자원'} 못 불러옴`, stack: 우리것 }, t.tagName === 'IMG' ? '그림' : '자원')
+        return 오류보내기({ message: `${t.tagName === 'IMG' ? '그림' : '자원'} 못 불러옴(다시 해도)${인터넷}`, stack: 우리것 }, t.tagName === 'IMG' ? '그림' : '자원')
       }
       오류보내기(e.error || e.message, 'error')
     }, true)
