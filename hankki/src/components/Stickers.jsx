@@ -2814,7 +2814,8 @@ export const DECOR_BACKGROUNDS = [
   { key: 'hwfelt', label: '핼러윈 펠트', key열쇠: '할로윈', 열쇠까지: '2026-10-16',
     style: { backgroundImage: 'url(' + HW_FELT + ')', backgroundSize: 'cover', backgroundPosition: 'center' } },
   // 🎄 [창업자 2026-11-10] 크리스마스 팩 배경(xw-03 크림 유칼립투스)을 12/01 무료로 — 그 전엔 열쇠(?크리스마스=1)
-  { key: 'xmaseuca', label: '크리스마스 유칼립투스', key열쇠: '크리스마스', 열쇠까지: '2026-12-01',
+  { key: 'xmaseuca', label: '크리스마스',   // ✏️ [창업자 2026-11-10] 「크리스마스 유칼립투스」가 길어 칸을 혼자 많이 차지 → 「크리스마스로 하자」
+    key열쇠: '크리스마스', 열쇠까지: '2026-12-01',
     style: { backgroundImage: 'url(' + XMAS_EUCA + ')', backgroundSize: 'cover', backgroundPosition: 'center' } },
   { key: 'plum', label: '딥플럼', dark: true, style: { background: '#3e3442' } },
   { key: 'midnight', label: '미드나잇', dark: true, style: { background: '#2d3340' } },
