@@ -53,7 +53,7 @@ import uiGomWow from '../assets/ui/wave/gom_wow.png' // 꼬르곰 감탄(별눈)
 import uiPengSearch from '../assets/ui/wave/pn_search.png'
 // 📔 일기 안내에 쓸 컷 — 꼬르곰·펭펭이 «둘 다» 하트를 만든다. 일기는 「그날의 마음을 남기는」 자리라 맞다.
 //    ⛔ ui 컷 다섯(hand_point·thumbsup·shop·heart·clap)은 이미 다른 단계가 다 쓰고 있어 정본 콤비에서 가져왔다.
-import { needsOnboarding } from '../components/Onboarding'
+import { needsOnboarding } from '../작은함수.js'   // 📏 Onboarding 통째로 안 끌고 오게
 import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount, myDiaryCount, needsCloudHome, markCloudHomeSeen, askOpenCloud, 클라우드보임 } from '../nudges'
 import { 로그인해뒀나 } from '../cloud'
 import { weeklyNow, homemadeNow, snsNow } from '../data/weekly'

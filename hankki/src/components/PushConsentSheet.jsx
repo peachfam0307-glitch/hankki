@@ -16,7 +16,7 @@ import Icon from './Icon'
 import { useModalBack } from '../useBackHandler'
 import { 알림이벤트, 기존유저한번물을까, 기존물음칸 } from '../pushConsent'
 import { 구독맞추기, 알림켜기 } from '../pushSubscribe'
-import { ONBOARD_KEY } from './Onboarding'
+import { ONBOARD_KEY } from '../작은함수.js'   // 📏 Onboarding 통째로 안 끌고 오게
 import { 알림시트봄, 알림허락, 알림거절 } from '../stats'   // 🚪 [2026-09-21] 관문 — 2026-09-20 에 나갔는데 계측이 0줄이었다
 
 export default function PushConsentSheet () {
