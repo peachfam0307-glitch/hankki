@@ -6,6 +6,7 @@ import { isReleased, seasonRank } from '../season'
 // 🌧 가을 유료팩 배경 — 우리 배경 중 «첫 사진». 표지가 1:1 이라 미리 1:1 로 잘라 뒀다.
 import RAIN_STREET from '../assets/decorbg/rain-street.webp'
 import HW_NIGHT from '../assets/decorbg/halloween-night.webp'
+import XMAS_EUCA from '../assets/decorbg/xmas-eucalyptus.webp'   // 🎄 크리스마스 팩 배경 xw-03 → 12/01 무료(창업자 2026-11-10)
 import HW_FELT from '../assets/decorbg/halloween-felt.webp'     // 🎃 같은 날 받은 «둘째» 판(펠트 · 밝은 크림) — 창업자 2026-09-21 「둘 다 앱에서 볼게」   // 🎃 창업자 2026-08-03 확정 배경(클레이-핼러윈밤 · docs/stickers/배경-창업자-2026-07-31)
 
 // ── 꾸미기 스티커 라이브러리 ──
@@ -832,6 +833,8 @@ const PHOTO_RATIO = {
   hw_01: 1.1072, hw_04: 0.9547, hw_09: 0.8685,
   hw_13: 0.9522,
   xm_01: 0.7759, xm_02: 0.718, xm_03: 0.9472, xm_04: 0.615,
+  // 🎄 [창업자 2026-11-10 확정] 크리스마스 무료 64 ＋ 겨울 마테 5 — docs/크리스마스-홈-2026-11-09.md
+  xk_n09_03: 0.8846, xk_n05_02: 0.992, xk_c02_01: 1.1653, xk_n012_02: 0.9467, xk_c02_05: 1.1538, xk_n012_03: 0.905, xk_n05_05: 0.6538, xk_c02_02: 0.7246, xk_c02_03: 0.7062, xk_c01_02: 0.9817, xk_n012_04: 1.0, xk_n05_01: 1.1399, xk_n09_01: 0.8667, xk_c01_03: 0.9811, xk_n05_03: 0.9313, xk_c03_05: 1.1342, xk_c04_02: 0.9683, xk_n09_02: 0.7533, xk_c01_04: 1.0, xk_c03_04: 1.0526, xk_c04_01: 0.96, xk_n05_04: 0.722, xk_n09_04: 0.8605, xg01: 0.8697, xg02: 1.0496, xg03: 1.0034, xg04: 0.6338, xg05: 0.9961, xg06: 0.8383, xg07: 0.9024, xg08: 0.9522, xg09: 0.8729, xd06: 1.1736, xd13: 0.9635, xd14: 1.0457, xd16: 0.6447, xd21: 1.1094, xi01: 1.0575, xi03: 1.015, xi07: 0.6853, xi10: 0.637, xp05: 1.1312, xp09: 0.7131, xp12: 0.965, xd22: 2.1119, xd23: 1.7956, xd27: 3.5068, xd29: 5.5222, xn01: 1.378, xn02: 1.219, xn06: 1.0265, xn07: 1.1065, xn09: 1.4867, xn12: 1.471, xt01: 8.48, xt02: 10.5124, xt03: 9.6364, xt04: 12.3495, xt05: 10.7797, xf01: 1.1199, xf02: 1.0473, xf03: 1.1405, xf05: 0.979, xh01: 5.9191, xh02: 5.9535, xh03: 5.9191, xh04: 5.9191,
   ch_che01: 0.806, ch_che04: 1.399, ch_che06: 1.0724, ch_che08: 1.285, ch_che05: 0.9354,
   lf_fit12: 1.5443, lf_fit11: 1.436, lf_fit08: 1.2205, lf_fit07: 1.1709, lf_fit02: 1.0825, lf_fit13: 0.7045, lf_fit14: 1.1691, lf_fit06: 0.697,
   cp_cpf01: 0.8659, cp_cpf02: 0.9215, cp_cpf03: 0.8136, cp_cpf04: 0.8604, cp_cpf05: 0.9968, cp_cpf06: 1.0358, cp_cpf07: 0.9139, cp_cpf08: 0.8815,
@@ -1962,6 +1965,16 @@ export const STICKER_GROUPS = [
   { key: 'frame_halloween', 명절: 'hw', tab: 'frame', key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '핼러윈 프레임', items: ['hfw_01', 'hfw_02', 'hfw_03', 'hfw_04'] },
   { key: 'deco_halloween', 명절: 'hw', tab: 'deco', key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '핼러윈 종이·씰', items: ['hp_04', 'hp_07', 'hp_12', 'hp_14', 'hp_15', 'hp_18', 'hs_02', 'hs_06', 'hs_08', 'hs_09', 'hs_10', 'hs_11'] },
   { key: 'tape_halloween', 명절: 'hw', tab: 'tape', key열쇠: '할로윈', 열쇠까지: '2026-10-16', from: '2026-01-01', label: '핼러윈', items: ['ht_01', 'ht_02', 'ht_05', 'ht_06'] },
+  // 🎄 [창업자 2026-11-10 「추천대로 하고 무료만 먼저 가자」] 크리스마스 무료 — 12/01 00시에 모두에게(그 전엔 창업자 열쇠 ?크리스마스=1)
+  //    ⭐ 유료 크리스마스 팩(xd·xi·xp·xn)에서 푼 22컷은 paidPacks.js `freed` 에 같이 적었다 · 캐릭터는 xk_(유료 xn 과 안 겹치게)
+  { key: 'buddies_xmas', 명절: 'xmas', tab: 'buddies', bigCell: true, key열쇠: '크리스마스', 열쇠까지: '2026-12-01', from: '2026-01-01', label: '한끼 친구들의 크리스마스', items: ['xk_n09_03', 'xk_n05_02', 'xk_c02_01', 'xk_n012_02', 'xk_c02_05', 'xk_n012_03', 'xk_n05_05', 'xk_c02_02', 'xk_c02_03', 'xk_c01_02', 'xk_n012_04', 'xk_n05_01', 'xk_n09_01', 'xk_c01_03', 'xk_n05_03', 'xk_c03_05', 'xk_c04_02', 'xk_n09_02', 'xk_c01_04', 'xk_c03_04', 'xk_c04_01', 'xk_n05_04', 'xk_n09_04'] },
+  { key: 'deco_xmas_ginger', 명절: 'xmas', tab: 'deco', key열쇠: '크리스마스', 열쇠까지: '2026-12-01', from: '2026-01-01', label: '진저브레드 쿠키', items: ['xg01', 'xg02', 'xg03', 'xg04', 'xg05', 'xg06', 'xg07', 'xg08', 'xg09'] },
+  { key: 'deco_xmas', 명절: 'xmas', tab: 'deco', key열쇠: '크리스마스', 열쇠까지: '2026-12-01', from: '2026-01-01', label: '크리스마스 소품·메모', items: ['xd06', 'xd13', 'xd14', 'xd16', 'xd21', 'xi01', 'xi03', 'xi07', 'xi10', 'xp05', 'xp09', 'xp12', 'xd22', 'xd23', 'xd27', 'xd29', 'xn01', 'xn02', 'xn06', 'xn07', 'xn09', 'xn12'] },
+  { key: 'tape_xmas', 명절: 'xmas', tab: 'tape', key열쇠: '크리스마스', 열쇠까지: '2026-12-01', from: '2026-01-01', label: '크리스마스', items: ['xh01', 'xh02', 'xh03', 'xh04'] },
+  { key: 'frame_xmas', 명절: 'xmas', tab: 'frame', key열쇠: '크리스마스', 열쇠까지: '2026-12-01', from: '2026-01-01', label: '크리스마스 프레임', items: ['xf01', 'xf02', 'xf03', 'xf05'] },
+  // ❄️ [창업자 2026-11-10 「겨울 내내 하자 1월부터 쭉」 → 「봄 열릴 때까지」] 파란 겨울 마테 — 2027-01-01 열림(유료 겨울팩 freed)
+  //    ⚠️ 닫는 날(봄 2027-03-01)은 서랍 그룹에 «끝»이 없어 못 박지 못했다 — 한 번 열린 무료는 계속 쓴다(가을·핼러윈과 같다). 창업자 확인 필요.
+  { key: 'tape_winter', tab: 'tape', from: '2027-01-01', label: '겨울', items: ['xt01', 'xt02', 'xt03', 'xt04', 'xt05'] },
   { key: 'deco_dish_halloween', 명절: 'hw', tab: 'frame', key열쇠: '할로윈', 열쇠까지: '2026-10-16', bigCell: true, from: '2026-01-01', label: '보랏빛 핼러윈 식탁', hint: '직접 찍은 음식 사진을 접시에 담아보세요', items: ['pf_hw01', 'pf_hw04', 'pf_hw09', 'pf_hw10'] },
   // 🍽 [창업자 2026-09-21] 기본 그릇 8컷 — 늘 열려 있다. 사진 표지에 프레임을 «안» 얹으면 갈래별 기본 그릇(`기본그릇키`)이 저절로 깔리고, 여기서 직접 고르면 그게 이긴다.
   // 🔒🔒 [창업자 2026-09-22 14:38 *"빼 · 음식 종류에 맞게 기본값으로 네가 넣어주는 그릇이니까 · 빼고 안 보이게 하는 게 맞아 · 아예 삭제하라는 게 아니라"*]
@@ -2800,6 +2813,9 @@ export const DECOR_BACKGROUNDS = [
   // 🎃 펠트 크림 판 — 8/3 엔 「팩당 배경 1개」 규칙으로 예비 보관했던 것. 창업자 2026-09-21 *"둘 다 앱에서 볼게"* → 열쇠 뒤에서 나란히 본다. 둘 중 무엇을 팩에 넣을지는 창업자가 앱에서 보고 정한다.
   { key: 'hwfelt', label: '핼러윈 펠트', key열쇠: '할로윈', 열쇠까지: '2026-10-16',
     style: { backgroundImage: 'url(' + HW_FELT + ')', backgroundSize: 'cover', backgroundPosition: 'center' } },
+  // 🎄 [창업자 2026-11-10] 크리스마스 팩 배경(xw-03 크림 유칼립투스)을 12/01 무료로 — 그 전엔 열쇠(?크리스마스=1)
+  { key: 'xmaseuca', label: '크리스마스 유칼립투스', key열쇠: '크리스마스', 열쇠까지: '2026-12-01',
+    style: { backgroundImage: 'url(' + XMAS_EUCA + ')', backgroundSize: 'cover', backgroundPosition: 'center' } },
   { key: 'plum', label: '딥플럼', dark: true, style: { background: '#3e3442' } },
   { key: 'midnight', label: '미드나잇', dark: true, style: { background: '#2d3340' } },
 ]
