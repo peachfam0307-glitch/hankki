@@ -859,6 +859,10 @@ export default function HomeScreen() {
         />
       )}
 
+      {/* 🎄 크리스마스 — 홈을 다 내리면 과자집 마을이 «통째로» 보인다(창업자 「과자집 전체가 다 보이게」) ＋ 흰 점 눈 */}
+      {명절 === 'xmas' && 명절컷?.xmas_house && <XmasVillage 컷={명절컷} />}
+      {명절 === 'xmas' && <XmasSnow />}
+
       {/* 최근 저장 카드 길게 눌러 삭제 */}
       {delAsk && (
         <ConfirmSheet
@@ -952,4 +956,24 @@ export function Avatar({ name, avatar, size = 32 }) {
       {isEmoji ? avatar.value : (name || '한')[0]}
     </div>
   )
+}
+
+// 🎄 과자집 마을 — 다크면 코코아 밤 판(창업자 2026-11-10 「좋아 확정」)
+function XmasVillage({ 컷 }) {
+  const 밤 = document.documentElement.getAttribute('data-theme') === 'dark'
+  return (
+    <div className="xmas-village" aria-hidden="true">
+      <img src={밤 ? 컷.xmas_house_night : 컷.xmas_house} alt="" draggable={false} />
+    </div>
+  )
+}
+
+// ❄️ 흰 점 눈 28개 — 크기 6~13px · 7~13초 · 자리는 한 번만 정한다(다시 그려도 안 튄다)
+const 눈들 = Array.from({ length: 28 }, (_, i) => {
+  const r = (n) => { const x = Math.sin((i + 1) * 9301 + n * 49297) * 233280; return x - Math.floor(x) }
+  const z = 6 + r(1) * 7
+  return { left: r(2) * 100 + 'vw', width: z, height: z, opacity: 0.6 + r(3) * 0.4, '--dx': (r(4) * 40 - 20) + 'px', animationDuration: (7 + r(5) * 6) + 's', animationDelay: '-' + (r(6) * 10) + 's' }
+})
+function XmasSnow() {
+  return <div className="xmas-snow" aria-hidden="true">{눈들.map((s, i) => <i key={i} style={s} />)}</div>
 }

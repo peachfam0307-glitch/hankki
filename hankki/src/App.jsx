@@ -1197,7 +1197,7 @@ export default function App() {
             ⭐ 그래서 담는 칸을 하나 둔다 — 여기가 `position: relative` 라
                쌓인 화면의 `inset:0` 이 **띠 «아래»부터** 시작한다. */}
         <div className="frame-body">
-        <div key={tab} className="screen fade">
+        <div key={tab} className="screen fade" data-tab={tab}>
           <TabScreen />
         </div>
 

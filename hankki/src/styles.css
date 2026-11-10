@@ -317,6 +317,32 @@ img {
   background-image: url('./assets/season/hw-felt-lavender.jpg');
   background-size: 420px auto;
 }
+/* 🎄 [창업자 2026-11-09~10 확정] 크리스마스 12/01~12/31 — 쿠키 마을(바닐라라떼) · 다크 = 코코아 밤
+   ⭐ 표시는 useSeasonCuts·철켜기끄기 가 단다(설정 테마에서 끄면 `data-season` 이 빠진다).
+   ⭐ 바탕 그림은 «홈»에만 · 색은 앱 전체(핼러윈과 같은 결). 그림은 CSS 라 철이 아니면 «안 받는다».
+   📄 `docs/크리스마스-홈-2026-11-09.md` (다크 4차 색 값 그대로) */
+:root[data-season='xmas']:not([data-theme='dark']) {
+  --bg: #fdf1e1; --nav-bg: rgba(253, 241, 225, 0.95);
+}
+:root[data-season='xmas'][data-theme='dark'] {
+  --bg: #90837a; --surface: #4a3c37; --cream: #574843; --cream-deep: #62524c; --frame: #3a2f2b;
+  --nav-bg: rgba(58, 47, 43, 0.94);
+  --today-grad: linear-gradient(135deg, #52433e, #463833); --tease: linear-gradient(100deg, #52433e, #463833); --tease-line: #6a5852;
+}
+:root[data-season='xmas']:not([data-theme='dark']) .screen[data-tab='home'] {
+  background: #fdf1e1 url('./assets/season/xmas-top.webp') center top / 100% auto no-repeat;
+}
+:root[data-season='xmas'][data-theme='dark'] .screen[data-tab='home'] {
+  background: #90837a url('./assets/season/xmas-top-night.webp') center top / 100% auto no-repeat;
+}
+/* ❄️ 흰 점 눈 — 홈에서만 · 움직임 줄이기 설정이면 안 내린다 */
+.xmas-snow { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
+.xmas-snow i { position: absolute; top: -12px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px rgba(120, 90, 60, .45); animation: xmas-fall linear infinite; }
+@keyframes xmas-fall { to { transform: translate(var(--dx), 110vh); } }
+@media (prefers-reduced-motion: reduce) { .xmas-snow { display: none; } }
+.xmas-village { position: relative; margin: 8px -20px 0; }
+.xmas-village > img { display: block; width: 100%; pointer-events: none; }
+
 .app-frame {
   max-width: 440px;
   margin: 0 auto;

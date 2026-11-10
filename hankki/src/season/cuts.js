@@ -28,7 +28,12 @@ import hw_15 from '../assets/stickers/season/hw_15.webp'
 import 한복곰 from '../assets/stickers/season/한복곰.webp'
 import 한복펭 from '../assets/stickers/season/한복펭.webp'
 
+// 🎄 [창업자 2026-11-10 확정] 크리스마스 — 홈 맨 끝 과자집 마을(밝은·코코아 밤)
+import xmas_house from '../assets/season/xmas-house.webp'
+import xmas_house_night from '../assets/season/xmas-house-night.webp'
+
 export default {
+  xmas_house, xmas_house_night,
   추석소품01, duo301, duo401, duo101, 거미줄02, 거미줄03,
   박쥐짙은02, 박쥐짙은03, 박쥐짙은04,
   cs_b02, hb09, hb12, hw_02, hw_03, hw_06, hw_09, hw_13, hw_11, hw_16, hw_15,
