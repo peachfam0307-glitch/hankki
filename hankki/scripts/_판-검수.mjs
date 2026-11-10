@@ -89,7 +89,11 @@ if (!목록.length) {
 }
 
 // ── 그림을 판에 «박아» 넣는다 (밖에서 못 불러오니 통째로) ──────────
+let 앱값 = null
+try { 앱값 = await import(join(APP, 'node_modules/.cache/앱값.mjs')) } catch { /* release-prep 을 먼저 돌리면 생긴다 */ }
+const 자동그림 = (t) => { const k = 앱값?.guessFoodIconStrict?.(t); return k && k !== 'default' ? k : null }
 const 그림 = (key) => {
+  if (!key) return null
   const p = join(APP, 'src/assets/stickers/photo', `${key}.png`)
   if (!existsSync(p)) return null
   // 작게 줄여 넣는다 — 폰에서 여는 판이라 무거우면 안 열린다
@@ -146,7 +150,9 @@ const 재료줄 = (t) => {
 
 const 카드 = (r, meta, i) => {
   const 색 = /우리집/.test(meta.줄) ? 'home' : 'cool'
-  const img = 그림(r.icon)
+  // 🔸 [2026-11-10] 아이콘을 안 박은 편은 앱이 «제목으로 자동» 붙인다 — 판에도 그 그림을 띄운다(안 그러면 빈 칸으로 보여 검수 ②를 못 한다)
+  //    판정은 release-prep.mjs 가 앱 소스로 담아 둔 같은 함수(node_modules/.cache/앱값.mjs)를 쓴다 — 베끼지 않는다
+  const img = 그림(r.icon || 자동그림(r.title))
   return `
 <article class="card ${색}" id="r${i + 1}" data-key="${r.id}">
   <header class="card-h">
