@@ -5074,6 +5074,19 @@ const RAW_BASICS = [
     id: 'basic-eomuk-tang',
     origin: '창업자', // 📮 창업자가 «직접 쓴» 레시피 (창업자 확인 · 2026-09-27 — 메모 「파운더」·창업자 말)
     title: '어묵탕', from: '2026-11-23',
+    // 🎄 크리스마스 꾸미기 샘플 ① — 창업자가 폰에서 꾸민 화면 녹화(2026-11-10 22:53 · 「배경 크림으로 바꾸고 트리랑 펭펭 위치 조금 조정했어」)
+    //    자리·크기·각도 = 영상 마지막 프레임에서 «잰» 값(tools/꾸미기-영상재기.py · 알파 마스크 맞추기) — ⛔ 눈대중으로 고치지 않는다
+    sample: true,
+    decorBg: 'cream',
+    decor: [
+      { id: 'xmo-holly', type: 'sticker', key: 'xd27', x: 0.5084, y: 0.1044, s: 0.455, r: 0 },
+      { id: 'xmo-wreath', type: 'sticker', key: 'xf05', x: 0.5214, y: 0.4978, s: 0.597, r: 0 },
+      { id: 'xmo-tag', type: 'sticker', key: 'xp09', x: 0.8788, y: 0.2510, s: 0.171, r: 8 },
+      { id: 'xmo-tape', type: 'sticker', key: 'xh02', x: 0.2120, y: 0.9650, s: 0.379, r: 0 },
+      { id: 'xmo-tree', type: 'sticker', key: 'xi07', x: 0.1584, y: 0.7828, s: 0.275, r: -6 },
+      { id: 'xmo-gift', type: 'sticker', key: 'xd13', x: 0.2973, y: 0.9195, s: 0.139, r: -7 },
+      { id: 'xmo-peng', type: 'sticker', key: 'xk_n05_02', x: 0.7781, y: 0.8242, s: 0.315, r: -2 },
+    ],
     열쇠: '크리스마스',   // 🔑 [창업자 2026-11-10 「꾸미기한번 해볼게」] 창업자 폰(?크리스마스=1)에선 11/23 전에도 보인다 — 크리스마스 꾸미기 샘플용
     review: '창업자',   // ✅ 2026-08-18 검수판 통과
     icon: 'fb_b02',
@@ -5295,6 +5308,17 @@ const RAW_BASICS = [
     ...base,
     made: '창업자', // 🧑‍🍳 창업자가 «직접 만든» 레시피 — 뱃지 대상 (창업자 확인 · 2026-09-27 「스키야키 내꺼 맞아」)
     id: 'basic-sukiyaki', title: '스키야키', from: '2026-11-09',
+    // 🎄 크리스마스 꾸미기 샘플 ② — 창업자가 폰에서 꾸민 화면 녹화(2026-11-10 22:39) · 자리 = 영상에서 «잰» 값(tools/꾸미기-영상재기.py)
+    sample: true,
+    decorBg: 'xmaseuca',
+    decor: [
+      { id: 'xms-tape', type: 'tape', key: 'ggingham', x: 0.6492, y: 0.2286, s: 0.4268, r: 10.7, ratio: 2.91 },
+      { id: 'xms-title', type: 'text', color: 'charcoal', font: 'gaegu', text: '스키야키', x: 0.656, y: 0.242, s: 0.5, r: 10.7, w: 'mid' },
+      { id: 'xms-cookie', type: 'sticker', key: 'xg07', x: 0.3193, y: 0.2295, s: 0.135, r: -22 },
+      { id: 'xms-seal', type: 'sticker', key: 'xp05', x: 0.2528, y: 0.3327, s: 0.167, r: -5 },
+      { id: 'xms-flower', type: 'sticker', key: 'xd14', x: 0.8156, y: 0.3042, s: 0.203, r: 7 },
+      { id: 'xms-friends', type: 'sticker', key: 'xk_c01_02', x: 0.6772, y: 0.7864, s: 0.359, r: 0 },
+    ],
     icon: 'fe_121', category: '일식',
     time: 30, servings: 2, difficulty: '쉬움',
     origin: '창업자', review: '창업자',
