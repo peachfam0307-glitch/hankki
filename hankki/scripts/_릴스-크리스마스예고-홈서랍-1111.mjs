@@ -14,7 +14,7 @@ const 밖 = process.env.OUT || '/tmp/claude-0/릴스-크리스마스예고-홈�
 // 🏠 홈은 zoom 고화질에서 칸이 깨진다(2026-11-11 실측 · 글자가 세로로 쌓임) → HQ=0 DSF=2.7692 로 «정지 화면»(홈.png)만 따로 찍는다
 const HQ = process.env.HQ !== '0'; const 배율 = HQ ? 1080 / 390 : 1
 const b = await chromium.launch({ executablePath: process.env.SMOKE_CHROMIUM })
-const ctx = await b.newContext({ viewport: HQ ? { width: 1080, height: 2340 } : { width: 390, height: 844 }, deviceScaleFactor: HQ ? 1 : Number(process.env.DSF || 2), locale: 'ko-KR', recordVideo: { dir: 밖, size: HQ ? { width: 1080, height: 2340 } : { width: 390, height: 844 } } })
+const ctx = await b.newContext({ viewport: HQ ? { width: 1080, height: 2340 } : { width: 390, height: Number(process.env.TALL || 844) }, deviceScaleFactor: HQ ? 1 : Number(process.env.DSF || 2), locale: 'ko-KR', recordVideo: { dir: 밖, size: HQ ? { width: 1080, height: 2340 } : { width: 390, height: 844 } } })
 await ctx.clock.setFixedTime(new Date('2026-12-01T11:00:00Z'))
 await ctx.addInitScript(() => { try { for (const k of ['hankki:nudge:giftpack', 'hankki:nudge:cloudgate', 'hankki:onboarded', 'hankki:news:off']) localStorage.setItem(k, '1'); localStorage.setItem('hankki-theme', 'apricot'); const g = Storage.prototype.getItem; Storage.prototype.getItem = function (k) { if (typeof k === 'string' && k.startsWith('hankki:coach')) return '1'; return g.call(this, k) } } catch {} })
 if (HQ) await ctx.addInitScript((z) => { document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.zoom = String(z) }) }, 배율)
