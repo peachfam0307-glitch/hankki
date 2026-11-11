@@ -5313,7 +5313,7 @@ const RAW_BASICS = [
     decorBg: 'xmaseuca',
     decor: [
       { id: 'xms-tape', type: 'tape', key: 'ggingham', x: 0.6492, y: 0.2286, s: 0.4268, r: 10.7, ratio: 2.91 },
-      { id: 'xms-title', type: 'text', color: 'charcoal', font: 'gaegu', text: '스키야키', x: 0.656, y: 0.242, s: 0.5, r: 10.7, w: 'mid' },
+      { id: 'xms-title', type: 'text', color: 'charcoal', font: 'gaegu', text: '스키야키', x: 0.632, y: 0.242, s: 0.5, r: 10.7, w: 'mid' },
       { id: 'xms-cookie', type: 'sticker', key: 'xg07', x: 0.3193, y: 0.2295, s: 0.135, r: -22 },
       { id: 'xms-seal', type: 'sticker', key: 'xp05', x: 0.2528, y: 0.3327, s: 0.167, r: -5 },
       { id: 'xms-flower', type: 'sticker', key: 'xd14', x: 0.8156, y: 0.3042, s: 0.203, r: 7 },
