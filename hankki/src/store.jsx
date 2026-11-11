@@ -158,7 +158,23 @@ function load() {
 const BASIC_PHOTOS = Object.fromEntries(
   basicRecipes.filter((r) => r.thumb === 'photo' && r.image).map((r) => [r.id, r.image])
 )
-function migrateBasics(saved) {
+// 🎄 [창업자 2026-11-11 「12월 1일부터 보이게 하자」] 날짜가 여는 «꾸민 표지» — 앱 켤 때마다 본다(버전 안 올라도)
+//    씨앗에 `decorFrom` 이 있고 그날이 지나 basics.js 가 decor 를 내주면(꾸밈거르기), 이미 깔린 폰의 그 편에 얹는다.
+//    ⛔ 유저가 직접 꾸민 편(decor·배경 있음)·고친 편(touched)은 안 건드린다
+//    ⛔ 한 번 얹었으면 `꾸밈받음` 표식 — 유저가 나중에 표지를 비워도 다시 안 얹는다
+function 꾸밈열기(recipes) {
+  const 씨앗 = new Map(allBasicRecipes.filter((s) => s.decorFrom && Array.isArray(s.decor) && s.decor.length).map((s) => [s.id, s]))
+  if (!씨앗.size) return recipes
+  return recipes.map((r) => {
+    const s = r && 씨앗.get(r.id)
+    if (!s || r.touched || r.꾸밈받음 === s.decorFrom) return r
+    const 유저꾸밈 = (Array.isArray(r.decor) && r.decor.length > 0) || (r.decorBg && r.decorBg !== 'none')
+    if (유저꾸밈) return { ...r, 꾸밈받음: s.decorFrom }
+    return { ...r, decor: s.decor, decorBg: s.decorBg, sample: s.sample, decorFrom: s.decorFrom, 꾸밈받음: s.decorFrom }
+  })
+}
+function migrateBasics(saved0) {
+  const saved = { ...saved0, recipes: 꾸밈열기(saved0.recipes || []) }
   const v = saved.seedV || 0
   const have = new Set(saved.recipes.map((r) => r.id))
   // 🏷🏷 제목 중복 막기 — **「우리가 깐 것」끼리만** 본다. (창업자 확정 2026-08-15 「둘 다 놓기」)
@@ -298,6 +314,7 @@ function migrateBasics(saved) {
       // 🔖 [2026-09-08] 핀의 «종»도 유저 것이다 — 안 실으면 시드가 갱신될 때마다 하트가 모자로 되돌아간다.
       //    ⚠️ `favorite` 바로 옆에 둔다 — 둘은 «한 쌍»이라 떨어지면 한쪽만 실리는 사고가 난다.
       favPin: r.favPin,
+      꾸밈받음: r.꾸밈받음,   // 🎄 날짜가 연 표지를 한 번 얹었다는 표식(꾸밈열기) — 버전 올라도 안 잃게
       cooked: r.cooked,
       cookedAt: r.cookedAt,
       savedAt: r.savedAt,
