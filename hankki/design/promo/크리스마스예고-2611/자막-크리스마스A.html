@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><style>
+@font-face{font-family:BH;src:url(blackhansans-korean-400.woff2),url(blackhansans-latin-400.woff2)}
+@font-face{font-family:J;src:url(jua-korean-400.woff2),url(jua-latin-400.woff2)}
+html,body{margin:0;width:1080px;height:1920px;background:transparent}
+.cap{position:absolute;left:30px;right:30px;bottom:240px;text-align:center;line-height:1.1}
+.w{display:inline-block;position:relative}
+.cap span{display:inline-block;white-space:nowrap}
+.st{position:absolute;pointer-events:none;filter:drop-shadow(0 6px 6px rgba(60,30,20,.3))}
+/* A 사탕지팡이 */
+.A .l1{font-family:J;font-size:80px;color:#fff;background:#c8463a;padding:16px 44px 20px;border-radius:44px;transform:rotate(-4deg);box-shadow:0 0 0 8px #fff,0 0 0 16px #c8463a,0 16px 0 10px #8e2c23}
+.A .l2{font-family:BH;font-size:96px;color:#fff;margin-top:40px;padding:16px 50px 20px;border-radius:60px;transform:rotate(2deg);background:repeating-linear-gradient(-45deg,#3f7a4c 0 26px,#356a41 26px 52px);box-shadow:0 0 0 8px #fff,0 16px 0 8px #244a2d}
+/* B 쿠키 아이싱 */
+.B .l1{font-family:J;font-size:82px;color:#7a3f1d;background:#f3d9b0;padding:16px 44px 20px;border-radius:60px;transform:rotate(-3deg);border:8px dashed #fff;box-shadow:0 14px 0 #c48a52}
+.B .l2{font-family:BH;font-size:98px;color:#fff;background:#b8743e;padding:16px 50px 20px;border-radius:60px;margin-top:30px;transform:rotate(2.5deg);border:8px dashed #fff8ee;box-shadow:0 16px 0 #7f4a22;text-shadow:0 5px 0 #7f4a22}
+/* 통통 등장 */
+.l1{animation:pop .55s cubic-bezier(.2,1.6,.4,1) both}
+.l2{animation:pop2 .6s .15s cubic-bezier(.2,1.6,.4,1) both}
+.st{animation:pop .6s .3s cubic-bezier(.2,1.8,.4,1) both}
+@keyframes pop{0%{scale:.2;opacity:0}100%{scale:1;opacity:1}}
+@keyframes pop2{0%{scale:.3;opacity:0}100%{scale:1;opacity:1}}
+@keyframes wob{0%,100%{rotate:-6deg}50%{rotate:6deg}}
+.st.wob{animation:pop .6s .3s cubic-bezier(.2,1.8,.4,1) both,wob 1.2s .9s ease-in-out infinite}
+</style><div class="cap" id="cap"><div class="w"><span class="l1" id="a"></span><img class="st wob" id="s1" style="width:150px;left:-150px;top:-80px"></div><br><div class="w"><span class="l2" id="b"></span><img class="st wob" id="s2" style="width:140px;right:-70px;top:-50px"></div></div>
+<script>const q=new URLSearchParams(location.search);a.textContent=q.get('a');b.textContent=q.get('b');const s=q.get('s')||'A';cap.classList.add(s);s1.src=s==='A'?'xg04.png':'xg01.png';s2.src=s==='A'?'xd14.png':'xg02.png';
+if(q.get('t')){document.getAnimations().forEach(x=>{x.pause();x.currentTime=Number(q.get('t'))})}</script>
