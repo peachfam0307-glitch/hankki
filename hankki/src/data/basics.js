@@ -2400,6 +2400,7 @@ const RAW_BASICS = [
     //   ⛔ 쓰는 컷은 전부 **2026-09-01 에 열린 가을 무료 컷**이다(au_i24·au_i43·au_i48·au_b30 · tw_funfun).
     //      10/1·11/1 에 열리는 컷은 유저 폰에 «아직 없어서» 못 쓴다.
     sample: true,
+    decorUntil: '2026-12-01',   // 📅 [창업자 2026-11-09 「꾸민표지만 내릴거야」 → 2026-11-11 「같이 만들어줘」] 12/1 부터 꾸민 표지·샘플 표시만 내린다(레시피는 그대로)
     thumb: 'icon',
     decorBg: 'none',
     decor: [
@@ -8887,7 +8888,10 @@ const today = todayKST()
 //    ⭐ 레시피는 이미 열려 있어도(스키야키 11/9) 표지만 늦게 연다 · 열쇠(?크리스마스=1)를 켠 폰은 미리 보인다.
 //    ⭐ 이미 깔린 폰은 store.jsx `꾸밈열기` 가 «앱 켤 때마다» 보고 그날이 오면 얹는다(BASICS_VERSION 이 안 올라도).
 //    ⛔ function 선언이라야 한다 — 아래 const 들보다 먼저 불린다.
-function 꾸밈때(r) { return !r.decorFrom || r.decorFrom <= today || (!!r.열쇠 && 레시피열쇠(r.열쇠)) }
+// 📅 `decorUntil` = 그날부터 꾸민 표지·샘플 표시를 «내린다»(꽃게탕 12/1 · 창업자 2026-11-09 「꾸민표지만 내릴거야」)
+function 꾸밈때(r) { return (!r.decorFrom || r.decorFrom <= today || (!!r.열쇠 && 레시피열쇠(r.열쇠))) && (!r.decorUntil || today < r.decorUntil) }
+// 🗂 내린 편의 «원래» 표지 — 이미 깐 폰에 저장된 게 «우리 것 그대로»인지 대 보려고(store.jsx 꾸밈열기). 유저가 바꿨으면 안 내린다.
+export const 내린꾸밈원본 = Object.fromEntries(RAW_BASICS.filter((r) => r.decorUntil && r.decor).map((r) => [r.id, { decor: r.decor, decorBg: r.decorBg, until: r.decorUntil }]))
 function 꾸밈거르기(r) { if (꾸밈때(r)) return r; const { decor, decorBg, sample, ...나머지 } = r; return 나머지 }
 export const allBasicRecipes = RAW_BASICS.map((r) => 꾸밈거르기({ ...r, steps: politeSteps(r.steps) }))
 

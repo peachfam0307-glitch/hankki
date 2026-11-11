@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useReducer, useCallback, useRef } from 'react'
 import { seedRecipes, 열린때 } from './data/seed'
-import { basicRecipes, allBasicRecipes, BASICS_VERSION } from './data/basics'
+import { basicRecipes, allBasicRecipes, BASICS_VERSION, 내린꾸밈원본 } from './data/basics'
 import { 거울쓰기 } from './pantryExpiry.js'   // 🔔🧊 알림 «얹기» 거울 — 저장 자리에서 매번(2026-09-19)
 import { 유통기한날짜맞추기 } from './pushSubscribe.js'   // 🔔📅 D-2 «따로» 알림 — 날짜만 워커로(2026-09-20)
 // 🥬 재료 이름 → 파트너스 링크 (2026-09-12 창업자 *"장보기에 들어가는 것도 다 붙이자"*)
@@ -162,7 +162,17 @@ const BASIC_PHOTOS = Object.fromEntries(
 //    씨앗에 `decorFrom` 이 있고 그날이 지나 basics.js 가 decor 를 내주면(꾸밈거르기), 이미 깔린 폰의 그 편에 얹는다.
 //    ⛔ 유저가 직접 꾸민 편(decor·배경 있음)·고친 편(touched)은 안 건드린다
 //    ⛔ 한 번 얹었으면 `꾸밈받음` 표식 — 유저가 나중에 표지를 비워도 다시 안 얹는다
-function 꾸밈열기(recipes) {
+function 꾸밈열기(recipes0) {
+  // 📅 [창업자 2026-11-11 「같이 만들어줘」] 거꾸로 = `decorUntil` 이 지나면 «우리가 준 그대로»인 표지·샘플 표시를 내린다(꽃게탕 12/1)
+  //    ⛔ 유저가 조각을 하나라도 바꿨으면 그건 유저 표지다 — 표지는 두고 「샘플」 표시만 뗀다
+  const 오늘 = todayKST()
+  const recipes = recipes0.map((r) => {
+    const 원 = r && 내린꾸밈원본[r.id]
+    if (!원 || 오늘 < 원.until || r.꾸밈내림 === 원.until) return r
+    const 그대로 = JSON.stringify(r.decor || []) === JSON.stringify(원.decor) && (r.decorBg || 'none') === (원.decorBg || 'none')
+    if (!그대로) return { ...r, sample: false, 꾸밈내림: 원.until }
+    return { ...r, decor: [], decorBg: 'none', sample: false, 꾸밈내림: 원.until }
+  })
   const 씨앗 = new Map(allBasicRecipes.filter((s) => s.decorFrom && Array.isArray(s.decor) && s.decor.length).map((s) => [s.id, s]))
   if (!씨앗.size) return recipes
   return recipes.map((r) => {
@@ -314,7 +324,8 @@ function migrateBasics(saved0) {
       // 🔖 [2026-09-08] 핀의 «종»도 유저 것이다 — 안 실으면 시드가 갱신될 때마다 하트가 모자로 되돌아간다.
       //    ⚠️ `favorite` 바로 옆에 둔다 — 둘은 «한 쌍»이라 떨어지면 한쪽만 실리는 사고가 난다.
       favPin: r.favPin,
-      꾸밈받음: r.꾸밈받음,   // 🎄 날짜가 연 표지를 한 번 얹었다는 표식(꾸밈열기) — 버전 올라도 안 잃게
+      꾸밈받음: r.꾸밈받음,
+      꾸밈내림: r.꾸밈내림,   // 📅 날짜가 내린 표지 표식 — 버전 올라도 안 잃게   // 🎄 날짜가 연 표지를 한 번 얹었다는 표식(꾸밈열기) — 버전 올라도 안 잃게
       cooked: r.cooked,
       cookedAt: r.cookedAt,
       savedAt: r.savedAt,

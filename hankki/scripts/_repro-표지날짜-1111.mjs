@@ -38,5 +38,22 @@ const e = await 열어보기('2026-12-02', null); 재다('새로 깐 폰 12/2 = 
 // 유저가 11월에 직접 꾸민 편은 12/1 에도 안 덮는다
 const 꾸민폰 = { recipes: 옛폰.map((r) => r.id === 'basic-sukiyaki' ? { ...r, decor: [{ id: 'u1', type: 'sticker', key: 'xd14', x: 0.5, y: 0.5, s: 0.2, r: 0 }], decorBg: 'cream' } : r), seedV: BASICS_VERSION }
 const f = await 열어보기('2026-12-01', 꾸민폰); 재다('유저가 꾸민 편은 12/1 에도 그대로(1조각) ' + JSON.stringify(f), f && f.조각 === 1 && f.배경 === 'cream')
+// 📅 거꾸로 — 꽃게탕 꾸민 표지는 12/1 에 «내린다»(이미 깐 폰엔 표지가 저장돼 있다)
+async function 꽃게(날, 상태) {
+  const now = Date.parse(날 + 'T12:00:00+09:00')
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }); await ctx.clock.setFixedTime(new Date(now))
+  const p = await ctx.newPage(); const url = `http://127.0.0.1:${PORT}/`
+  await p.goto(url); await p.evaluate((s) => { localStorage.setItem('hankki:v1', JSON.stringify(s)); localStorage.setItem('hankki:onboarded', '1') }, 상태)
+  await p.goto(url); await p.waitForTimeout(2500)
+  const r = await p.evaluate(() => { const r = JSON.parse(localStorage.getItem('hankki:v1') || '{}').recipes?.find((x) => x.id === 'basic-kkotge-tang'); return r ? { 조각: r.decor?.length || 0, 샘플: !!r.sample } : null })
+  await ctx.close(); return r
+}
+const 꽃게원 = allBasicRecipes.find((r) => r.id === 'basic-kkotge-tang')
+재다('11/11 씨앗 꽃게탕엔 아직 표지가 있다(8조각 안팎)', (꽃게원?.decor?.length || 0) > 0)
+const g = await 꽃게('2026-11-30', 옛상태); 재다('이미 깐 폰 11/30 꽃게탕 = 표지 그대로 ' + JSON.stringify(g), g && g.조각 > 0 && g.샘플)
+const h = await 꽃게('2026-12-01', 옛상태); 재다('이미 깐 폰 12/1 꽃게탕 = 표지·샘플 내림 ' + JSON.stringify(h), h && h.조각 === 0 && !h.샘플)
+const 바꾼폰 = { recipes: 옛폰.map((r) => r.id === 'basic-kkotge-tang' ? { ...r, decor: [...r.decor.slice(1)] } : r), seedV: BASICS_VERSION }
+const k = await 꽃게('2026-12-01', 바꾼폰); 재다('유저가 바꾼 꽃게탕 표지는 12/1 에도 남고 샘플 표시만 뗀다 ' + JSON.stringify(k), k && k.조각 === 꽃게원.decor.length - 1 && !k.샘플)
+const m = await 꽃게('2026-12-02', null); 재다('새로 깐 폰 12/2 꽃게탕 = 표지 없음 ' + JSON.stringify(m), m && m.조각 === 0 && !m.샘플)
 await b.close(); srv.kill()
 console.log(죽음 ? `\n⛔ ${죽음}칸` : '\n✅ 표지 날짜 — 전부 통과'); process.exit(죽음 ? 1 : 0)
