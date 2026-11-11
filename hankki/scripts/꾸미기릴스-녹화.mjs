@@ -60,7 +60,7 @@ if (!레시피 || !Array.isArray(조각) || !조각.length) { console.error('⛔
 
 // 🔒 값검사를 «통과해야» 돈다 — 조용히 틀리는 값은 찍고 나면 눈으로 볼 때까지 모른다
 {
-  const 검사값 = 조각.map((c) => c.text
+  const 검사값 = 조각.filter((c) => !c.tapeLabel).map((c) => c.text
     ? { type: 'text', color: c.color, font: c.font }
     : { type: 'sticker', key: c.key, ...(c.fx ? { fx: c.fx } : {}), ...(c.flipX !== undefined ? { flipX: c.flipX } : {}) })
   try { execFileSync(process.execPath, [join(여기, '꾸미기-값검사.mjs'), '--값', JSON.stringify(검사값)], { stdio: 'inherit' }) }
@@ -134,7 +134,8 @@ await p.waitForTimeout(2200); await 안내치우기()
 const 레시피이름 = await p.evaluate((id) => {
   const s = JSON.parse(localStorage.getItem('hankki:v1') || 'null')
   const r = s?.recipes?.find((x) => x.id === id)
-  if (r) { r.decor = []; r.decorBg = 'none'; localStorage.setItem('hankki:v1', JSON.stringify(s)) }
+  // 📅 [2026-11-11] 날짜가 여는 표지(decorFrom · store.jsx 꾸밈열기)는 «받았다» 표식이 없으면 앱이 다시 얹는다 → 같이 적어 둔다
+  if (r) { r.decor = []; r.decorBg = 'none'; if (r.decorFrom) r.꾸밈받음 = r.decorFrom; localStorage.setItem('hankki:v1', JSON.stringify(s)) }
   return r?.title || null
 }, 레시피)
 if (!레시피이름) { console.error(`⛔ 저장본에 레시피 «${레시피}» 가 없다 — src/data 의 id 를 확인할 것`); await b.close(); srv.close(); process.exit(1) }
@@ -162,6 +163,7 @@ const 끌기 = async (from, to, 걸음 = 22, 쉼 = 14) => {
 //    2026-09-19 실측: 붙자마자 「순서」가 열려 있어서 내가 누르니 닫혔고 뒤집기 단추가 사라졌다.
 const 갈래열기 = async (k) => {
   const t = p.locator(`[data-ctxtab="${k}"]`)
+  if (!(await t.count())) { await p.screenshot({ path: join(밖, `⚠️갈래없음-${k}.png`) }); throw new Error(`편집바 갈래 «${k}» 가 없다 — ${밖}/⚠️갈래없음-${k}.png 를 볼 것`) }
   if ((await t.getAttribute('aria-pressed')) !== 'true') { await t.click(); await p.waitForTimeout(400) }
 }
 const 탭누르기 = async (라벨) => {
@@ -218,7 +220,9 @@ for (let i = 0; i < 몇; i++) {
     if (지금 && Math.abs(지금.r - (c.r || 0)) > 0.5) { await 돌리기(지금, c.r || 0); 적기(`   각도 ${지금.r}° → ${c.r || 0}°`) }
     continue
   }
-  const 칸 = p.locator(`.decor-cell[aria-label^="${c.key}"]`).first()
+  // 🎗 [2026-11-11] 무늬 테이프(CSS) — 「마테」 탭의 aria-label="테이프 <무늬 이름>" (스키야키 초록깅엄)
+  //    ⚠️ 굵기(가늘게·보통·굵게)는 안 고른다 — 기본(보통). 붙인 뒤 끌기·크기·각도는 스티커와 같은 길
+  const 칸 = c.tapeLabel ? p.locator(`[aria-label="테이프 ${c.tapeLabel}"]`).first() : p.locator(`.decor-cell[aria-label^="${c.key}"]`).first()
   await 칸.scrollIntoViewIfNeeded(); await p.waitForTimeout(250)
   await 칸.click(); await p.waitForTimeout(600)
   적기('   붙음 (기본 자리)')
