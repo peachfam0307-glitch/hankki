@@ -5079,13 +5079,13 @@ const RAW_BASICS = [
     sample: true,
     decorBg: 'cream',
     decor: [
-      { id: 'xmo-holly', type: 'sticker', key: 'xd27', x: 0.5084, y: 0.1044, s: 0.455, r: 0 },
+      { id: 'xmo-holly', type: 'sticker', key: 'xd27', x: 0.5084, y: 0.1044, s: 0.455, r: 0, fx: 'heart' },
       { id: 'xmo-wreath', type: 'sticker', key: 'xf05', x: 0.5214, y: 0.4978, s: 0.597, r: 0 },
       { id: 'xmo-tag', type: 'sticker', key: 'xp09', x: 0.8788, y: 0.2510, s: 0.171, r: 8 },
       { id: 'xmo-tape', type: 'sticker', key: 'xh02', x: 0.2120, y: 0.9650, s: 0.379, r: 0 },
-      { id: 'xmo-tree', type: 'sticker', key: 'xi07', x: 0.1584, y: 0.7828, s: 0.275, r: -6 },
+      { id: 'xmo-tree', type: 'sticker', key: 'xi07', x: 0.1584, y: 0.7828, s: 0.275, r: -6, motion: 'tilt', fx: 'spark' },
       { id: 'xmo-gift', type: 'sticker', key: 'xd13', x: 0.2973, y: 0.9195, s: 0.139, r: -7 },
-      { id: 'xmo-peng', type: 'sticker', key: 'xk_n05_02', x: 0.7781, y: 0.8242, s: 0.315, r: -2 },
+      { id: 'xmo-peng', type: 'sticker', key: 'xk_n05_02', x: 0.7781, y: 0.8242, s: 0.315, r: -2, motion: 'tilt', fx: 'spark' },
     ],
     열쇠: '크리스마스',   // 🔑 [창업자 2026-11-10 「꾸미기한번 해볼게」] 창업자 폰(?크리스마스=1)에선 11/23 전에도 보인다 — 크리스마스 꾸미기 샘플용
     review: '창업자',   // ✅ 2026-08-18 검수판 통과
@@ -5314,10 +5314,10 @@ const RAW_BASICS = [
     decor: [
       { id: 'xms-tape', type: 'tape', key: 'ggingham', x: 0.6492, y: 0.2286, s: 0.4268, r: 10.7, ratio: 2.91 },
       { id: 'xms-title', type: 'text', color: 'charcoal', font: 'gaegu', text: '스키야키', x: 0.632, y: 0.242, s: 0.5, r: 10.7, w: 'mid' },
-      { id: 'xms-cookie', type: 'sticker', key: 'xg07', x: 0.3193, y: 0.2295, s: 0.135, r: -22 },
-      { id: 'xms-seal', type: 'sticker', key: 'xp05', x: 0.2528, y: 0.3327, s: 0.167, r: -5 },
-      { id: 'xms-flower', type: 'sticker', key: 'xd14', x: 0.8156, y: 0.3042, s: 0.203, r: 7 },
-      { id: 'xms-friends', type: 'sticker', key: 'xk_c01_02', x: 0.6772, y: 0.7864, s: 0.359, r: 0 },
+      { id: 'xms-cookie', type: 'sticker', key: 'xg07', x: 0.3193, y: 0.2295, s: 0.135, r: -22, motion: 'wave', fx: 'spark' },
+      { id: 'xms-seal', type: 'sticker', key: 'xp05', x: 0.2528, y: 0.3327, s: 0.167, r: -5, motion: 'wave', fx: 'spark' },
+      { id: 'xms-flower', type: 'sticker', key: 'xd14', x: 0.8156, y: 0.3042, s: 0.203, r: 7, motion: 'tilt', fx: 'spark' },
+      { id: 'xms-friends', type: 'sticker', key: 'xk_c01_02', x: 0.6772, y: 0.7864, s: 0.359, r: 0, motion: 'tongtong', fx: 'heart' },
     ],
     icon: 'fe_121', category: '일식',
     time: 30, servings: 2, difficulty: '쉬움',
