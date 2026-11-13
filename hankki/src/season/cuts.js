@@ -42,6 +42,7 @@ import xk_n012_03 from '../assets/stickers/season/xk_n012_03.webp'
 import xk_n05_05 from '../assets/stickers/season/xk_n05_05.webp'
 import xk_c02_02 from '../assets/stickers/season/xk_c02_02.webp'
 import xk_c02_03 from '../assets/stickers/season/xk_c02_03.webp'
+import xk_five_01 from '../assets/stickers/season/xk_five_01.webp'   // 🎄 홈 맨 아래 다섯 친구 코스튬(창업자 2026-11-13 「1번으로 바꿔줘」)
 import xg01 from '../assets/stickers/season/xg01.webp'
 import xg02 from '../assets/stickers/season/xg02.webp'
 import xg03 from '../assets/stickers/season/xg03.webp'
@@ -53,7 +54,7 @@ import xg09 from '../assets/stickers/season/xg09.webp'
 
 export default {
   xmas_house, xmas_house_night,
-  xk_n09_03, xk_n05_02, xk_c02_01, xk_n012_02, xk_c02_05, xk_n012_03, xk_n05_05, xk_c02_02, xk_c02_03,
+  xk_n09_03, xk_n05_02, xk_c02_01, xk_n012_02, xk_c02_05, xk_n012_03, xk_n05_05, xk_c02_02, xk_c02_03, xk_five_01,
   xg01, xg02, xg03, xg04, xg06, xg07, xg08, xg09,
   추석소품01, duo301, duo401, duo101, 거미줄02, 거미줄03,
   박쥐짙은02, 박쥐짙은03, 박쥐짙은04,
