@@ -967,7 +967,7 @@ function XmasVillage({ 컷 }) {
       <img src={밤 ? 컷.xmas_house_night : 컷.xmas_house} alt="" draggable={false} />
       {/* 🎄 끝마을 = 한끼 친구들 다섯 코스튬 한 장(산타 꼬르곰·루돌프 카롱·엘프 뾰미·눈사람 펭펭·트리 꼬비)
           창업자 2026-11-13 「맨 아래에 다섯 전체 넣자」→「1번으로 바꿔줘」 — 옛 두 컷(xk_c02_02·03)을 갈아끼움 */}
-      <img className="xmas-friend" src={컷.xk_five_01} alt="" draggable={false} style={{ left: '22%', bottom: '2%', width: '56%' }} />
+      <img className="xmas-friend" src={컷.xk_five_01} alt="" draggable={false} style={{ left: '22%', bottom: '-1%', width: '56%' }} />
     </div>
   )
 }
