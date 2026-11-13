@@ -26,13 +26,42 @@ export function 행동적기(무엇) {
 let 보던화면 = ''
 export function 화면적기(이름) { 보던화면 = String(이름 || ''); 행동적기(`화면:${보던화면}`) }
 
+// 🔎 [창업자 2026-11-13 「진짜 오류를 거르는 장치」] 웹이면 «어느 브라우저»인지 갈래만 붙인다(UA 원문은 안 싣는다)
+//    ⛔ 워커가 기기 칸을 10글자로 자른다(worker-push.js:186) — 'web·인스타' 처럼 짧게
+function 브라우저() {
+  const u = String(navigator.userAgent || '')
+  if (/Instagram/i.test(u)) return '인스타'
+  if (/FBAN|FBAV|FB_IAB/i.test(u)) return '페북'
+  if (/KAKAOTALK/i.test(u)) return '카톡'
+  if (/NAVER\(inapp/i.test(u)) return '네이버'
+  if (/ Line\//i.test(u)) return '라인'
+  if (/SamsungBrowser/i.test(u)) return '삼성'
+  if (/CriOS|Chrome\//i.test(u)) return '크롬'
+  if (/Safari\//i.test(u)) return '사파리'
+  return '기타'
+}
+// 🤖 링크 미리보기·검사 로봇 — 사람이 아니다. 보내지 않는다
+const 로봇 = () => { try { return /bot|crawl|spider|slurp|HeadlessChrome|facebookexternalhit|Lighthouse|preview|scanner/i.test(navigator.userAgent || '') || navigator.webdriver === true } catch { return false } }
+
 function 기기() {
   try {
     if (window.Capacitor?.isNativePlatform?.()) return 'ios'
     // ⛔ 「홈 화면에 설치」만으로 갤럭시라 하지 않는다 — 아이폰 사파리·컴퓨터 설치판도 standalone 이다(2026-11-02 검토)
     if (document.referrer.startsWith('android-app://') || (/Android/i.test(navigator.userAgent) && matchMedia('(display-mode: standalone)').matches)) return 'android'
+    return 'web·' + 브라우저()
   } catch { /* 무시 */ }
   return 'web'
+}
+
+// 🧹 «우리 코드»에서 난 오류인가 — 위치(stack)에 우리 사이트 주소·/assets/·capacitor 가 하나도 없으면 «바깥»
+//    (11/12 20:21 「Error: Rejected」 = 우리 빌드에 없는 글자 · 위치에 파일 없음 → 앱 안 브라우저·확장 기능이 낸 것)
+//    ⛔ 위치가 «아예 비면» 우리 것일 수도 있어 진짜로 둔다(문자열로 reject 한 경우 등)
+function 우리코드(err) {
+  try {
+    const s = String(err?.stack || '')
+    if (!s) return true
+    return s.includes(location.origin) || s.includes('/assets/') || s.includes('capacitor://')
+  } catch { return true }
 }
 
 // 같은 오류는 하루 3번까지만 보낸다(폰 하나 기준) — 고장 난 화면에서 계속 터져도 워커가 안 넘친다
@@ -49,14 +78,21 @@ function 오늘몇번(지문) {
 
 export function 오류보내기(err, 종류 = 'error') {
   try {
-    if (!켜짐 || 통계꺼짐()) return false
+    if (!켜짐 || 통계꺼짐() || 로봇()) return false
+    // 🧹 우리 코드 밖에서 난 오류는 «바깥»으로 갈래를 바꿔 보낸다 — 운영 화면에서 진짜와 따로 본다
+    if ((종류 === 'error' || 종류 === 'promise') && !우리코드(err)) 종류 = '바깥'
     // ⛔ 따옴표 안은 가린다 — 크롬 JSON.parse 오류는 «입력 앞부분»(레시피 글·붙여넣은 글)을 메시지에 싣는다(2026-11-02 검토)
     const 메시지 = String(err?.message || err || '').replace(/"[^"]*"/g, '"…"').replace(/'[^']{12,}'/g, "'…'").slice(0, 300)
     const 위치 = String(err?.stack || '').split('\n').slice(0, 8).join('\n').slice(0, 1500)
     // 📦 [2026-11-06] 바로 보내지 않고 «2초 모아» 한 번에 — 11/6 02:29 한 폰이 2초에 17번 보내 받는 쪽(KV)이 429 로 튕겼다
     //    같은 오류는 묶음 안에서 «몇번»만 늘린다 · 앱을 켜서 끌 때까지 최대 20가지(세션 상한)
     const 같은것 = 대기.find((x) => x.종류 === 종류 && x.메시지 === 메시지)
-    if (같은것) { 같은것.몇번++; return true }
+    if (같은것) {
+      같은것.몇번++
+      // 🖼 그림은 «어떤 파일들이» 실패했는지 5개까지 이어 붙인다(한 줄 · 운영 화면이 첫 줄만 보여서)
+      if ((종류 === '그림' || 종류 === '자원') && 위치 && !같은것.위치.includes(위치) && 같은것.위치.split(' , ').length < 5) 같은것.위치 = (같은것.위치 + ' , ' + 위치).slice(0, 600)
+      return true
+    }
     if (오늘몇번(`${종류}|${메시지}`.slice(0, 120)) > 3) return false
     if (보낸수 >= 세션상한) return false
     보낸수++
