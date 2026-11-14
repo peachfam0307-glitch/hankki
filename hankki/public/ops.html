@@ -120,10 +120,13 @@
       const 잡음 = (e) => e.종류 === '바깥'
         || ((e.종류 === 'error' || e.종류 === 'promise') && e.위치 && !/peachfam0307-glitch\.github\.io\/hankki|capacitor:\/\//.test(e.위치))
         || ((e.종류 === '그림' || e.종류 === '자원') && e.몇번 >= 5)
+      // 🧩 [창업자 2026-11-14 「1」] 서비스워커 등록 거절 = 따로 센다(옛 판은 종류가 error·promise 라 글로도 가른다)
+      const 서비스워커 = (e) => e.종류 === '서비스워커' || /register a ServiceWorker|serviceWorker\.register|registerSW\.js/i.test((e.메시지 || '') + '\n' + (e.위치 || ''))
       const 줄 = (e, i) => `${i + 1}. [적어도 ${e.몇번}번] ${e.메시지 || '(글 없음)'}\n   화면 ${e.화면 || '-'} · ${e.판} · ${기기글(e.기기)} · ${시(e.처음)}~${시(e.마지막)}\n   직전 ${(e.직전 || []).slice(-4).join(' > ') || '-'}${e.위치 ? '\n   위치 ' + e.위치.split('\n').slice(0, 3).join('\n        ').slice(0, 500) : ''}`
-      const 모두 = j.오류 || [], 진짜 = 모두.filter((e) => !잡음(e)), 거른것 = 모두.filter(잡음)
+      const 모두 = j.오류 || [], 서워 = 모두.filter(서비스워커), 나머지 = 모두.filter((e) => !서비스워커(e)), 진짜 = 나머지.filter((e) => !잡음(e)), 거른것 = 나머지.filter(잡음)
       $('out').textContent = !모두.length ? '최근 7일 오류 없음 🎉'
         : `🔴 진짜 오류 ${진짜.length}개\n\n${진짜.length ? 진짜.map(줄).join('\n\n') : '없음 🎉'}`
+          + (서워.length ? `\n\n──────────\n🧩 서비스워커 거절 ${서워.length}가지 · 적어도 ${서워.reduce((a, e) => a + (e.몇번 || 1), 0)}번 (그 폰 브라우저가 막음 — 앱은 돌고 오프라인·알림만 안 됨)\n\n${서워.map(줄).join('\n\n')}` : '')
           + (거른것.length ? `\n\n──────────\n⚪ 걸러낸 잡음 ${거른것.length}개 (우리 코드 밖 · 접속 끊김 — 손볼 필요 없음)\n\n${거른것.map(줄).join('\n\n')}` : '')
     } catch (e) { $('out').textContent = '연결 실패: ' + e }
   }

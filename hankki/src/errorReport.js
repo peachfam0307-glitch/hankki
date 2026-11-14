@@ -56,6 +56,12 @@ function 기기() {
 // 🧹 «우리 코드»에서 난 오류인가 — 위치(stack)에 우리 사이트 주소·/assets/·capacitor 가 하나도 없으면 «바깥»
 //    (11/12 20:21 「Error: Rejected」 = 우리 빌드에 없는 글자 · 위치에 파일 없음 → 앱 안 브라우저·확장 기능이 낸 것)
 //    ⛔ 위치가 «아예 비면» 우리 것일 수도 있어 진짜로 둔다(문자열로 reject 한 경우 등)
+function 서비스워커거절(err) {
+  try {
+    const s = String(err?.message || err || '') + '\n' + String(err?.stack || '')
+    return /register a ServiceWorker|serviceWorker\.register|registerSW\.js/i.test(s)
+  } catch { return false }
+}
 function 우리코드(err) {
   try {
     const s = String(err?.stack || '')
@@ -81,6 +87,9 @@ export function 오류보내기(err, 종류 = 'error') {
     if (!켜짐 || 통계꺼짐() || 로봇()) return false
     // 🧹 우리 코드 밖에서 난 오류는 «바깥»으로 갈래를 바꿔 보낸다 — 운영 화면에서 진짜와 따로 본다
     if ((종류 === 'error' || 종류 === 'promise') && !우리코드(err)) 종류 = '바깥'
+    // 🧩 [창업자 2026-11-14 「1」] 서비스워커 등록이 «거절»된 것은 따로 — 그 폰 브라우저가 막은 것(앱은 그대로 돈다 · 오프라인·알림만 안 됨)
+    //    실측 = 「Failed to register a ServiceWorker … cannot be started」(갤럭시 v14.79) · 「Rejected … serviceWorker.register … registerSW.js」(웹 v14.78)
+    if ((종류 === 'error' || 종류 === 'promise' || 종류 === '바깥') && 서비스워커거절(err)) 종류 = '서비스워커'
     // ⛔ 따옴표 안은 가린다 — 크롬 JSON.parse 오류는 «입력 앞부분»(레시피 글·붙여넣은 글)을 메시지에 싣는다(2026-11-02 검토)
     const 메시지 = String(err?.message || err || '').replace(/"[^"]*"/g, '"…"').replace(/'[^']{12,}'/g, "'…'").slice(0, 300)
     const 위치 = String(err?.stack || '').split('\n').slice(0, 8).join('\n').slice(0, 1500)
