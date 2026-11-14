@@ -754,14 +754,23 @@ img {
   border-radius: var(--r-pill);
   padding: 4px;
   margin: 2px 0 16px;
+  gap: 4px; /* 🤍 칸 사이 틈 — 안 고른 칸도 «흰 단추»로 따로 보이게 (창업자 2026-11-14 「2번으로 앱 전체 탭」) */
 }
 .seg {
   flex: 1;
   padding: 9px;
   border-radius: var(--r-pill);
   font-size: 16.5px;
-  font-weight: 600;
-  color: var(--text-sub);
+  /* 🔢 [2026-11-14] 안 고른 칸 = 흰 칸 + 진한 글씨 — 창업자 「눈에 안 띄어」
+     옛날 = 크림 바탕 위 --text-sub 600 → 대비 3.0:1 (WCAG AA 4.5 미달). 지금 = 흰 위 --text 700 → 11.6:1
+     ⛔ 꾸미기 서랍(.decor-drawer .segment .seg)은 밑줄 모양이라 아래에서 따로 덮는다(더 세다) */
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  /* 🧱 입체 = 아래 두께 2px + 옅은 그림자 + 위쪽 빛줄 (창업자 2026-11-14 「좀 더 입체적으로 누르는 칸처럼」)
+     누르면 2px 내려앉는다(아래 :active) */
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.10), 0 3px 8px rgba(0, 0, 0, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transition: all 0.18s ease;
   /* 🔤 두 줄이 되면 «낱말째» 넘어간다 — 「일기 / 꾸미기」 (창업자 2026-08-06)
      ⛔ 기본값이면 한글은 아무 데서나 끊겨 「일기 꾸미 / 기」 가 된다(실제로 그렇게 잘렸다).
@@ -774,12 +783,16 @@ img {
       어느 쪽이 켜진 건지 한눈에 안 들어왔다(창업자가 요리 기록 탭에서 잡았다).
    📌 앱 안의 다른 「고름」 표시와 같은 모양이다 — 꾸미기 탭 칩·속지 고르기가 이미 이렇게 한다.
       **같은 뜻은 같은 모양으로.** */
+.seg:active { transform: translateY(2px); box-shadow: 0 0 0 rgba(0, 0, 0, 0), inset 0 1px 2px rgba(0, 0, 0, 0.08); }
 .seg.on {
+  border-color: transparent;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18), 0 3px 8px rgba(0, 0, 0, 0.10);
   background: var(--brown);
   color: #fff;
   font-weight: 700;
-  box-shadow: var(--shadow-soft);
 }
+/* 🌙 다크 = 흰 칸이 바탕보다 어두워서 «한 톤 밝은 칸» + 옅은 빛줄 */
+:root[data-theme='dark'] .seg:not(.on) { background: #3a3a43; border-color: rgba(255, 255, 255, 0.06); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45), 0 3px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08); }
 
 /* 상단 헤더 */
 .topbar {
@@ -3577,7 +3590,7 @@ html, body { overscroll-behavior: none; }
       *"여기 값들은 손가락 최소(44px)를 깬다 — 44 를 지키면 스티커가 «한 줄»뿐이다."*
       ＋ 이 줄은 모드가 넷이라 한 칸이 «가로로 97px» 이다. 세로가 짧아도 잘 눌린다. */
 .decor-drawer .segment .seg {
-  min-height: 26px; border-radius: 0; background: none; box-shadow: none;
+  min-height: 26px; border-radius: 0; background: none; box-shadow: none; border: 0; transform: none;
   font-size: 13px; font-weight: 700; color: var(--text-sub);
   border-bottom: 2.5px solid transparent; margin-bottom: -1.5px;
 }
@@ -3589,7 +3602,8 @@ html, body { overscroll-behavior: none; }
    🔢 모드줄 40 → 30px · 머리(손잡이＋모드줄) 58 → 42px
    ⛔⛔ 이 줄을 쓸 때 «백틱»을 쓰지 말 것 — 셸이 삼켜서 «.seg»·«padding 9px» 이 통째로 사라졌다.
       (2026-09-01 · 하루에 네 번째다. 낫표«»로 쓴다) */
-.decor-drawer .segment { padding: 2px; }
+.decor-drawer .segment { padding: 2px; gap: 0; }
+:root[data-theme='dark'] .decor-drawer .segment .seg { background: none; box-shadow: none; border: 0; }
 .decor-drawer .segment .seg { padding: 4px; }
 .decor-drawer .segment .seg.on { font-weight: 800; }
 .decor-drawer .segment .seg.on {
