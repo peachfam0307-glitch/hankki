@@ -53,6 +53,14 @@ const HWF = Object.values(import.meta.glob('../assets/cardbg/hwf/*.png', { eager
 // 🎃 핼러윈 스킨엔 **핼러윈 애들만** 올린다 (창업자 *"거기에는 딱 할로윈애들만 넣을 수있게"*)
 //   여름 스킨이 여름 컷만 쓰는 것과 같은 규칙 — 배경이 세니까 아무 컷이나 얹으면 결이 죽는다.
 const HALLOWEEN = /^hw_/
+// 🎄 크리스마스 코스튬(xk_) — 크리스마스 카드에서만(한복·해골처럼 사철 카드로 안 새게)
+const XMAS = /^xk_/
+// 🎄 [창업자 2026-11-10 확정] 크리스마스 카드 2종 바탕 = 홈과 «같은 그림»(쿠키 하늘 ＋ 과자집 마을 · 코코아 밤)
+import XM_TOP from '../assets/season/xmas-top.webp'
+import XM_HOUSE from '../assets/season/xmas-house.webp'
+import XM_TOP_N from '../assets/season/xmas-top-night.webp'
+import XM_HOUSE_N from '../assets/season/xmas-house-night.webp'
+const XMF = Object.values(import.meta.glob('../assets/stickers/season/xg0*.webp', { eager: true, query: '?url', import: 'default' }))
 // 🏮 추석 카드 배경 — 창업자 2026-08-03 *"이쁘게 만들어줘 카드 추석자랑카드에 조각보넣던가.."*
 //   ⭐ 조각보는 **무료 드립 배경**이라 유료팩 누수 걱정이 없다(배경 README 배정표).
 //      핼러윈이 펠트면 추석은 조각보 — 둘 다 «천 소재»라 계절 카드끼리 결이 맞는다.
@@ -174,7 +182,8 @@ const seasonCuts = (kind) => SEASON_CUTS
 //      코스튬은 여기서 걸러 **펠트 배경 핼러윈 카드에서만** 나오게 한다.
 // ⛔ 계절 «옷»(한복·코스튬)은 사철 카드로 안 나간다 — 각자 전용 카드에서만.
 //   안 막으면 추석 창(9/1~10/15)과 핼러윈 창(10/1~11/2)이 15일 겹쳐 한복과 해골이 뒤섞인다.
-const notHw = (a) => a.filter((e) => !HALLOWEEN.test(e.name) && !HANBOK.test(e.name))
+const notHw = (a) => a.filter((e) => !HALLOWEEN.test(e.name) && !HANBOK.test(e.name) && !XMAS.test(e.name))
+const xmOnly = (kind) => seasonCuts(kind).filter((e) => XMAS.test(e.name))
 const gomPool = () => [...GOM, ...notHw(seasonCuts('gom'))]
 const pengPool = () => [...PENG, ...notHw(seasonCuts('peng'))]
 const duoPool = () => [...DUO, ...notHw(seasonCuts('duo'))]
@@ -231,19 +240,20 @@ function drawState(첫판 = false) {
   // 🎃 핼러윈도 여름과 같은 «한정 한 장» — 창이 열린 동안만 뽑기 풀에 얹는다.
   //    창은 `cardSeasons.js` 의 hw(10-01~11-02)를 그대로 쓴다 ⛔날짜를 여기 또 적지 말 것(어긋난다)
   const seasonOpen = (k) => SEASON_CUTS.some((s) => s.key === k && inCardWindow(s))
-  const hwOpen = seasonOpen('hw'), csOpen = seasonOpen('cs')
+  const hwOpen = seasonOpen('hw'), csOpen = seasonOpen('cs'), xmOpen = seasonOpen('xm')
   const pool = ['warm', 'panel', 'pola', 'mag', 'arch', 'night',
     // 🍂 `isPeakSeason` = 전환기 겹침을 «안» 센다 → **9/1 에 여름 스킨이 바로 빠진다**
     //    (창업자 확정 2026-08-29 = *"9월1일에 빼야지 가을시작이니까."* · ⛔`isSeason` 이면 9/14 까지 남는다)
     ...(isPeakSeason('summer') ? ['summer'] : []),
     ...(hwOpen ? ['halloween', 'hwn_poster', 'hwn_moon', 'hwn_invite'] : []), ...(csOpen ? ['chuseok'] : []),
+    ...(xmOpen ? ['xmas', 'xmas_night'] : []),   // 🎄 12/01~12/31
     // 🍂🍂 **[창업자 확정 2026-09-02] 11월엔 «둘 다» 얹는다** — *"11월은 둘가추가하자."*
     //   ⭐ 11/3 부터 덤(추석·핼러윈)이 다 빠져 **기본 6장만 남던 자리**다. 이제 11월이 **8장**이 된다.
     //   ⛔ 날짜를 여기 또 적지 «않는다» — `isLateAutumn`(LATE_AUTUMN_MONTH) 한 곳이 늦가을의 유일한 정의다.
     //      그래서 **옷(늦가을)과 뼈대(둘)가 «같은 날» 같이 온다** — 11월 1일에 화면이 확 바뀐다.
     //   🔢 뽑기 확률 = 6장 각 16.7% → **8장 각 12.5%**(창업자가 그 값을 보고 「둘 다」로 정했다)
     ...(isLateAutumn() ? ['post', 'ticket'] : [])]
-  const 첫판들 = 첫판 && hwOpen ? ['halloween', 'hwn_poster', 'hwn_moon', 'hwn_invite'] : null
+  const 첫판들 = 첫판 && hwOpen ? ['halloween', 'hwn_poster', 'hwn_moon', 'hwn_invite'] : 첫판 && xmOpen ? ['xmas', 'xmas_night'] : null   // 🎄 크리스마스도 «맨 앞에»
   const key = (() => {
     try { const v = new URLSearchParams(location.search).get('card'); if (v && SKINS[v]) return v } catch { /* noop */ }
     return rnd(첫판들 || pool)
@@ -256,6 +266,7 @@ function drawState(첫판 = false) {
   const [g, p, d] = key === 'summer' ? [S_GOM, S_PENG, S_DUO]
     : (key === 'halloween' || key === 'halloween_night' || key.startsWith('hwn_')) ? [hwOnly('gom'), hwOnly('peng'), hwOnly('duo')]
       : key === 'chuseok' ? [csOnly('gom'), csOnly('peng'), csOnly('duo')]
+      : key.startsWith('xmas') ? [xmOnly('gom'), xmOnly('peng'), xmOnly('duo')]
       : [gomPool(), pengPool(), duoPool()]
   const 씬 = scenesNow()   // 🏖 여름 씬은 여름에만 (위 `scenesNow` 주석 참고)
   const cat = key === 'pola' && 씬.length && r < 0.65 ? 씬     // 폴라로이드는 씬 사진 위주
@@ -263,7 +274,7 @@ function drawState(첫판 = false) {
       // ⛔ **펭 자리도 비어 있을 수 있다** — 2026-09-02 에 옛 펭펭을 다 내려서 사철 펭 = 0 이 됐다.
       //    안 막으면 `rnd([])` → 아래 마지막 줄의 폴백이 «전체 풀»로 새어 **방금 내린 컷이 되살아난다.**
       ? (r < 0.5 ? g : r < 0.78 ? (p.length ? p : (d.length ? d : g)) : (d.length ? d : g))
-      : (key === 'halloween' || key === 'halloween_night' || key.startsWith('hwn_') || key === 'chuseok')
+      : (key === 'halloween' || key === 'halloween_night' || key.startsWith('hwn_') || key === 'chuseok' || key.startsWith('xmas'))
         // 곰·펭·콤비 골고루 — ⚠️ **콤비가 없으면 그 몫을 곰에게 몰지 말고 반반으로 나눈다.**
         //   안 그러면 곰 65% · 펭 35% 가 된다(추석은 콤비가 없어서 실제로 5판 중 4판이 곰이었다).
         //   📌 「명단이 2:2니까 반반이겠지」는 «명단»이지 «확률»이 아니다. 뽑아 보고 세야 안다.
@@ -296,6 +307,7 @@ const SKINS = {
   summer: { key: 'summer' },
   halloween: { key: 'halloween' },
   halloween_night: { key: 'halloween_night' },
+  xmas: { key: 'xmas' }, xmas_night: { key: 'xmas_night' },   // 🎄 [창업자 2026-11-10] 밝은 · 코코아 밤
   hwn_poster: { key: 'hwn_poster' }, hwn_moon: { key: 'hwn_moon' }, hwn_invite: { key: 'hwn_invite' },   // 🧪 시안 셋(풀 밖 · ?card= 로만)   // 🌙 [창업자 2026-09-29] 같은 창에 얹는 어두운 한 장   // 🎃 10/01~11/02 에만 얹는 한 장 (펠트 배경 ＋ 핼러윈 애들만)
   chuseok: { key: 'chuseok' },       // 🏮 09/01~10/15 에만 얹는 한 장 (조각보 배경 ＋ 한복만)
   // 🍂❄️ **11월 뼈대 시안 셋 (2026-09-02 · ⏳창업자 판정 대기)**
@@ -826,6 +838,34 @@ function Card({ char, no, title, tags, cover, recipe, skin }) {
   // ⚠️ 배경이 세니까 **글자는 크림 판 위에** 올린다 — 펠트 위에 바로 얹으면 안 읽힌다.
   //    (배경 그림의 가운데가 비어 있어서 그 자리를 쓴다)
   // 🌙 [창업자 2026-09-29] 어두운 한 장(`halloween_night`)도 같은 뼈대 — 배경 그림과 바깥 글자색만 다르다. 크림 판은 그대로.
+  // 🎄 [창업자 2026-11-10 「좋아 이대로 가자」] 크리스마스 2종 — 핼러윈 크림 판 뼈대 그대로 · 바탕 = 홈 쿠키 마을(위 하늘 ＋ 아래 과자집)
+  //    시안 = design/promo/크리스마스홈-2611/레꾸자랑/카드시안-밝은·코코아.png
+  if (K.key === 'xmas' || K.key === 'xmas_night') {
+    const 밤 = K.key === 'xmas_night'
+    const hs = headSize([l1, l2], 132, 1080 - PAD * 2 - 40)
+    const 진 = 밤 ? '#fff6ea' : '#6b3d2a'
+    return shell(밤 ? '#4a3c37' : '#fdf1e1', <>
+      <img src={밤 ? XM_TOP_N : XM_TOP} alt="" crossOrigin="anonymous" style={{ position: 'absolute', left: 0, top: 0, width: 1080, height: 1350, objectFit: 'cover', objectPosition: 'top' }} />
+      <img src={밤 ? XM_HOUSE_N : XM_HOUSE} alt="" crossOrigin="anonymous" style={{ position: 'absolute', left: 0, bottom: 0, width: 1080 }} />
+      {brand(진, { textShadow: 밤 ? '0 2px 10px rgba(40,25,15,.8)' : '0 2px 10px rgba(255,250,240,.9)' })}
+      <div style={{ position: 'absolute', top: 84, right: PAD, transform: 'rotate(-7deg)', fontFamily: 'Jua, sans-serif', fontSize: 31, color: '#fff', background: 'linear-gradient(180deg,#d9483b,#b8322a)', padding: '13px 28px', borderRadius: 18, boxShadow: '0 10px 18px -6px rgba(120,30,20,.45), inset 0 2px 0 rgba(255,255,255,.35)', zIndex: 9 }}>Merry Christmas</div>
+      <div style={{ position: 'absolute', left: PAD - 6, right: PAD - 6, top: 300, padding: '34px 38px 40px', borderRadius: 34, background: 'rgba(253,250,244,.93)', boxShadow: '0 18px 40px -18px rgba(90,50,20,.45)', zIndex: 6 }}>
+        <div style={{ fontFamily: 'Gaegu, sans-serif', fontWeight: 700, fontSize: 44, color: '#b8322a' }}>크리스마스엔, 이 한 끼</div>
+        <div style={{ marginTop: 4, fontFamily: 'Jua, sans-serif', fontSize: hs, lineHeight: 0.99, letterSpacing: -3, color: '#4a2a1c', wordBreak: 'keep-all' }}>
+          {l1}{l2 && <><br />{l2}</>}
+        </div>
+        <div style={{ marginTop: 26 }}>{chips('rgba(80,140,90,.22)', '#2f6b3f')}</div>
+        {(() => {
+          const pick = [...XMF].sort(() => Math.random() - 0.5).slice(0, 2)
+          const spot = [{ left: -64, bottom: -54, size: 150, rot: -14 }, { right: -40, top: -50, size: 128, rot: 12 }]
+          return pick.map((u, i) => { const s = spot[i]; return <img key={i} src={u} alt="" crossOrigin="anonymous" style={{ position: 'absolute', ...s, width: s.size, height: s.size, objectFit: 'contain', transform: 'rotate(' + s.rot + 'deg)', filter: 'drop-shadow(0 10px 14px rgba(90,50,20,.3))' }} /> })
+        })()}
+      </div>
+      {hero({ right: 24, bottom: 210, height: 540, filter: die8('#ffffff') })}
+      {밤 ? veil('58,47,43') : veil('253,241,225')}
+      {more(진, 밤 ? '#e9d6c4' : '#8a5a3c')}{foot(진, 밤 ? '#e9d6c4' : '#8a5a3c')}
+    </>)
+  }
   if (K.key === 'halloween' || K.key === 'halloween_night') {
     const 밤 = K.key === 'halloween_night'
     const hs = headSize([l1, l2], 132, 1080 - PAD * 2 - 40)

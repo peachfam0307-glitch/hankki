@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useStore, 다읽었나 } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { consumeIosShared, onIosShare } from './iosShare'
-import { makeInboxRecipe } from './screens/ImportScreen'
+import { makeInboxRecipe, needsOnboarding } from './작은함수.js'   // 📏 화면 통째로 안 끌고 오게(2026-11-10)
 import { ocrImage, getOcrLeft, 열쇠셈, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
 import { parseRecipeText, keepRaw, 자리표제목 } from './parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중, 번호알림받기, 선반집기, 동의안함으로끝났나 } from './tidy'
@@ -26,7 +26,7 @@ import TabSwipe from './components/TabSwipe'
 import TimerBar from './components/TimerBar'
 import Icon from './components/Icon'
 import { useTimer } from './timer'
-import Onboarding, { needsOnboarding } from './components/Onboarding'
+const Onboarding = 조각(() => import('./components/Onboarding'))   // 📏 첫 실행 한 번 — 본체에서 뺐다
 import CloudGate from './components/CloudGate'
 import ConfirmSheet from './components/ConfirmSheet'
 import { 앱안인가 } from './nativeAuth'                       // 🍎 아이폰 앱 안 = 로그인 필수 스위치(§8 ⑥)
@@ -35,19 +35,24 @@ import TidyWaiting from './components/TidyWaiting'
 import { askOpenBackup, needsCloudGate, askOpenCloud, 클라우드보임, 자동받기켤까, shouldAskReview, shouldAskReviewNow, myRecipeCount, 문머리글 } from './nudges'
 import ReviewAskSheet from './components/ReviewAskSheet'
 import HomeScreen from './screens/HomeScreen'
-import SearchScreen from './screens/SearchScreen'
-import MyRecipesScreen from './screens/MyRecipesScreen'
-import ShopScreen from './screens/ShopScreen'
-import ProfileScreen from './screens/ProfileScreen'
-import BragScreen from './screens/BragScreen'
-import ImportScreen from './screens/ImportScreen'
-import RecipeDetailScreen from './screens/RecipeDetailScreen'
-import EditorScreen from './screens/EditorScreen'
-import InboxScreen from './screens/InboxScreen'
-import FavoritesScreen from './screens/FavoritesScreen'
-import CookedScreen from './screens/CookedScreen'
-import CookScreen from './screens/CookScreen'
-import DiaryScreen from './screens/DiaryScreen'
+// 📏📏 [창업자 2026-11-10 「설계를 다시해봐 이런일안생기게」] 홈 말고는 «열 때» 받는다 — docs/앱본체-크기벽-설계-2026-11-10.md
+//   ⛔ 뿌리 = 화면 15개가 본체 한 덩어리 → 11/10 본체 99.3%(2MiB 한도)에서 크리스마스 판이 빌드를 못 했다.
+//   ✅ 서비스워커가 조각도 미리 받는다(globPatterns js) → 깔린 폰·오프라인은 전과 같다 · 아이폰은 앱 안 파일이라 바로 열린다.
+//   ⛔ 새 화면을 여기 «정적 import» 로 넣지 말 것 — check-precache 가 본체 80% 에서 막는다.
+import { 조각 } from './조각.jsx'
+const SearchScreen = 조각(() => import('./screens/SearchScreen'))
+const MyRecipesScreen = 조각(() => import('./screens/MyRecipesScreen'))
+const ShopScreen = 조각(() => import('./screens/ShopScreen'))
+const ProfileScreen = 조각(() => import('./screens/ProfileScreen'))
+const BragScreen = 조각(() => import('./screens/BragScreen'))
+const ImportScreen = 조각(() => import('./screens/ImportScreen'))
+const RecipeDetailScreen = 조각(() => import('./screens/RecipeDetailScreen'))
+const EditorScreen = 조각(() => import('./screens/EditorScreen'))
+const InboxScreen = 조각(() => import('./screens/InboxScreen'))
+const FavoritesScreen = 조각(() => import('./screens/FavoritesScreen'))
+const CookedScreen = 조각(() => import('./screens/CookedScreen'))
+const CookScreen = 조각(() => import('./screens/CookScreen'))
+const DiaryScreen = 조각(() => import('./screens/DiaryScreen'))
 
 // '일지'는 레시피 탭의 '요리 기록' 세그먼트로 합쳐졌다.
 // 📔 「일기」 탭 = 레시피 화면을 «한끼 일기»부터 연다 (창업자 2026-08-07
@@ -1192,7 +1197,7 @@ export default function App() {
             ⭐ 그래서 담는 칸을 하나 둔다 — 여기가 `position: relative` 라
                쌓인 화면의 `inset:0` 이 **띠 «아래»부터** 시작한다. */}
         <div className="frame-body">
-        <div key={tab} className="screen fade">
+        <div key={tab} className="screen fade" data-tab={tab}>
           <TabScreen />
         </div>
 

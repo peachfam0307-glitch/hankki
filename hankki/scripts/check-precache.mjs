@@ -65,3 +65,26 @@ if (mb > LIMIT_MB) {
   process.exit(1)
 }
 console.log('✅ 통과 — 처음 켤 때 받는 양이 상한 안이다')
+
+// 📏📏 [창업자 2026-11-10 「설계를 다시해봐 이런일안생기게」] «한 파일» 계기판 — docs/앱본체-크기벽-설계-2026-11-10.md
+//   ⛔ 뿌리 = vite-plugin-pwa 0.21 은 미리받기 파일 하나가 2MiB 를 넘으면 «빌드를 죽인다»(throwMaximumFileSizeToCacheInBytes).
+//      11/10 본체가 99.3% 였는데 아무도 몰랐다 → 크리스마스 4단계에서 배포가 통째로 멈췄다.
+//   ✅ 그래서 «다 차기 전에» 막는다 — 본체(index-*.js) 80% · 나머지 조각 60%. 넘으면 그 판에서 화면을 하나 더 떼어 낸다.
+//   ⭐ 숫자를 넓혀서 풀지 말 것(절대원칙 34) — 떼어 내는 게 답이다.
+const 한도 = 2 * 1024 * 1024, 본체예산 = 0.80, 조각예산 = 0.60, 하루증가 = 1600   // 하루증가 = 10/28→11/10 실측 +21KB/13일
+const js = urls.map((u) => u.replace(/^\.\//, '')).filter((r) => r.endsWith('.js') && r.startsWith('assets/'))
+let 넘음 = 0
+console.log('\n📏 파일 하나 계기판 (한도 2MiB · 본체 80% · 조각 60%)')
+for (const r of js.map((r) => ({ r, b: statSync(join(ROOT, 'dist', r)).size })).sort((a, b) => b.b - a.b).slice(0, 8)) {
+  const 본체 = /^assets\/index-/.test(r.r), 예산 = (본체 ? 본체예산 : 조각예산) * 한도, p = r.b / 한도 * 100
+  const 남은날 = Math.floor((예산 - r.b) / 하루증가)
+  console.log(`   ${r.r.padEnd(34)} ${(r.b / 1024).toFixed(0).padStart(6)}KB  ${p.toFixed(1).padStart(5)}%  ${본체 ? '본체' : '조각'}${r.b > 예산 ? '  ⛔ 예산 넘음' : 본체 ? `  (예산까지 약 ${남은날}일)` : ''}`)
+  if (r.b > 예산) 넘음++
+}
+if (넘음) {
+  console.error(`\n⛔⛔ **파일 ${넘음}개가 예산을 넘었다** — 아직 한도 전이지만 «여유가 있을 때» 막는다.`)
+  console.error('   👉 본체면: 첫 화면에 안 쓰는 화면을 App.jsx 에서 lazy 로 떼어 낸다.')
+  console.error('   👉 조각이면: 그 조각 안의 큰 모듈을 또 나눈다. ⛔ 한도·예산 숫자를 올리지 않는다.')
+  process.exit(1)
+}
+console.log('✅ 파일 하나 예산 안')

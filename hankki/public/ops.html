@@ -113,9 +113,18 @@
       const j = await r.json()
       if (!r.ok) { $('out').textContent = r.status + ' ' + JSON.stringify(j); return }
       const 시 = (t) => { const d = new Date(t + 9 * 3600000); return d.toISOString().slice(5, 16).replace('T', ' ') }
-      $('out').textContent = (j.오류 || []).length
-        ? j.오류.map((e, i) => `${i + 1}. [적어도 ${e.몇번}번] ${e.메시지 || '(글 없음)'}\n   화면 ${e.화면 || '-'} · ${e.판} · ${({ ios: '아이폰', android: '갤럭시', web: '웹' })[e.기기] || e.기기} · ${시(e.처음)}~${시(e.마지막)}\n   직전 ${(e.직전 || []).slice(-4).join(' > ') || '-'}${e.위치 ? '\n   위치 ' + e.위치.split('\n')[0].slice(0, 140) : ''}`).join('\n\n')
-        : '최근 7일 오류 없음 🎉'
+      // 🧹 [창업자 2026-11-13 「진짜 오류를 거르는 장치」] 진짜 / 잡음 두 칸으로 가른다
+      //   잡음 = ①우리 코드 밖(종류 '바깥') ②옛 앱의 「Error: Rejected」처럼 위치에 우리 파일이 없는 것
+      //         ③그림·자원이 «한꺼번에 5장 이상» 실패(그 사람 접속이 끊긴 것 · 파일은 멀쩡)
+      const 기기글 = (g) => ({ ios: '아이폰', android: '갤럭시', web: '웹' })[g] || (String(g || '').startsWith('web·') ? '웹(' + g.slice(4) + ')' : g)
+      const 잡음 = (e) => e.종류 === '바깥'
+        || ((e.종류 === 'error' || e.종류 === 'promise') && e.위치 && !/assets\/|capacitor:|https?:\/\//.test(e.위치))
+        || ((e.종류 === '그림' || e.종류 === '자원') && e.몇번 >= 5)
+      const 줄 = (e, i) => `${i + 1}. [적어도 ${e.몇번}번] ${e.메시지 || '(글 없음)'}\n   화면 ${e.화면 || '-'} · ${e.판} · ${기기글(e.기기)} · ${시(e.처음)}~${시(e.마지막)}\n   직전 ${(e.직전 || []).slice(-4).join(' > ') || '-'}${e.위치 ? '\n   위치 ' + e.위치.split('\n')[0].slice(0, 300) : ''}`
+      const 모두 = j.오류 || [], 진짜 = 모두.filter((e) => !잡음(e)), 거른것 = 모두.filter(잡음)
+      $('out').textContent = !모두.length ? '최근 7일 오류 없음 🎉'
+        : `🔴 진짜 오류 ${진짜.length}개\n\n${진짜.length ? 진짜.map(줄).join('\n\n') : '없음 🎉'}`
+          + (거른것.length ? `\n\n──────────\n⚪ 걸러낸 잡음 ${거른것.length}개 (우리 코드 밖 · 접속 끊김 — 손볼 필요 없음)\n\n${거른것.map(줄).join('\n\n')}` : '')
     } catch (e) { $('out').textContent = '연결 실패: ' + e }
   }
   상태()

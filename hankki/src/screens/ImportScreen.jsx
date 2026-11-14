@@ -1141,29 +1141,6 @@ function placeholderFor(flow) {
   return 'https://...'
 }
 
-export function makeInboxRecipe({ source, title, sourceUrl = '', image = null, category, memo = '' }) {
-  return {
-    id: newId(),
-    title,
-    // 가져온 레시피도 기본 썸네일은 브랜드 아이콘(통일감). 사진은 원하면 편집에서 고른다.
-    thumb: 'icon',
-    icon: guessFoodIcon(title),
-    emoji: '🍽️',
-    image,
-    source,
-    category: category || guessCategory(title + ' ' + memo),
-    tags: [],
-    time: 0,
-    servings: 0,
-    difficulty: '',
-    ingredients: [],
-    steps: [],
-    memo,
-    sourceUrl,
-    status: 'unsorted',
-    folder: null,
-    favorite: false,
-    cooked: 0,
-    savedAt: Date.now(),
-  }
-}
+// 📏 [2026-11-10] `src/작은함수.js` 로 옮겼다(본체 나누기) — 여기선 다시 내보내기만
+export { makeInboxRecipe } from '../작은함수.js'
+import { makeInboxRecipe } from '../작은함수.js'   // ⭐ 이 화면 안에서도 쓴다(2026-11-10 재현: 빼기만 하니 「makeInboxRecipe is not defined」)

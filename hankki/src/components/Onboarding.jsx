@@ -40,13 +40,9 @@ import obReku from '../assets/onboard/reku.webp'
 // 첫 실행 온보딩 — 스토어 스샷과 똑같은 레꾸 카드+곰펭 디자인을 앱 안에서 라이브로.
 // 곰펭은 앱 실제 모션(콩콩·살랑·둥실…), 꾸미기 슬라이드엔 반짝·하트 효과. 문구=꼬르곰·펭펭/레꾸(옛 '흩어진'·'곰펭이' 없음).
 // 표시 여부는 localStorage 'hankki:onboarded' 하나로만 관리.
-export const ONBOARD_KEY = 'hankki:onboarded'
-export function needsOnboarding() {
-  try { return localStorage.getItem(ONBOARD_KEY) !== '1' } catch { return false }
-}
-export function markOnboarded() {
-  try { localStorage.setItem(ONBOARD_KEY, '1') } catch { /* noop */ }
-}
+// 📏 [2026-11-10] 봤나 셈은 `src/작은함수.js` 로 옮겼다(본체 나누기) — 여기선 다시 내보내기만
+export { ONBOARD_KEY, needsOnboarding, markOnboarded } from '../작은함수.js'
+import { ONBOARD_KEY, markOnboarded } from '../작은함수.js'
 
 // ⏰⏰ 날짜는 «오늘»을 쓴다 — 고정으로 박으면 반드시 낡는다.
 //    (창업자 2026-08-08 *"날짜도 맞춰야해(온보드에 날짜 써있는 이미지가 있을거야)"* — 맞았다.

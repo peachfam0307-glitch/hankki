@@ -33,6 +33,7 @@ const defaultScale = (key) => {
   //      DecorEditor 630줄을 고치면 **여기도 반드시** 고친다(값이 두 곳에 복사돼 있다).
   if (key.startsWith('rs_v') || key.startsWith('rs_k')) return 0.32
   if (key.startsWith('dc_') || key.startsWith('ch_')) return 0.15
+  if (['xd13'].includes(key)) return 0.15   // DecorEditor 「작게붙는컷」과 같은 목록
   return 0.22                                          // 그 밖의 사진 스티커
 }
 

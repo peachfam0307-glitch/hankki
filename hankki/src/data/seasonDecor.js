@@ -17,10 +17,31 @@ export const 명절창 = [
   //   📅 그래서 10월이 셋으로 나뉜다 = 10/01 가을 22컷 · **10/16 핼러윈(＋이벤트 시작)** · 11/01 늦가을 27컷
   //   ⭐ 알림도 저절로 따라온다 — push-schedule.mjs:41 이 이 창을 «그대로» 읽는다(로직을 두 벌로 안 만든다)
   { key: 'hw', label: '핼러윈', from: '2026-10-16', to: '2026-10-30' },   // ✏️ [창업자 2026-09-29 「10월 16일부터 10월 30일까지만 딱 뜨게. 레꾸자랑도, 홈도」] 11-02 → 10-30
+  // 🎄 [창업자 2026-11-09 「12월부터 크리스마스까지 우리 홈테마배경 바꿀려고」 · 「연말까지」] 12/01~12/31
+  //   ⛔ 키는 `xm` 이 아니다 — 사진 스티커 `xm_01~04`·레꾸자랑 `cardSeasons` 가 이미 `xm` 을 쓴다(2026-11-10 실측).
+  { key: 'xmas', label: '크리스마스', from: '2026-12-01', to: '2026-12-31', 테마: true },
 ]
 
+// 🎄 [창업자 2026-11-09 「크리스마스 테마를 설정에서 다른색으로 바꿨다가 다시하고싶은데 다시할수가 없더라」]
+//   ⭐ `테마: true` 인 철은 설정 «테마» 칸에 한 칸으로 뜬다 — 다른 색을 고르면 꺼지고, 다시 누르면 켜진다.
+//   ⭐ 끈 기록은 «그 철 키»로만 남는다 → 철이 끝나면 저절로 무의미해진다(1/1 = 원래 쓰던 색 그대로).
+//   ⛔ 유저가 고른 색(`hankki-theme`)은 건드리지 않는다 — 크리스마스를 골라도 원래 색이 그대로 남아 있다.
+const 끈철키 = 'hankki-season-off'
+export const 철테마창 = (오늘 = todayKST()) => 명절창.find((s) => s.테마 && 오늘 >= s.from && 오늘 <= s.to) || null
+export function 철꺼짐(key) { try { return localStorage.getItem(끈철키) === key } catch { return false } }
+export function 철켜기끄기(key, 켬) {
+  try { 켬 ? localStorage.removeItem(끈철키) : localStorage.setItem(끈철키, key) } catch { /* 저장 못 해도 이번 화면엔 적용 */ }
+  try { window.dispatchEvent(new Event('hankki-season-change')) } catch { /* 없음 */ }
+  // ⭐ 설정 화면엔 철을 재는 부품이 안 떠 있을 수 있다 → 앱 전체 표시(data-season)는 여기서 «바로» 맞춘다
+  //   (2026-11-10 재현: 그레이지를 눌러도 새로고침 전까지 크리스마스 색이 남았다)
+  try { const k = 이번명절(); k === 'hw' || k === 'xmas' ? document.documentElement.setAttribute('data-season', k) : document.documentElement.removeAttribute('data-season') } catch { /* 없음 */ }
+}
+
 export function 이번명절(오늘 = todayKST()) {
-  return 명절창.find((s) => 오늘 >= s.from && 오늘 <= s.to)?.key || null
+  const s = 명절창.find((x) => 오늘 >= x.from && 오늘 <= x.to)
+  if (!s) return null
+  if (s.테마 && 철꺼짐(s.key)) return null   // 🎄 유저가 테마에서 다른 색을 골랐다
+  return s.key
 }
 
 // 🏠 홈 장식 — `화면` 은 창업자가 놓은 배경이 «맨 위»였나 «맨 아래»였나다.
@@ -82,7 +103,12 @@ export const 홈장식 = {
 export const 탭컷 = {
   cs: { rec: 'cs_b02', log: 'duo101', shop: 'hb09', fridge: 'hb12', brag: 'duo301' },
   hw: { rec: 'hw_02', log: 'hw_09', shop: 'hw_15', fridge: 'hw_03', brag: 'hw_06' },   // ✏️ shop hw_13 → hw_15 (창업자 2026-09-29 20:12)
+  // 🎄 [창업자 2026-11-09 「탭 컷도 이대로」] 레시피 xn09_03 · 일기 xn05_02 · 장보기 xc02_01 · 냉장고 xn012_02 · 레꾸자랑 xc02_05
+  xmas: { rec: 'xk_n09_03', log: 'xk_n05_02', shop: 'xk_c02_01', fridge: 'xk_n012_02', brag: 'xk_c02_05' },
 }
+// 🎄 철마다 키움·내림이 다르면 여기 — 크리스마스 탭은 ×1.6 · 아래 4px (시안 `탭시안.cjs` SCALE 1.6 그대로)
+export const 철키움 = { xmas: 1.6 }
+export const 철내림 = { xmas: 4 }
 // 🇰🇷 홈의 «우리 애 자리» 두 곳을 명절엔 한복 컷으로 갈아끼운다.
 // 📮 창업자 2026-09-09 = *"한끼소식이랑 아직 안해봤어요 자리에.. 쟤들만 한복아니니까 이상해서.."*
 //    ⭐ 자리·크기·움직임은 «그대로»다 — 그림만 바뀐다(둘 다 원본과 같은 높이 320px 로 잘랐다).
@@ -94,6 +120,8 @@ export const 홈컷 = {
   //    얹으면 원래 캐릭터와 겹친다 → 추석(한복)처럼 «바꿔 끼운다». 자리·크기·움직임은 원래 그대로.
   // ✏️ [창업자 2026-09-29 20:00 「한끼소식은 핼로윈 유료16로, 아직안해봤어요는 11번으로」] hw_13·hw_09 → hw_16·hw_11
   hw: { 소식: 'hw_16', 다음: 'hw_11' },
+  // 🎄 [창업자 2026-11-09 「한끼소식에 꼬르곰 아래로 조금 내리고 크기도 살짝 더 키우자 펭펭도」 → 「펭펭은 살짝 아래로」] ×1.4 · 소식 6px · 다음 5px 아래 (크기·여백 = styles.css)
+  xmas: { 소식: 'xk_n012_03', 다음: 'xk_n05_05' },
 }
 
 // 🧒 「이번 주 제철 · 월」 줄에 «박아» 앉는 컷 — 카드가 굴러가면 같이 굴러간다.

@@ -30,7 +30,8 @@ p.on('pageerror', e => errs.push(String(e)))
 //    📌 또 「되나」가 아니라 «내 흉내가 맞나»에서 틀린 것이다(규칙 18 ⓘ).
 // ⭐ 키를 «소스에서 읽는다» — 손으로 적으면 반드시 낡는다(.jsx 는 노드가 import 못 한다)
 import { readFileSync } from 'node:fs'
-const ONBOARD_KEY = readFileSync(new URL('../src/components/Onboarding.jsx', import.meta.url), 'utf8')
+// 📏 [2026-11-10] 키는 본체 나누기로 src/작은함수.js 에 산다
+const ONBOARD_KEY = readFileSync(new URL('../src/작은함수.js', import.meta.url), 'utf8')
   .match(/ONBOARD_KEY\s*=\s*'([^']+)'/)[1]
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 await p.addInitScript(new Function(SEED_COACH_SEEN))
