@@ -7,7 +7,7 @@ import { useStore } from '../store'
 import { useNav } from '../App'
 import Icon from '../components/Icon'
 import { openExternal } from '../utils'
-import { INSTAGRAM_URL, INSTA_NEW_AT, INSTA_NEW_DAYS } from '../version'
+import { INSTAGRAM_URL, INSTA_NEW_AT, INSTA_NEW_DAYS, INSTA_WEEKLY_MONDAY } from '../version'
 import { 인스타로감, 홈누름 } from '../stats'   // 🚪 insta_go — 홈 인스타 칸을 누른 사람
 import { SNS인가, SNS표 } from '../embed'
 import Thumb from '../components/Thumb'
@@ -183,7 +183,9 @@ const 인스타본표 = 'hankki:insta:본글'
 const 지금켠날 = () => {
   const 오늘 = Date.parse(todayKST() + 'T00:00:00Z')
   let 고른 = ''
-  for (const s of [].concat(INSTA_NEW_AT || [])) {
+  // 📅 [2026-11-15] 창업자 「매주 월요일에 인스타 새로 켜지게」 — 이번 주 월요일을 저절로 더한다(아이폰에 구워진 판도 매주 켜진다)
+  const 요일 = new Date(오늘).getUTCDay(), 월요일 = new Date(오늘 - ((요일 + 6) % 7) * 86400000).toISOString().slice(0, 10)
+  for (const s of [].concat(INSTA_NEW_AT || [], INSTA_WEEKLY_MONDAY ? [월요일] : [])) {
     const 켠날 = String(s || '').trim()
     if (!/^\d{4}-\d{2}-\d{2}$/.test(켠날)) continue
     const 지난날 = (오늘 - Date.parse(켠날 + 'T00:00:00Z')) / 86400000
