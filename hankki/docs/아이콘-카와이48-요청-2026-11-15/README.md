@@ -6,3 +6,8 @@
 1장(1~16): shopping bag, grocery basket with carrot and baguette, lipstick, skincare cream jar, nail polish bottle, t-shirt, dress on a hanger, rice bowl with chopsticks, hamburger, coffee cup, popcorn, birthday cake, house, car, padlock, checklist clipboard
 2장(17~32): gold coin, Korean won banknotes(글자 없이), wallet, piggy bank, pills, first-aid kit, tooth, baby bottle, school backpack, open book, pencil, sneaker, dumbbell, scissors, paint palette, cat paw
 3장(33~48): heart, star, bell, sun, green leaf, gift box, party popper, movie clapperboard, music note, airplane, suitcase, camera, flower, crescent moon, smartphone, envelope
+
+## 결과 (2026-11-15 21:59 · Higgsfield gpt_image_2 1k · 안녕한끼 계정 · 3크레딧)
+- 시트1.png · 시트2.png · 시트3.png (각 1024×1024 · 4×4)
+- ⚠️ 시트1: 순서가 요청과 조금 다름(매니큐어가 2줄 끝) · 시트3: 카메라·편지만 얼굴 없음
+- ⏳ 창업자 판정 대기 → 확정 뒤 cut.py 로 낱개 48
