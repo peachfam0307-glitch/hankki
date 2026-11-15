@@ -37,12 +37,17 @@ const 보기 = async (날, 떠야, 본글 = '') => {
 // 📅 [2026-10-06] 날짜가 여러 개 — 「14,16일날 둘다 새로」(창업자). 날마다 전날·그날·창 끝·창 밖 ＋ 앞 글을 눌러 끈 사람도 다음 날짜엔 다시 뜨나
 const 날들 = [].concat(INSTA_NEW_AT).sort()
 const 마지막 = 날들[날들.length - 1]
-await 보기(날더하기(날들[0], -1), false)
+// 📅 [2026-11-15] 매주 월요일 저절로 새로(INSTA_WEEKLY_MONDAY) — 「안 떠야」 칸도 그 주 월요일 창 안이면 뜨는 게 맞다
+const { INSTA_WEEKLY_MONDAY } = await import('../src/version.js')
+const 월창 = (d) => !!INSTA_WEEKLY_MONDAY && ((new Date(d + 'T00:00:00Z').getUTCDay() + 6) % 7) < INSTA_NEW_DAYS
+await 보기(날더하기(날들[0], -1), 월창(날더하기(날들[0], -1)))
 for (const d of 날들) await 보기(d, true)
 for (let i = 1; i < 날들.length; i++) await 보기(날들[i], true, 날들[i - 1])   // 앞 글을 이미 눌렀어도 새 글이면 뜬다
 await 보기(마지막, false, 마지막)                                               // 그 글을 눌렀으면 안 뜬다
 await 보기(날더하기(마지막, INSTA_NEW_DAYS - 1), true)
-await 보기(날더하기(마지막, INSTA_NEW_DAYS), false)
+await 보기(날더하기(마지막, INSTA_NEW_DAYS), 월창(날더하기(마지막, INSTA_NEW_DAYS)))
+await 보기('2026-11-23', !!INSTA_WEEKLY_MONDAY)   // 월요일 = 날짜 안 적어도 저절로
+await 보기('2026-11-22', false)                    // 일요일 = 월요일 창(5일) 밖
 await b.close(); srv.close()
 console.log(`\n통과 ${결과.filter(Boolean).length} / ${결과.length}`)
 process.exit(결과.every(Boolean) ? 0 : 1)
