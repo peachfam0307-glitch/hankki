@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { COACH } from '../coach'
-import { todayKST } from '../today'
+import { todayKST, daysAheadKST } from '../today'
 import { nextUpList } from '../nextUp'
 import OneLineSheet from '../components/OneLineSheet'
 import { useStore } from '../store'
@@ -184,7 +184,7 @@ const 지금켠날 = () => {
   const 오늘 = Date.parse(todayKST() + 'T00:00:00Z')
   let 고른 = ''
   // 📅 [2026-11-15] 창업자 「매주 월요일에 인스타 새로 켜지게」 — 이번 주 월요일을 저절로 더한다(아이폰에 구워진 판도 매주 켜진다)
-  const 요일 = new Date(오늘).getUTCDay(), 월요일 = new Date(오늘 - ((요일 + 6) % 7) * 86400000).toISOString().slice(0, 10)
+  const 요일 = new Date(오늘).getUTCDay(), 월요일 = daysAheadKST(-((요일 + 6) % 7))   // ⛔날짜는 today.js 에서만(절대원칙 27)
   for (const s of [].concat(INSTA_NEW_AT || [], INSTA_WEEKLY_MONDAY ? [월요일] : [])) {
     const 켠날 = String(s || '').trim()
     if (!/^\d{4}-\d{2}-\d{2}$/.test(켠날)) continue
