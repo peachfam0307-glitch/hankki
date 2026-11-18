@@ -2,6 +2,7 @@ import { useStore } from '../store'
 import { useNav } from '../App'
 import TopBar from '../components/TopBar'
 import Thumb from '../components/Thumb'
+import FounderMark from '../components/FounderMark'
 
 export default function CookedScreen() {
   const { recipes } = useStore()
@@ -20,7 +21,7 @@ export default function CookedScreen() {
               <button className="list-row press" style={{ width: '100%', textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
                 <Thumb recipe={r} style={{ width: 54, height: 54, flex: '0 0 auto' }} radius={12} emojiSize="1.4rem" showDecor />
                 <div className="meta">
-                  <div className="name">{r.title}</div>
+                  <div className="name">{r.title}<FounderMark recipe={r} /></div>
                   <div className="t-sub" style={{ marginTop: 3 }}>{r.category}</div>
                 </div>
                 <span className="info-pill" style={{ fontSize: 15 }}>{r.cooked}번</span>

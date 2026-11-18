@@ -29,6 +29,7 @@ import TabTalk from '../components/TabTalk'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 import SeasonHeadCut from '../components/SeasonHeadCut.jsx'
 import { 정렬값 } from '../data/seed'
+import FounderMark from '../components/FounderMark'
 
 // 🎴 카드자랑 탭 — 바이럴 진입점. 내 레시피를 골라 자랑한다.
 // ⭐ 창업자 방향: 주인공은 '내가 꾸민 표지', 랜덤 카드는 옵션(메인 아님).
@@ -310,7 +311,7 @@ export default function BragScreen() {
               <div key={r.id} className="grid-card" {...(i === 0 ? { 'data-coach': 'brag-list' } : {})}>
                 <button className="press" style={{ textAlign: 'left', width: '100%' }} onClick={() => { try { 자랑고름() } catch { /* noop */ } setPick(r) }} aria-label={`${r.title} 자랑하기`}>
                   <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
-                  <div className="name">{r.title}</div>
+                  <div className="name">{r.title}<FounderMark recipe={r} /></div>
                 </button>
               </div>
             ))}
