@@ -82,16 +82,20 @@ try {
   //    아래 파싱(날짜·경로 줄)이 통째로 빈다. 여기는 사람이 읽는 게 아니라 프로그램이 추리는 자리다.
   const out = execFileSync(process.execPath, [join(APP, 'scripts/latest-map.mjs'), '--전부'], { encoding: 'utf8', cwd: APP })
   const 줄 = out.split('\n')
-  const 최근 = []
+  const 최근 = [], 전부 = []
   let 옛주제 = 0
   for (let i = 0; i < 줄.length; i++) {
     const t = 줄[i]
     if (!/^\S/.test(t) || !줄[i + 1]?.includes('✅ 최신')) continue
     const m = 줄[i + 1].match(/✅ 최신\s+(\S+)\s+(.+)$/)
     if (!m) continue
+    전부.push({ date: m[1], path: m[2].trim(), topic: t.trim() })
     if (m[1] < 문턱) { 옛주제++; continue }
     최근.push({ date: m[1], path: m[2].trim(), topic: t.trim() })
   }
+  // ⏳ [2026-11-18] 14일 안에 새 문서가 «하나도» 없으면 표가 통째로 비었다(run 3063 · 배포 갈래엔 문서가 안 쌓인다)
+  //    → 빈 표 대신 «가장 최근 것»을 보여준다(실패의 모양을 바꾼다 · 절대원칙 34)
+  if (!최근.length && 전부.length) { 전부.sort((a, b) => (a.date < b.date ? 1 : -1)); console.log(`   (${DAYS}일 안엔 새 문서가 없다 — 가장 최근 것)`); 옛주제 -= Math.min(5, 전부.length); 최근.push(...전부.slice(0, 5)) }
   최근.sort((a, b) => (a.date < b.date ? 1 : -1))
   최근.slice(0, 보일수).forEach((r) => console.log(`   · ${r.path}   〔${r.topic}〕`))
   const 남 = 최근.length - 보일수 + 옛주제
