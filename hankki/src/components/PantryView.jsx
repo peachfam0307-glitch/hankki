@@ -20,6 +20,7 @@ import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 //    ⭐ 새로 만들지 않는다: 같은 것이 앱 안에서 두 모양이면 유저가 다른 것으로 읽는다.
 import uiKeyOne from '../assets/ui/key_one.png'
 import { 앱안인가 } from '../nativeAuth'   // 🍎 아이폰엔 「갤러리」가 없다 — 「사진」(2026-09-13)
+import FounderMark from './FounderMark'
 
 // 🥕 냉장고 한 줄에 붙일 그림. 창업자 제보 *"재료 하나만 담아도 큰 이미지가 생겨서 재료가 안보였어."*
 //   ⛔⛔ **이미 담아둔 재료도 같이 고쳐져야 한다**(규칙 18 ⓙ) — 담을 때 `icon` 이 굳어 저장되기 때문에
@@ -301,7 +302,7 @@ export default function PantryView() {
       {목록.map(({ r, n, 급함표 }) => (
         <button key={r.id} className="grid-card press" style={{ flex: '0 0 41%', textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
           <Thumb recipe={r} ratio="5/4" radius={16} showDecor />
-          <div className="name">{r.title}</div>
+          <div className="name">{r.title}<FounderMark recipe={r} /></div>
           {/* 🚨 왜 이게 떴는지 «한 줄 안에서» 보이게 — ⛔줄을 새로 늘리지 않는다
               (2026-08-12 창업자 *"재료 하나만 담아도 큰 이미지가 생겨서 재료가 안보였어"*) */}
           <div className="date" style={꼬리말}>
@@ -396,7 +397,7 @@ export default function PantryView() {
           .map((r) => (
             <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
               <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
-              <div className="name">{r.title}</div>
+              <div className="name">{r.title}<FounderMark recipe={r} /></div>
               <div className="date">기본 제공</div>
             </button>
           ))}

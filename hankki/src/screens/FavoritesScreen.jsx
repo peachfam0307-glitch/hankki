@@ -6,6 +6,7 @@ import Icon from '../components/Icon'
 // 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`) — 이 자리는 벌써 두 번 이름이 바뀌었다
 import { FAV_NAME } from '../favName'
 import { 정렬값 } from '../data/seed'
+import FounderMark from '../components/FounderMark'
 
 export default function FavoritesScreen() {
   const { recipes } = useStore()
@@ -29,7 +30,7 @@ export default function FavoritesScreen() {
               <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
                 <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                 <div className="fav-dot"><Icon name="bookmark" size={16} color="var(--brown)" style={{ fill: 'var(--brown)' }} /></div>
-                <div className="name">{r.title}</div>
+                <div className="name">{r.title}<FounderMark recipe={r} /></div>
                 <div className="date">{r.category} · {r.time}분</div>
               </button>
             ))}
