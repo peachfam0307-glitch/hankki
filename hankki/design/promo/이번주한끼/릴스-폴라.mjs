@@ -36,8 +36,8 @@ const FPS = 24, 장면 = []; let t = 0
 const 넣기 = (길이, 종류, 내용) => { 장면.push({ s: t, d: 길이, 종류, ...내용 }); t += 길이 }
 const 흔들 = (i) => [((i * 47) % 13) - 6, ((i * 71) % 90) - 45, ((i * 29) % 60) - 30]
 넣기(2.8, '표지', {})
-const 묶음 = [['월', '새 레시피', `${md(월)} 월요일`, 월편.map((r) => ({ 그림: 컷(r.icon), 이름: r.title }))],
-  ['수', 'SNS 레시피', `${md(수)} 수요일`, 수편.map((r) => ({ 그림: 컷(r.icon), 이름: r.title }))],
+const 묶음 = [['월', '새 레시피', `${md(월)} 월요일`, 월편.map((r) => ({ 그림: 컷(r.icon), 이름: r.title, 주: r.made === '창업자' }))],
+  ['수', 'SNS 레시피', `${md(수)} 수요일`, 수편.map((r) => ({ 그림: 컷(r.icon), 이름: r.title, 주: r.made === '창업자' }))],
   ['장', '주부의 장바구니', '직접 사서 써 본 것만', 장편.map((p) => ({ 그림: 장컷(p.icon), 이름: p.name, 작게: `${요일(p.from)} ${md(p.from)}${p.brand ? ' · ' + p.brand : ''}` }))]]
 for (const [요, 제목, 날, 편] of 묶음) {
   if (!편.length) continue
@@ -91,7 +91,7 @@ body{width:1080px;height:1920px;overflow:hidden;position:relative;font-family:'J
 <div class="장" id="끝판"><div class="끝"><div id="모음"></div><div class="h">레시피는<br>한끼 앱에서</div><div class="s">재료 · 순서 · 타이머까지 그대로</div>
 <div class="알약"><img src="${앱}">App Store · Google Play</div><div class="검색">「한끼 레시피북」 검색</div></div></div>
 <script>
-const 장면=${JSON.stringify(장면)}, 총=${총}, 표그림=${JSON.stringify(월편.slice(0, 3).map((r) => 컷(r.icon)))}
+const 주인장='${b64(join(ROOT, 'src/assets/avatars/av_gom.png'))}', 장면=${JSON.stringify(장면)}, 총=${총}, 표그림=${JSON.stringify(월편.slice(0, 3).map((r) => 컷(r.icon)))}
 const 이즈=(x)=>1-Math.pow(1-Math.min(1,Math.max(0,x)),3)
 const 튕=(x)=>{x=Math.min(1,Math.max(0,x));const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)}
 const 폴=(src,w,extra)=>'<div class="폴" style="width:'+(w+68)+'px;'+(extra||'')+'"><div class="테이프"></div><div class="속" style="width:'+w+'px;height:'+w+'px"><img src="'+src+'" style="width:'+(w*0.86)+'px;height:'+(w*0.86)+'px"></div></div>'
@@ -118,7 +118,7 @@ window.render=(t)=>{
     document.getElementById('위').textContent=c.갈;document.getElementById('점들').innerHTML=Array.from({length:c.n},(_,k)=>'<i class="'+(k<=c.i?'on':'')+'"></i>').join('')
     const 열쇠=c.갈+c.i
     if(지난!==열쇠){지난=열쇠;document.getElementById('더미').innerHTML=c.앞.map(y=>폴(y.그림,680,'left:'+(166+y.h[1])+'px;top:'+(400+y.h[2])+'px;transform:rotate('+y.h[0]+'deg)')).join('')+폴(c.그림,680,'left:'+(166+c.h[1])+'px;top:'+(400+c.h[2])+'px')
-      document.getElementById('이름').textContent=c.이름;document.getElementById('작게').textContent=c.작게||''}
+      document.getElementById('이름').innerHTML=c.이름+(c.주?'<img src="'+주인장+'" style="width:108px;height:108px;vertical-align:-14px;margin-left:18px">':'');document.getElementById('작게').textContent=c.작게||''}
     const 더미=document.getElementById('더미').children, 지금=더미[더미.length-1], q=튕(p/0.4)
     지금.style.transform='translateY('+(-1500*(1-q))+'px) rotate('+(c.h[0]+(c.i%2?-24:24)*(1-q))+'deg)'
     const b=이즈((p-0.25)/0.3);const 이=document.getElementById('이름');이.style.opacity=b*나감;이.style.transform='translateY('+(40*(1-b))+'px)';document.getElementById('작게').style.opacity=b*나감}
