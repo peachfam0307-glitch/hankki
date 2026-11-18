@@ -7,6 +7,7 @@ import { 저장날짜보임, 내것인가, 정렬값 } from '../data/seed'
 import { 나라들, 종류들, 종류고르기, 옛폴더이름 } from '../data/종류'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
+import FounderMark from '../components/FounderMark'
 import TabTips from '../components/TabTips'
 import TabTalk from '../components/TabTalk'
 import PromptSheet from '../components/PromptSheet'
@@ -1081,7 +1082,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                             />
                           )}
                         </div>
-                        <div className="name" style={gridSize === 'small' ? { fontSize: 15, marginTop: 5 } : undefined}>{r.title}</div>
+                        <div className="name" style={gridSize === 'small' ? { fontSize: 15, marginTop: 5 } : undefined}>{r.title}<FounderMark recipe={r} /></div>
                         {/* 📅 ⛔기본 레시피는 저장 날짜를 안 보여준다 — 유저가 저장한 적이 없다(창업자 확정 2026-09-12 「a」).
                             그 전엔 줄 세우려고 쓴 바닥값 2020-01-01 이 그대로 찍혀 목록이 거의 다 「2020.01.01」이었다. */}
                         {gridSize === 'big' && 저장날짜보임(r) && <div className="date">{dateLabel(r.savedAt)}</div>}

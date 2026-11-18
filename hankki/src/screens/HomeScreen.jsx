@@ -11,6 +11,7 @@ import { INSTAGRAM_URL, INSTA_NEW_AT, INSTA_NEW_DAYS, INSTA_WEEKLY_MONDAY } from
 import { 인스타로감, 홈누름 } from '../stats'   // 🚪 insta_go — 홈 인스타 칸을 누른 사람
 import { SNS인가, SNS표 } from '../embed'
 import Thumb from '../components/Thumb'
+import FounderMark from '../components/FounderMark'
 import { 얹은틀있나 } from '../components/Stickers'
 import FoodIcon from '../components/FoodIcon'
 import Buddy from '../components/Buddies'
@@ -146,7 +147,7 @@ function WeekBox({ w, 기본, open, 요일, 줄컷, 가로 }) {
                 </span>
               )}
             </div>
-            <div className="name">{r.title}</div>
+            <div className="name">{r.title}<FounderMark recipe={r} /></div>
           </button>
         ))}
       </div>
@@ -723,7 +724,7 @@ export default function HomeScreen() {
                 <Thumb recipe={todayPick} style={{ width: 'var(--today-thumb)', height: 'var(--today-thumb)', flex: '0 0 auto' }} radius={16} showDecor />
                 <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                   <div className="today-label">오늘 뭐 해먹지?</div>
-                  <div className="today-title">{todayPick.title}</div>
+                  <div className="today-title">{todayPick.title}<FounderMark recipe={todayPick} /></div>
                   <div className="today-reason">{today.fromFridge ? '냉장고 재료로 만들 수 있어요' : '이건 어때요?'}</div>
                 </div>
               </button>
@@ -791,7 +792,7 @@ export default function HomeScreen() {
                       ✅ 판 «안»에서 그림만 키운다(56% → 70%). 이름표 자리도 그대로다.
                       🍽 [2026-09-01 창업자 = 갈래 「라」] 단 **프레임을 얹은 레시피는 56%** — `홈그림크기()` 참조 */}
                   <Thumb recipe={r} ratio="1/1" radius={16} emojiSize="2.5rem" iconSize={홈그림크기(r)} showDecor />
-                  <div className="name">{r.title}</div>
+                  <div className="name">{r.title}<FounderMark recipe={r} /></div>
                 </button>
               ))}
             </div>
@@ -820,7 +821,7 @@ export default function HomeScreen() {
                 onContextMenu={(e) => e.preventDefault()}
               >
                 <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
-                <div className="name">{r.title}</div>
+                <div className="name">{r.title}<FounderMark recipe={r} /></div>
               </button>
             </div>
           ))}

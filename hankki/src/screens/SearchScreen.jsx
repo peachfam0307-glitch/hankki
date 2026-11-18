@@ -20,6 +20,7 @@ import { pinName, pinOf, nextPin } from '../favPin'
 import idxChef from '../assets/ui/idx_chef.png'
 import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 import idxHeart from '../assets/ui/idx_heart.png'
+import FounderMark from '../components/FounderMark'
 // 🍎 아이폰 앱은 «열쇠 없이» 켠다 — 창업자 2026-10-29 「아이폰 판은 열쇠 떼고 굽기」
 function 새검색열쇠() {
   try {
@@ -108,7 +109,7 @@ export default function SearchScreen() {
                   <div key={r.id} style={{ position: 'relative', minWidth: 0 }}>
                     <button className="grid-card press" style={{ textAlign: 'left', width: '100%' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
                       <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
-                      <div className="name">{r.title}</div>
+                      <div className="name">{r.title}<FounderMark recipe={r} /></div>
                       <div className="date">{r.category} · {r.time}분</div>
                     </button>
                     <button
@@ -129,7 +130,7 @@ export default function SearchScreen() {
                 ) : (
                   <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
                     <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
-                    <div className="name">{r.title}</div>
+                    <div className="name">{r.title}<FounderMark recipe={r} /></div>
                     <div className="date">{r.category} · {r.time}분</div>
                   </button>
                 ))}
