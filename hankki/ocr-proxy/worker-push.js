@@ -215,13 +215,20 @@ export default {
       }
       if (써야) { try { await kv.put(칸키, JSON.stringify(목록), { expirationTtl: 8 * 86400 }) } catch (e) { console.log('err:recent 쓰기 실패 ' + String(e).slice(0, 80)) } }
       // 🔔 처음 보는 오류 = 30일 «본 것» 표 하나(최대 400) — 같은 오류는 다시 안 울린다
+      // 🧹 [창업자 2026-11-19 「진짜오류만 알람받게」] 알림은 «진짜»만 — ops.html 의 잡음·서비스워커 잣대와 «같은» 판정
+      //    (11/19 07:00 알림 = 진짜 0 · 서비스워커 거절·그림 42장 실패뿐이었는데 울렸다) · 목록(ops)에는 그대로 남긴다
+      const 잡음 = (e) => e.종류 === '바깥'
+        || ((e.종류 === 'error' || e.종류 === 'promise') && e.위치 && !/peachfam0307-glitch\.github\.io\/hankki|capacitor:\/\//.test(e.위치))
+        || ((e.종류 === '그림' || e.종류 === '자원') && e.몇번 >= 5)
+        || e.종류 === '서비스워커' || /register a ServiceWorker|serviceWorker\.register|registerSW\.js/i.test((e.메시지 || '') + '\n' + (e.위치 || ''))
+      const 진짜새것 = 새것.filter((k) => !잡음(k))
       let 처음수 = 0
-      if (새것.length) {
+      if (진짜새것.length) {
         let 본표 = {}
         try { 본표 = (await kv.get('err:seen', 'json')) || {} } catch { 본표 = {} }
         const 지금 = Date.now()
         for (const [k, t] of Object.entries(본표)) if (지금 - t > 30 * 86400000) delete 본표[k]
-        for (const k of 새것) if (!본표[k.지문]) { 본표[k.지문] = 지금; 처음수++ }
+        for (const k of 진짜새것) if (!본표[k.지문]) { 본표[k.지문] = 지금; 처음수++ }
         if (처음수) {
           const 줄들 = Object.entries(본표).sort((a, c) => c[1] - a[1]).slice(0, 400)
           try { await kv.put('err:seen', JSON.stringify(Object.fromEntries(줄들))) } catch (e) { console.log('err:seen 쓰기 실패 ' + String(e).slice(0, 80)) }
