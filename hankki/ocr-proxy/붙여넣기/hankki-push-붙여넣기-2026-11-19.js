@@ -1,0 +1,627 @@
+// ═══════════════════════════════════════════════════════════════
+// 🔔 한끼 폰 알림(웹 푸시) — Cloudflare Worker   (2026-09-19 · 1판)
+//
+// 하는 일 = ①앱이 준 구독(폰 주소)을 «묶음»으로 담아 두고 ②정한 때가 되면 «빈 푸시(tickle)»를 보낸다.
+//   폰의 서비스워커(`src/sw.js`)가 빈 푸시를 받으면 여기 `/today` 로 «오늘 문구»를 가져와 띄운다.
+//   📄 설계 = docs/알림-설계-2026-09-19.md (설계 관문 통과판) · 창업자 확정 = 월수 17:00(⏰2026-09-20 갱신 · 15:30 → 17:00 · GA4 시간대 실측 17시 29명 > 15시 19명) · 토 09:00 · 꾸미기 20:00 · 하루 한 번
+//
+// ⛔⛔ **왜 「빈 푸시」인가** — 글자를 실어 보내려면 RFC 8291 암호화(aes128gcm·HKDF·ECDH)를 «손으로» 짜야 한다.
+//   대시보드에 붙여넣는 워커는 라이브러리를 못 쓴다. 150줄짜리 암호화를 틀리면 «조용히» 안 온다.
+//   ✅ 빈 푸시면 암호화 0줄 — 필요한 건 VAPID 서명(WebCrypto ES256 · 40줄)뿐이다.
+//   ✅ 문구는 앱이 «구운» `push/schedule.json` 에서 온다 → 문구를 바꾸는 건 앱 배포(저절로)지 워커 붙여넣기가 아니다.
+//
+// ⛔⛔ **한 번 실행에 바깥 요청 50개** (무료 플랜 · 열람 2026-09-19) — KV 읽기·쓰기도 다 센다.
+//   그래서 «묶음 하나 = 40명» · «한 번 깨어나면 묶음 하나»만 보낸다. 91명이면 3번(15분) 안에 다 간다.
+//   ⛔ 묶음을 키우거나 한 번에 여러 묶음을 보내면 «41번째 사람부터 조용히 못 받는다». 우리는 보낸 줄 안다.
+//
+// ⛔ 이 워커가 죽어도 앱은 안 죽는다 — 앱은 답을 «기다리지 않는다»(구독 보내기가 실패하면 다음에 또 보낸다).
+// 🔒 지키는 판 = scripts/_repro-푸시워커-0919.mjs (가짜 KV·fetch 로 «실제로 돌린다»)
+//
+// ── 창업자가 대시보드에서 할 것 (7분) ──────────────────────────
+//   1. Workers & Pages → Create → Worker → 이름 `hankki-push`   ⛔이름이 다르면 앱이 못 찾는다(주소가 이름에서 나온다)
+//   2. 이 파일 내용을 통째로 붙여넣고 Deploy
+//   3. Settings → Bindings → **KV 네임스페이스** 새로 만들기 `hankki-push-kv` · 변수 이름 `PUSH_KV`
+//   4. Settings → Variables and Secrets →
+//        Secret `APP_TOKEN`      = (기존 OCR 워커와 «같은» 값 · 구독 넣기에 쓴다)
+//        Secret `FOUNDER_SECRET` = (기존 OCR 워커와 «같은» 값 · `?quota=1` 통로)
+//   5. Settings → **Triggers → Cron Triggers → `*/5 * * * *`** (5분마다 · 보낼 때인지는 워커가 스스로 본다)
+//      ⛔ 이걸 안 걸면 «영영 안 보낸다». 구독은 쌓이는데 알림은 0 — 조용한 실패다.
+//   6. 확인 = `https://hankki-push.annyeong-hankki.workers.dev/vapid` 를 폰 브라우저로 열면 `{ pub: "…" }` 가 떠야 한다
+//      (VAPID 열쇠는 워커가 «첫 실행에 스스로» 만들어 KV 에 둔다 — 비밀 열쇠는 아무도 안 만진다)
+// ═══════════════════════════════════════════════════════════════
+
+const ALLOWED_ORIGINS = [
+  'https://peachfam0307-glitch.github.io',
+  'capacitor://localhost',   // 🍎 아이폰 껍데기 — 지금은 웹 푸시가 안 돼서 시트가 안 뜨지만, 주소는 맞춰 둔다
+]
+const 일정주소 = 'https://peachfam0307-glitch.github.io/hankki/push/schedule.json'
+const 앱길 = 'https://peachfam0307-glitch.github.io/hankki/'
+const 연락처 = 'mailto:annyeong.hankki@gmail.com'   // VAPID sub — 공개돼도 되는 지원 메일이다(README 와 같은 값)
+
+const LIMITS = {
+  묶음크기: 40,        // ⛔ 50 이 상한인데 KV 읽기·쓰기 몫을 빼면 40 이 안전선이다
+  보내는창분: 60,      // 정한 시각부터 60분 안에만 보낸다 — 지나면 «그날은 안 보낸다»(늦은 알림은 짜증이다)
+  최대묶음: 50,        // 40 × 50 = 2,000명까지. 그 위는 유료(월 5달러)로 가야 한다
+}
+
+const 칸 = {
+  열쇠: 'push:vapid',
+  묶음: (플랫폼, n) => `push:${플랫폼}:${n}`,
+  묶음수: 'push:n',
+  보냄: (날, 플랫폼, n) => `push:sent:${날}:${플랫폼}:${n}`,
+  기록: (달) => `push:log:${달}`,
+  // 🔔📅 D-2 «따로» 알림 (2026-09-20) — 날짜 → 그날 깨울 폰 주소들 · 폰 → 그 폰이 적어 둔 날짜들(바뀌면 옛 날짜에서 빼려고)
+  임박날: (날) => `push:exp:${날}`,
+  임박폰: (해시) => `push:expof:${해시}`,
+  임박보냄: (날) => `push:sent:${날}:exp`,   // 값 = 여기까지 보냈다(번호) — 40명씩 끊어 보낸다
+  // 🔔💳 새 구매 알림 (2026-10-30 창업자 「구매 알림 넣자」) — 창업자 폰 주소(최대 3) · 아직 안 읽은 구매(최대 20)
+  창업자폰: 'push:founder:subs',
+  창업자소식: 'push:founder:pending',
+}
+const 임박 = {
+  시각: '09:00',        // 창업자 확정 = 토요일 장바구니와 같은 아침 9시(장 보러 가기 전)
+  날짜최대: 20,        // 앱은 14일치를 보낸다 — 그 위는 잘라낸다
+  한번에: 40,          // 한 번 깨어나 보내는 수(묶음크기와 같은 이유 · 50 상한)
+  바꾸기최대: 20,      // 한 요청에서 고치는 날짜 칸 수 — 넘으면 partial 로 답하고 앱이 다음 저장 때 마저 보낸다(요청 하나 = KV 읽기·쓰기 2×20+2 < 50)
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    const origin = request.headers.get('Origin') || ''
+    const cors = corsHeaders(origin)
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
+    const url = new URL(request.url)
+    const kv = env.PUSH_KV
+
+    // 📊 운영자 — 「구독 몇 명 · 이달 몇 번 보냈나」 (OCR·tidy 워커와 같은 모양·같은 열쇠)
+    if (url.searchParams.get('quota') === '1') {
+      if (!env.FOUNDER_SECRET) return json({ error: 'no_secret' }, 500, cors)
+      const 준열쇠 = request.headers.get('x-hankki-founder') || url.searchParams.get('key') || ''
+      if (준열쇠 !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
+      if (!kv) return json({ 왜: 'KV 가 안 붙어 있어 셀 수가 없어요' }, 200, cors)
+      const n = await 묶음수읽기(kv)
+      const 세기 = async (플랫폼) => { let 합 = 0; for (let i = 0; i < n[플랫폼]; i++) 합 += (await 묶음읽기(kv, 플랫폼, i)).length; return 합 }
+      const 열쇠 = await kv.get(칸.열쇠, 'json')
+      return json({
+        날: kstDay(new Date()), 구독: { web: await 세기('web'), ios: await 세기('ios'), 묶음: n },
+        이달: (await kv.get(칸.기록(kstDay(new Date()).slice(0, 7)), 'json')) || { 보냄: 0, 성공: 0, 만료삭제: 0, 실행: 0 },
+        vapid: 열쇠 ? '있음' : '아직 없음(첫 /vapid 호출 때 생긴다)',
+      }, 200, cors)
+    }
+
+    // 🔔💳 새 구매 알림 — 창업자 폰에만 (2026-10-30 · 창업자 「일일이 확인하기 번거로우니까」)
+    //   ① /founder/subscribe = ops.html 「구매 알림 받기」가 이 폰 주소를 넣는다(창업자 열쇠 필요)
+    //   ② /founder/ping      = OCR 워커가 «처음 들어온 진짜 구매»마다 부른다(창업자 열쇠 · 서비스 바인딩 PUSH)
+    //   ③ /founder/inbox     = 서비스워커가 빈 푸시를 받고 «내 폰 몫 소식이 있나» 묻는다 — 창업자 폰이 아니면 404(⛔누가 샀는지는 원래 안 담는다)
+    //   ⭐ 웹 푸시는 «빈 푸시»라(암호화 0줄) 문구는 서비스워커가 가지러 온다 — 매일 알림과 같은 길이다.
+    if (url.pathname.startsWith('/founder/')) {
+      if (!kv) return json({ error: 'no_kv' }, 501, cors)
+      if (url.pathname === '/founder/inbox' && request.method === 'GET') {
+        const h = String(url.searchParams.get('h') || '')
+        const 폰들 = (await kv.get(칸.창업자폰, 'json')) || []
+        let 내폰 = false
+        for (const s of 폰들) if (h && (await 짧은해시(s.endpoint)) === h) 내폰 = true
+        if (!내폰) return json({ error: 'none' }, 404, cors)
+        const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
+        if (!소식.length) return json({ error: 'none' }, 404, cors)
+        await kv.put(칸.창업자소식, '[]')
+        const 셈 = { 구글: 0, 애플: 0, 시험: 0, 오류: 0, 한도사진: 0, 한도정리: 0, 점검정상: 0, 점검실패: 0 }
+        for (const x of 소식) 셈[셈[x.가게] != null ? x.가게 : '구글']++
+        // 🩺 [2026-11-04 창업자 「매일 저녁 8시」 · 「폰으로」] 저녁 점검 결과 — 정상도 «보낸다»(안 오면 그 자체가 신호)
+        const 점검 = [...소식].reverse().find((x) => x.가게 === '점검정상' || x.가게 === '점검실패')
+        const 점검줄 = 점검 ? String(점검.내용 || '').slice(0, 200) : ''
+        if (점검 && !셈.구글 && !셈.애플 && !셈.시험 && !셈.오류 && !셈.한도사진 && !셈.한도정리) {
+          return json(점검.가게 === '점검실패'
+            ? { 제목: '❌ 한끼 점검 — 고장난 곳이 있어요', 본문: 점검줄 || 'GitHub Actions 「ops-check」 기록을 보세요', 길: './ops.html', 표: 'hankki-check' }
+            : { 제목: '✅ 한끼 점검 — 오늘 다 정상', 본문: 점검줄 || '사이트 · 워커 셋 · 마지막 배포 모두 정상', 길: './ops.html', 표: 'hankki-check' }, 200, { ...cors, 'Cache-Control': 'no-store' })
+        }
+        const 줄 = [셈.구글 ? `갤럭시 ${셈.구글}건` : '', 셈.애플 ? `아이폰 ${셈.애플}건` : '', 셈.시험 ? `알림 시험 ${셈.시험}건(진짜 구매 아님)` : ''].filter(Boolean).join(' · ')
+        // ⚠️ [2026-11-02 운영 2단계] 처음 보는 앱 오류 — 구매 알림과 «같은 길»(창업자 폰 · 빈 푸시 → 여기서 문구)
+        const 오류줄 = 셈.오류 ? `처음 보는 오류 ${셈.오류}가지 — 운영 화면(ops) 「최근 오류」에서 보기` : ''
+        // 📈 [2026-11-02 운영 3단계] 한도 70% — 사진(이번 달 900 중) · 정리(오늘 200 중) · 다 차면 무료 유저가 못 쓴다
+        const 한도줄 = [셈.한도사진 ? '사진 읽기가 이번 달 한도의 70%를 넘었어요' : '', 셈.한도정리 ? 'AI 정리가 오늘 한도의 70%를 넘었어요' : ''].filter(Boolean).join(' · ')
+        if (한도줄 && !줄 && !오류줄) return json({ 제목: '📈 사용량이 한도의 70%를 넘었어요', 본문: 한도줄 + ' — 다 차면 무료 유저가 못 써요', 길: './ops.html', 표: 'hankki-quota' }, 200, { ...cors, 'Cache-Control': 'no-store' })
+        if (오류줄 && !줄) return json({ 제목: '⚠️ 앱에 처음 보는 오류가 났어요', 본문: [오류줄, 한도줄].filter(Boolean).join(' · '), 길: './ops.html', 표: 'hankki-error' }, 200, { ...cors, 'Cache-Control': 'no-store' })
+        return json({ 제목: '🔑 레시피열쇠가 팔렸어요', 본문: [줄, 오류줄, 한도줄, 점검줄].filter(Boolean).join(' · '), 길: './ops.html', 표: 'hankki-sale' }, 200, { ...cors, 'Cache-Control': 'no-store' })
+      }
+      if (!env.FOUNDER_SECRET || request.headers.get('x-hankki-founder') !== env.FOUNDER_SECRET) return json({ error: 'unauthorized' }, 401, cors)
+      // 🗂 [2026-11-06] 최근 오류 보기 — ops.html 「최근 오류」 단추(창업자 열쇠) · 7일치 · 많이 난 순
+      if (url.pathname === '/founder/errors' && request.method === 'GET') {
+        const 전부 = []
+        for (let i = 0; i < 7; i++) {
+          const 날 = kstDay(new Date(Date.now() - i * 86400000))
+          let 목록 = []
+          try { 목록 = (await kv.get(`err:recent:${날}`, 'json')) || [] } catch { 목록 = [] }
+          for (const e of 목록) 전부.push({ 날, ...e })
+        }
+        전부.sort((a, c) => c.마지막 - a.마지막)
+        return json({ 오류: 전부.slice(0, 100) }, 200, { ...cors, 'Cache-Control': 'no-store' })
+      }
+      let body = null
+      try { body = await request.json() } catch { return json({ error: 'bad_json' }, 400, cors) }
+      if (url.pathname === '/founder/subscribe' && request.method === 'POST') {
+        const sub = body?.sub
+        if (!sub || typeof sub.endpoint !== 'string' || !/^https:\/\//.test(sub.endpoint) || sub.endpoint.length > 2048) return json({ error: 'bad_sub' }, 400, cors)
+        const 폰들 = ((await kv.get(칸.창업자폰, 'json')) || []).filter((s) => s.endpoint !== sub.endpoint)
+        폰들.unshift({ endpoint: sub.endpoint, keys: sub.keys || {} })
+        await kv.put(칸.창업자폰, JSON.stringify(폰들.slice(0, 3)))   // 폰 바꾸면 옛 주소는 3개 넘을 때 밀려난다
+        return json({ ok: true, 폰: Math.min(3, 폰들.length) }, 200, cors)
+      }
+      if (url.pathname === '/founder/ping' && request.method === 'POST') {
+        const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
+        const 점검인가 = ['점검정상', '점검실패'].includes(body?.가게)
+        소식.push({ 가게: ['애플', '시험', '한도사진', '한도정리', '점검정상', '점검실패'].includes(body?.가게) ? body.가게 : '구글', 때: Date.now(), ...(점검인가 ? { 내용: String(body?.내용 || '').slice(0, 200) } : {}) })
+        await kv.put(칸.창업자소식, JSON.stringify(소식.slice(-20)))
+        const 폰들 = (await kv.get(칸.창업자폰, 'json')) || []
+        if (!폰들.length) return json({ ok: true, 보냄: 0, 왜: '창업자 폰이 아직 없다(ops.html 「구매 알림 받기」)' }, 200, cors)
+        const 열쇠 = await 열쇠꺼내기(kv)
+        const 남길 = []
+        let 보냄 = 0
+        for (const s of 폰들) { const r = await 푸시하나(s, 열쇠); if (r === 'ok') 보냄++; if (r !== 'gone') 남길.push(s) }
+        if (남길.length !== 폰들.length) await kv.put(칸.창업자폰, JSON.stringify(남길))
+        return json({ ok: true, 보냄 }, 200, cors)
+      }
+      return json({ error: 'not_found' }, 404, cors)
+    }
+
+    // ⚠️ 앱 오류 받기 (2026-11-02 운영 2단계 · 창업자 「문제가 발생했을때 즉각대응 · 원인파악이 바로」)
+    //   ① 받은 꾸러미를 «로그에 한 줄» 찍는다 → Cloudflare 기록 화면에서 「앱오류」로 찾는다(표·묶기 코드를 안 만든다)
+    //   ② 처음 보는 오류(판+종류+위치)면 창업자 폰에 알림 — 하루 20가지까지(폭주 때 폰이 터지지 않게)
+    //   ⛔ 개인 내용은 «안 받는다» — 글·사진·메일 칸이 없다. 앱이 그렇게 보내고, 여기서도 칸을 골라 받는다.
+    //   ⛔ 이 문이 죽어도 앱은 안 죽는다 — 앱은 답을 안 기다린다.
+    if (url.pathname === '/error' && request.method === 'POST') {
+      if (!ALLOWED_ORIGINS.includes(origin)) return json({ error: 'forbidden' }, 403, cors)
+      if (env.APP_TOKEN && request.headers.get('x-hankki-token') !== env.APP_TOKEN) return json({ error: 'unauthorized' }, 401, cors)
+      const 글 = await request.text()
+      if (글.length > 8000) return json({ error: 'too_big' }, 413, cors)
+      let b = null
+      try { b = JSON.parse(글) } catch { return json({ error: 'bad_json' }, 400, cors) }
+      const 자름 = (v, n) => String(v ?? '').slice(0, n)
+      // 📦 [2026-11-06] 묶음으로 받는다 — 11/6 02:29 한 폰이 2초에 17번 보내 KV 가 429 로 튕겼다(같은 칸 1초 1번 · 무료 하루 1,000번 = Cloudflare KV 한도 문서 2026-11-06 열람)
+      //    새 앱 = { 묶음: [...] } (최대 20) · 옛 앱(아이폰 88판 등) = 꾸러미 하나 — 둘 다 받는다
+      const 받은것 = Array.isArray(b?.묶음) ? b.묶음.slice(0, 20) : [b]
+      const 꾸러미들 = []
+      for (const x of 받은것) {
+        const 꾸러미 = {
+          판: 자름(x?.판, 20), 기기: 자름(x?.기기, 10), 화면: 자름(x?.화면, 40), 종류: 자름(x?.종류, 30),
+          메시지: 자름(x?.메시지, 300), 위치: 자름(x?.위치, 1500), 몇번: Math.max(1, Math.min(999, Number(x?.몇번) || 1)),
+          직전: Array.isArray(x?.직전) ? x.직전.slice(-10).map((y) => 자름(y, 60)) : [],
+        }
+        꾸러미.지문 = await 짧은해시(`${꾸러미.판}|${꾸러미.종류}|${꾸러미.메시지}|${꾸러미.위치.split('\n')[0]}`)
+        console.log(JSON.stringify({ 앱오류: 꾸러미.지문, ...꾸러미 }))
+        꾸러미들.push(꾸러미)
+      }
+      if (!kv) return json({ ok: true }, 200, cors)
+      // 🗂 「최근 오류」 = 날짜별 칸 «하나»(최대 50가지 · 7일) — ops.html 이 읽는다. ⛔ 요청 하나에 쓰기는 «최대 한 번씩»
+      //    횟수만 늘 때는 «10분에 한 번»만 다시 쓴다 → 이 칸 쓰기 = 하루 최대 144 ＋ 새 오류 50(유저 수와 무관 · 무료 하루 1,000 안)
+      //    ⚠️ 그래서 «몇번»은 «적어도»다 — 10분 안에 같은 오류가 또 오면 그 몫은 셈에서 빠질 수 있다(ops 에 「적어도」로 적는다)
+      const 날 = kstDay(new Date())
+      const 칸키 = `err:recent:${날}`
+      let 목록 = []
+      try { 목록 = (await kv.get(칸키, 'json')) || [] } catch { 목록 = [] }
+      let 써야 = false
+      const 마지막쓴때 = Math.max(0, ...목록.map((e) => e.마지막 || 0))
+      const 새것 = []
+      for (const k of 꾸러미들) {
+        const 있던 = 목록.find((e) => e.지문 === k.지문)
+        if (있던) {
+          있던.몇번 = Math.min(99999, 있던.몇번 + k.몇번)
+          if (Date.now() - 마지막쓴때 > 10 * 60000) 써야 = true
+          있던.마지막 = Date.now()
+        } else if (목록.length < 50) {
+          목록.push({ 지문: k.지문, 판: k.판, 기기: k.기기, 화면: k.화면, 종류: k.종류, 메시지: k.메시지, 위치: k.위치.split('\n').slice(0, 3).join('\n'), 직전: k.직전, 몇번: k.몇번, 처음: Date.now(), 마지막: Date.now() })
+          새것.push(k); 써야 = true
+        }
+      }
+      if (써야) { try { await kv.put(칸키, JSON.stringify(목록), { expirationTtl: 8 * 86400 }) } catch (e) { console.log('err:recent 쓰기 실패 ' + String(e).slice(0, 80)) } }
+      // 🔔 처음 보는 오류 = 30일 «본 것» 표 하나(최대 400) — 같은 오류는 다시 안 울린다
+      // 🧹 [창업자 2026-11-19 「진짜오류만 알람받게」] 알림은 «진짜»만 — ops.html 의 잡음·서비스워커 잣대와 «같은» 판정
+      //    (11/19 07:00 알림 = 진짜 0 · 서비스워커 거절·그림 42장 실패뿐이었는데 울렸다) · 목록(ops)에는 그대로 남긴다
+      const 잡음 = (e) => e.종류 === '바깥'
+        || ((e.종류 === 'error' || e.종류 === 'promise') && e.위치 && !/peachfam0307-glitch\.github\.io\/hankki|capacitor:\/\//.test(e.위치))
+        || ((e.종류 === '그림' || e.종류 === '자원') && e.몇번 >= 5)
+        || e.종류 === '서비스워커' || /register a ServiceWorker|serviceWorker\.register|registerSW\.js/i.test((e.메시지 || '') + '\n' + (e.위치 || ''))
+      const 진짜새것 = 새것.filter((k) => !잡음(k))
+      let 처음수 = 0
+      if (진짜새것.length) {
+        let 본표 = {}
+        try { 본표 = (await kv.get('err:seen', 'json')) || {} } catch { 본표 = {} }
+        const 지금 = Date.now()
+        for (const [k, t] of Object.entries(본표)) if (지금 - t > 30 * 86400000) delete 본표[k]
+        for (const k of 진짜새것) if (!본표[k.지문]) { 본표[k.지문] = 지금; 처음수++ }
+        if (처음수) {
+          const 줄들 = Object.entries(본표).sort((a, c) => c[1] - a[1]).slice(0, 400)
+          try { await kv.put('err:seen', JSON.stringify(Object.fromEntries(줄들))) } catch (e) { console.log('err:seen 쓰기 실패 ' + String(e).slice(0, 80)) }
+          const 오늘키 = `err:alert:${날}`
+          const 오늘수 = Number(await kv.get(오늘키)) || 0
+          if (오늘수 < 20) {
+            try { await kv.put(오늘키, String(오늘수 + 1), { expirationTtl: 2 * 86400 }) } catch { /* 넘어간다 */ }
+            // 🌙 [창업자 2026-11-06 「자고있는데 계속 알람오면 좀 그래」 → 「1번하자」] 오류 알림은 «하루 두 번 모아서»
+            //    19:00~07:00 에 난 것 → 아침 7시 · 07:00~19:00 에 난 것 → 저녁 7시 — 바로 울리지 않는다(소식만 적고 다음 울릴 때를 남긴다)
+            ctx.waitUntil(오류미루기(kv, new Date()))
+          }
+        }
+      }
+      return json({ ok: true, 처음: 처음수 > 0, 처음수 }, 200, cors)
+    }
+
+    // 🔑 공개 열쇠 — 앱이 구독을 만들 때 쓴다. 없으면 «지금» 만든다(비밀 열쇠는 KV 밖으로 안 나간다).
+    if (url.pathname === '/vapid' && request.method === 'GET') {
+      if (!kv) return json({ error: 'no_kv' }, 501, cors)
+      const 열쇠 = await 열쇠꺼내기(kv)
+      return json({ pub: 열쇠.pub }, 200, cors)
+    }
+
+    // 📨 오늘 문구 — 서비스워커가 빈 푸시를 받고 여기로 온다. ⛔ 없으면 «기본 문구»가 아니라 404 — 워커가 기본 문구를 쓴다.
+    if (url.pathname === '/today' && request.method === 'GET') {
+      const 오늘 = await 오늘문구(kstDay(new Date()))
+      return 오늘 ? json(오늘, 200, { ...cors, 'Cache-Control': 'no-store' }) : json({ error: 'none' }, 404, cors)
+    }
+
+    // 📥 구독 넣기 — { platform: 'web'|'ios', sub: { endpoint, keys } }
+    if (url.pathname === '/subscribe' && request.method === 'POST') {
+      if (!ALLOWED_ORIGINS.includes(origin)) return json({ error: 'forbidden' }, 403, cors)
+      if (env.APP_TOKEN && request.headers.get('x-hankki-token') !== env.APP_TOKEN) return json({ error: 'unauthorized' }, 401, cors)
+      if (!kv) return json({ error: 'no_kv' }, 501, cors)
+      let body = null
+      try { body = await request.json() } catch { return json({ error: 'bad_json' }, 400, cors) }
+      const 플랫폼 = body?.platform === 'ios' ? 'ios' : 'web'
+      const sub = body?.sub
+      // 🍎 [2026-09-20] 아이폰은 «주소»가 아니라 «기기 토큰»이 온다(16진 64자) — 잣대를 갈라 받는다.
+      //   ⛔ 옛 잣대(https:// 만 통과)로는 아이폰 구독이 «전부» 400 으로 튕겼다. 담기지도 않았다.
+      //   ⭐ 잣대는 «좁게» 잡는다(규칙 37) — 16진 64자만. 넓게 받으면 쓰레기가 KV 에 쌓인다.
+      const 아이폰인가 = 플랫폼 === 'ios'
+      const 토큰꼴 = 아이폰인가
+        ? (typeof sub?.endpoint === 'string' && /^[0-9a-fA-F]{64}$/.test(sub.endpoint))
+        : (typeof sub?.endpoint === 'string' && /^https:\/\//.test(sub.endpoint) && sub.endpoint.length <= 2048)
+      if (!sub || !토큰꼴) return json({ error: 'bad_sub' }, 400, cors)
+      const r = 아이폰인가
+        // 🍎 아이폰은 «어느 애플 문»으로 보낼지를 같이 담는다 — TestFlight·스토어 = production · Xcode 직접 = sandbox.
+        //    ⛔ 문을 틀리면 애플이 400 BadDeviceToken 을 준다(＝조용한 실패가 아니라 «틀렸다»고 말해 준다 · 아래에서 문을 바꿔 다시 담는다)
+        ? await 구독넣기(kv, 'ios', { endpoint: sub.endpoint, 문: body?.apnsEnv === 'sandbox' ? 'sandbox' : 'production' })
+        : await 구독넣기(kv, 'web', { endpoint: sub.endpoint, keys: sub.keys || {} })
+      return json(r, r.error ? 507 : 200, cors)
+    }
+
+    // 📅 D-2 날짜 넣기 — { endpoint, dates: ['YYYY-MM-DD', …] } · 재료 이름은 «안 온다». 빈 목록 = 이 폰의 날짜 전부 지우기.
+    if (url.pathname === '/expiry' && request.method === 'POST') {
+      if (!ALLOWED_ORIGINS.includes(origin)) return json({ error: 'forbidden' }, 403, cors)
+      if (env.APP_TOKEN && request.headers.get('x-hankki-token') !== env.APP_TOKEN) return json({ error: 'unauthorized' }, 401, cors)
+      if (!kv) return json({ error: 'no_kv' }, 501, cors)
+      let body = null
+      try { body = await request.json() } catch { return json({ error: 'bad_json' }, 400, cors) }
+      const endpoint = body?.endpoint
+      if (typeof endpoint !== 'string' || !/^https:\/\//.test(endpoint) || endpoint.length > 2048) return json({ error: 'bad_endpoint' }, 400, cors)
+      if (!Array.isArray(body?.dates)) return json({ error: 'bad_dates' }, 400, cors)
+      const 오늘 = kstDay(new Date())
+      const dates = [...new Set(body.dates.filter((d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= 오늘))].sort().slice(0, 임박.날짜최대)
+      const r = await 임박날짜맞추기(kv, endpoint, dates)
+      return json(r, 200, cors)
+    }
+
+    return json({ error: 'not_found' }, 404, cors)
+  },
+
+  // ⏰ 5분마다 깨어난다 — 보낼 때인지·보낼 묶음이 남았는지는 여기서 스스로 본다
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(보내기(env, new Date()))
+    ctx.waitUntil(미룬오류울리기(env.PUSH_KV, new Date()))
+  },
+}
+
+// ── 보내기 ────────────────────────────────────────────────────────────────
+/** 한 번 깨어나면 «묶음 하나»만. 돌려주는 값은 재현판이 본다. */
+export async function 보내기(env, now) {
+  const kv = env.PUSH_KV
+  if (!kv) return { 했나: false, 왜: 'no_kv' }
+  const 날 = kstDay(now)
+  const 문구 = await 오늘문구(날)
+  // 📅 일정이 «없는» 날 = D-2 폰들에게만 «따로» 보낸다(아침 9시). 일정이 있는 날은 그 알림 둘째 줄에 얹히므로 여기선 안 보낸다(하루 한 번).
+  if (!문구) return 임박보내기(kv, 날, now)
+  const 분 = kstMinutes(now)
+  const [h, m] = String(문구.시각 || '17:00').split(':').map(Number)
+  const 시작 = h * 60 + m
+  if (분 < 시작 || 분 >= 시작 + LIMITS.보내는창분) return { 했나: false, 왜: `아직 아니다(${문구.시각} 부터 ${LIMITS.보내는창분}분)` }
+
+  const n = await 묶음수읽기(kv)
+  // 🍎 [2026-09-20] 아이폰 묶음이 «웹보다 먼저» 간다 — 수가 훨씬 적어서(아이폰 유저 소수) 한 번에 끝나고,
+  //    웹 묶음을 기다리다 보내는창 60분을 넘기는 일이 없다. ⛔ 한 번 깨어나면 여전히 «묶음 하나»다(요청 50개 상한).
+  for (let i = 0; i < n.ios; i++) {
+    const 잠금 = 칸.보냄(날, 'ios', i)
+    if (await kv.get(잠금)) continue
+    const jwt = await apnsJwt(env)
+    if (!jwt) break                                          // 열쇠가 아직 없다 → 아이폰은 조용히 건너뛰고 웹은 그대로 보낸다
+    await kv.put(잠금, '1', { expirationTtl: 60 * 60 * 48 })
+    const 목록 = await 묶음읽기(kv, 'ios', i)
+    let 성공 = 0, 만료 = 0, 고침 = 0
+    const 남길것 = []
+    for (const s of 목록) {
+      const r = await 아이폰하나(s, jwt, 문구)
+      if (r === 'ok') { 성공++; 남길것.push(s) }
+      else if (r === 'gone') { 만료++ }
+      // 🚪 문이 틀렸을 뿐이면 «버리지 않고» 문을 바꿔 둔다 — 다음 판에 제대로 간다(실패의 모양을 바꾼다 · 규칙 34)
+      else if (r === 'sandbox') { 고침++; 남길것.push({ ...s, 문: 'sandbox' }) }
+      else { 남길것.push(s) }
+    }
+    if (만료 || 고침) await kv.put(칸.묶음('ios', i), JSON.stringify(남길것))
+    await 기록더하기(kv, 날.slice(0, 7), { 보냄: 목록.length, 성공, 만료삭제: 만료, 실행: 1 })
+    return { 했나: true, 플랫폼: 'ios', 묶음: i, 보냄: 목록.length, 성공, 만료삭제: 만료, 문고침: 고침 }
+  }
+
+  for (let i = 0; i < n.web; i++) {
+    const 잠금 = 칸.보냄(날, 'web', i)
+    if (await kv.get(잠금)) continue                       // 이미 보낸 묶음
+    await kv.put(잠금, '1', { expirationTtl: 60 * 60 * 48 })   // ⛔ 보내기 «전»에 먼저 박는다 — 두 번 보내기 방지
+    const 목록 = await 묶음읽기(kv, 'web', i)
+    const 열쇠 = await 열쇠꺼내기(kv)
+    let 성공 = 0, 만료 = 0
+    const 남길것 = []
+    for (const s of 목록) {
+      const r = await 푸시하나(s, 열쇠)
+      if (r === 'ok') { 성공++; 남길것.push(s) } else if (r === 'gone') { 만료++ } else { 남길것.push(s) }   // 일시 실패는 남긴다
+    }
+    if (만료) await kv.put(칸.묶음('web', i), JSON.stringify(남길것))
+    await 기록더하기(kv, 날.slice(0, 7), { 보냄: 목록.length, 성공, 만료삭제: 만료, 실행: 1 })
+    return { 했나: true, 묶음: i, 보냄: 목록.length, 성공, 만료삭제: 만료 }
+  }
+  return { 했나: false, 왜: '오늘 묶음 다 보냈다' }
+}
+
+// ── 📅 D-2 «따로» 알림 ─────────────────────────────────────────────────────
+/** 폰 하나의 날짜 목록을 «지난번과 견줘» 바뀐 칸만 고친다. 돌려주는 값 = { ok, 더함, 뺌, partial? } */
+async function 임박날짜맞추기(kv, endpoint, dates) {
+  const 해시 = await 짧은해시(endpoint)
+  const 전 = (await kv.get(칸.임박폰(해시), 'json')) || []
+  const 더할것 = dates.filter((d) => !전.includes(d))
+  const 뺄것 = 전.filter((d) => !dates.includes(d))
+  const 바꿀것 = [...뺄것.map((d) => ['-', d]), ...더할것.map((d) => ['+', d])]
+  const partial = 바꿀것.length > 임박.바꾸기최대
+  let 더함 = 0, 뺌 = 0
+  const 남긴날 = new Set(전)
+  for (const [어떻게, d] of 바꿀것.slice(0, 임박.바꾸기최대)) {
+    const 목록 = (await kv.get(칸.임박날(d), 'json')) || []
+    if (어떻게 === '+') {
+      if (!목록.includes(endpoint)) 목록.push(endpoint)
+      // 그날이 지나면 스스로 사라진다(＋2일 여유) — 손으로 안 지워도 표가 안 자란다
+      await kv.put(칸.임박날(d), JSON.stringify(목록), { expirationTtl: 남은초(d) + 2 * 86400 })
+      남긴날.add(d); 더함++
+    } else {
+      const 남 = 목록.filter((e) => e !== endpoint)
+      await kv.put(칸.임박날(d), JSON.stringify(남), { expirationTtl: 남은초(d) + 2 * 86400 })
+      남긴날.delete(d); 뺌++
+    }
+  }
+  await kv.put(칸.임박폰(해시), JSON.stringify([...남긴날].sort()), { expirationTtl: 60 * 86400 })
+  return partial ? { ok: true, 더함, 뺌, partial: true } : { ok: true, 더함, 뺌 }
+}
+
+/** 일정 없는 날 아침 9시 — 오늘 날짜에 적힌 폰들에게 빈 푸시. 한 번 깨어나면 40명. 폰의 sw 가 거울을 읽어 「냉장고 …」만 띄운다. */
+async function 임박보내기(kv, 날, now) {
+  const 분 = kstMinutes(now)
+  const [h, m] = 임박.시각.split(':').map(Number)
+  const 시작 = h * 60 + m
+  if (분 < 시작 || 분 >= 시작 + LIMITS.보내는창분) return { 했나: false, 왜: `오늘 일정 없음 · D-2 는 ${임박.시각} 부터 ${LIMITS.보내는창분}분` }
+  const 목록 = (await kv.get(칸.임박날(날), 'json')) || []
+  if (!목록.length) return { 했나: false, 왜: '오늘 D-2 폰 없음' }
+  const 부터 = Number(await kv.get(칸.임박보냄(날))) || 0
+  if (부터 >= 목록.length) return { 했나: false, 왜: '오늘 D-2 다 보냈다' }
+  const 까지 = Math.min(목록.length, 부터 + 임박.한번에)
+  await kv.put(칸.임박보냄(날), String(까지), { expirationTtl: 60 * 60 * 48 })   // ⛔ 보내기 «전»에 — 두 번 보내기 방지
+  const 열쇠 = await 열쇠꺼내기(kv)
+  let 성공 = 0, 만료 = 0
+  for (const endpoint of 목록.slice(부터, 까지)) {
+    const r = await 푸시하나({ endpoint }, 열쇠)
+    if (r === 'ok') 성공++; else if (r === 'gone') 만료++   // 만료된 주소는 묶음 쪽 보내기가 지운다 · 여기 표는 TTL 로 사라진다
+  }
+  await 기록더하기(kv, 날.slice(0, 7), { 임박보냄: 까지 - 부터, 임박성공: 성공, 실행: 1 })
+  return { 했나: true, 임박: true, 보냄: 까지 - 부터, 성공, 만료, 부터, 까지, 전체: 목록.length }
+}
+/** 🌙 오류 알림 «울릴 때» = 다음 07:00 또는 19:00(KST) — 지금보다 «뒤»의 가장 가까운 것 */
+export function 다음울릴때(now) {
+  const k = now.getTime() + 9 * 3600000                         // KST 를 UTC 처럼 다룬다(서머타임 없음)
+  const 자정 = Math.floor(k / 86400000) * 86400000
+  for (const h of [7, 19, 31]) { const t = 자정 + h * 3600000; if (t > k) return t - 9 * 3600000 }
+  return 자정 + 31 * 3600000 - 9 * 3600000
+}
+/** 🌙 오류 — 소식 칸에만 적고(폰이 다른 알림을 받으면 같이 보인다) «울릴 때»를 남긴다(이미 있으면 그대로) */
+async function 오류미루기(kv, now) {
+  try {
+    const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
+    소식.push({ 가게: '오류', 때: Date.now() })
+    await kv.put(칸.창업자소식, JSON.stringify(소식.slice(-20)))
+    if (!(await kv.get('err:due'))) await kv.put('err:due', String(다음울릴때(now)), { expirationTtl: 3 * 86400 })
+  } catch { /* 다음 오류 때 다시 */ }
+}
+/** 🌙 cron(5분마다) — 울릴 때(07:00·19:00)가 지났고 모아 둔 오류가 있으면 «한 번» 울린다 */
+export async function 미룬오류울리기(kv, now) {
+  if (!kv) return { 했나: false }
+  const 때 = Number(await kv.get('err:due')) || 0
+  if (!때 || now.getTime() < 때) return { 했나: false }
+  await kv.delete('err:due')
+  const 폰들 = (await kv.get(칸.창업자폰, 'json')) || []
+  if (!폰들.length) return { 했나: false, 왜: '창업자 폰 없음' }
+  const 열쇠 = await 열쇠꺼내기(kv)
+  let 보냄 = 0
+  for (const s of 폰들) if ((await 푸시하나(s, 열쇠)) === 'ok') 보냄++
+  return { 했나: true, 보냄 }
+}
+
+/** 창업자 폰에 빈 푸시 — /founder/ping 과 같은 길(소식 칸에 적고 → 폰이 /founder/inbox 로 문구를 가지러 온다) */
+async function 창업자알림(kv, 가게) {
+  const 소식 = (await kv.get(칸.창업자소식, 'json')) || []
+  소식.push({ 가게, 때: Date.now() })
+  await kv.put(칸.창업자소식, JSON.stringify(소식.slice(-20)))
+  const 폰들 = (await kv.get(칸.창업자폰, 'json')) || []
+  if (!폰들.length) return { 보냄: 0 }
+  const 열쇠 = await 열쇠꺼내기(kv)
+  let 보냄 = 0
+  for (const s of 폰들) if ((await 푸시하나(s, 열쇠)) === 'ok') 보냄++
+  return { 보냄 }
+}
+function 남은초(ymd) { const [y, mo, d] = ymd.split('-').map(Number); return Math.max(60, Math.floor((Date.UTC(y, mo - 1, d) - 9 * 3600000 - Date.now()) / 1000) + 86400) }
+async function 짧은해시(s) { const b = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))); let h = ''; for (let i = 0; i < 12; i++) h += b[i].toString(16).padStart(2, '0'); return h }
+
+/** 빈 푸시 하나. 'ok' | 'gone'(410·404 → 지운다) | 'fail'(일시) */
+async function 푸시하나(sub, 열쇠) {
+  try {
+    const aud = new URL(sub.endpoint).origin
+    const jwt = await vapidJwt(열쇠, aud)
+    const r = await fetch(sub.endpoint, {
+      method: 'POST',
+      headers: { TTL: '86400', Urgency: 'normal', Authorization: `vapid t=${jwt}, k=${열쇠.pub}`, 'Content-Length': '0' },
+    })
+    if (r.status === 404 || r.status === 410) return 'gone'
+    return r.status >= 200 && r.status < 300 ? 'ok' : 'fail'
+  } catch { return 'fail' }
+}
+
+// ── 🍎 아이폰(APNs) ───────────────────────────────────────────────────────
+// ⛔⛔ **왜 아이폰만 «글자를 실어» 보내나** — 웹은 빈 푸시를 보내면 서비스워커가 깨어나 `/today` 로 문구를 가져온다.
+//   아이폰 앱엔 **서비스워커가 아예 없다**(2026-09-20 실측 = `푸시 API: 없음`). 깨어나서 가져올 놈이 없다.
+//   → APNs 는 **보낼 때 제목·본문을 같이 실어야** 한다. 암호화는 안 한다(애플과 우리 사이는 TLS·JWT 로 이미 잠긴다).
+//   📌 그래서 문구를 바꾸는 길은 웹과 «같다» — 앱이 구운 `push/schedule.json` 하나다. 워커를 다시 붙여넣을 일이 없다.
+//
+// 🔑 창업자가 워커 비밀칸에 넣을 셋 (Settings → Variables and Secrets → Secret)
+//   · `APNS_KEY`   = 애플에서 받은 .p8 «파일 안의 글자 통째로»(-----BEGIN PRIVATE KEY----- 줄 포함)
+//   · `APNS_KEY_ID`= 그 키의 Key ID (10자리)
+//   · `APNS_TEAM_ID`= 팀 ID (10자리 · Membership 화면)
+//   ⛔ 셋 중 하나라도 없으면 아이폰 묶음은 «건너뛴다» — 웹 알림은 그대로 나간다(한쪽이 없다고 둘 다 멈추지 않는다).
+
+const APNS_토픽 = 'kr.hankki.app'      // ⛔ 앱 번들 ID 와 «글자 하나까지» 같아야 한다(Fastfile BUNDLE_ID)
+const APNS_문 = { production: 'https://api.push.apple.com', sandbox: 'https://api.development.push.apple.com' }
+let _apns표 = null                     // { jwt, 만든때 } — 애플은 20~60분마다 새로 만들라고 한다. 한 번 만들어 55분 쓴다.
+
+/** .p8 글자 → WebCrypto 열쇠. ⛔ 매번 import 하면 느리지만 워커는 자주 새로 뜨므로 캐시는 JWT 쪽에만 둔다. */
+async function apns열쇠(p8) {
+  const 몸통 = String(p8).replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')
+  const bin = Uint8Array.from(atob(몸통), (c) => c.charCodeAt(0))
+  return crypto.subtle.importKey('pkcs8', bin, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'])
+}
+
+/** 애플에 보여 줄 표(JWT). 없으면 null — 그럼 아이폰은 이번 판을 건너뛴다. */
+async function apnsJwt(env) {
+  if (!env.APNS_KEY || !env.APNS_KEY_ID || !env.APNS_TEAM_ID) return null
+  const 지금 = Math.floor(Date.now() / 1000)
+  if (_apns표 && 지금 - _apns표.만든때 < 55 * 60) return _apns표.jwt
+  try {
+    const head = b64url(new TextEncoder().encode(JSON.stringify({ alg: 'ES256', kid: env.APNS_KEY_ID })))
+    const body = b64url(new TextEncoder().encode(JSON.stringify({ iss: env.APNS_TEAM_ID, iat: 지금 })))
+    const 열쇠 = await apns열쇠(env.APNS_KEY)
+    const sig = new Uint8Array(await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, 열쇠, new TextEncoder().encode(`${head}.${body}`)))
+    const jwt = `${head}.${body}.${b64url(sig)}`
+    _apns표 = { jwt, 만든때: 지금 }
+    return jwt
+  } catch { return null }
+}
+
+/** 아이폰 하나에 보낸다. 'ok' | 'gone'(토큰 죽음 → 지운다) | 'sandbox'(문을 바꿔야 한다) | 'fail'(일시) */
+async function 아이폰하나(sub, jwt, 문구) {
+  const 문 = APNS_문[sub.문 === 'sandbox' ? 'sandbox' : 'production']
+  try {
+    const r = await fetch(`${문}/3/device/${sub.endpoint}`, {
+      method: 'POST',
+      headers: {
+        authorization: `bearer ${jwt}`,
+        'apns-topic': APNS_토픽,
+        'apns-push-type': 'alert',
+        'apns-priority': '10',
+        'apns-expiration': String(Math.floor(Date.now() / 1000) + 60 * 60 * 6),   // 6시간 지나면 애플이 버린다(늦은 알림은 짜증이다 · 웹의 보내는창과 같은 뜻)
+      },
+      body: JSON.stringify({
+        // 🔕 [창업자 확정 2026-09-21 00:09 「조용한걸루하고싶엉」] 소리 «없이» 보낸다 — 화면·잠금화면에만 뜬다.
+        //   ⛔ sound 를 아예 안 보내는 것이 «무음»이다(sound: '' 이나 null 이 아니라 «칸이 없어야» 한다).
+        //   ⭐ 갤럭시·웹은 원래 우리가 소리를 안 정한다(폰 설정을 따른다) → 이제 두 쪽이 같은 결이 된다.
+        aps: { alert: { title: 문구.제목, body: 문구.본문 }, 'thread-id': 문구.표 },
+        길: 문구.길,   // 누르면 갈 자리 — 앱이 읽는다
+      }),
+    })
+    if (r.status === 410) return 'gone'                       // 앱을 지웠다
+    if (r.status === 400) {
+      // 애플이 «왜» 틀렸는지 말해 준다 — 문이 틀린 것과 토큰이 죽은 것을 갈라야 한다(규칙 18ⓚ = 경계가 원인을 가리킨다)
+      let 까닭 = ''
+      try { 까닭 = (await r.json())?.reason || '' } catch { /* 몸통이 비어도 된다 */ }
+      if (까닭 === 'BadDeviceToken') return sub.문 === 'sandbox' ? 'gone' : 'sandbox'
+      return 'gone'                                            // BadTopic·DeviceTokenNotForTopic 등 — 고쳐도 이 토큰은 못 쓴다
+    }
+    return r.status >= 200 && r.status < 300 ? 'ok' : 'fail'
+  } catch { return 'fail' }
+}
+
+// ── 오늘 문구 = 앱이 구운 일정에서 ────────────────────────────────────────
+async function 오늘문구(날) {
+  try {
+    const r = await fetch(일정주소, { headers: { 'Cache-Control': 'no-cache' } })
+    if (!r.ok) return null
+    const 일정 = await r.json()
+    const 오늘 = 일정?.날?.[날]
+    if (!오늘 || !오늘.본문) return null
+    return { 제목: String(오늘.제목 || '한끼'), 본문: String(오늘.본문), 길: String(오늘.길 || 앱길), 표: `hankki-${날}`, 시각: String(오늘.시각 || '17:00') }
+  } catch { return null }
+}
+
+// ── 구독 묶음 ─────────────────────────────────────────────────────────────
+async function 묶음수읽기(kv) { const v = await kv.get(칸.묶음수, 'json'); return { web: Number(v?.web) || 0, ios: Number(v?.ios) || 0 } }
+async function 묶음읽기(kv, 플랫폼, i) { const v = await kv.get(칸.묶음(플랫폼, i), 'json'); return Array.isArray(v) ? v : [] }
+
+/** 같은 endpoint 면 안 넣는다(재구독). 마지막 묶음이 차면 새 묶음. ⛔ 최대묶음을 넘으면 «못 넣었다»고 말한다. */
+async function 구독넣기(kv, 플랫폼, sub) {
+  const n = await 묶음수읽기(kv)
+  for (let i = 0; i < n[플랫폼]; i++) {
+    const 목록 = await 묶음읽기(kv, 플랫폼, i)
+    if (목록.some((s) => s.endpoint === sub.endpoint)) return { ok: true, 이미: true, 묶음: i }
+  }
+  let i = Math.max(0, n[플랫폼] - 1)
+  let 목록 = n[플랫폼] ? await 묶음읽기(kv, 플랫폼, i) : []
+  if (!n[플랫폼] || 목록.length >= LIMITS.묶음크기) {
+    if (n[플랫폼] >= LIMITS.최대묶음) return { error: 'full' }
+    i = n[플랫폼]; 목록 = []
+    n[플랫폼] = i + 1
+    await kv.put(칸.묶음수, JSON.stringify(n))
+  }
+  목록.push(sub)
+  await kv.put(칸.묶음(플랫폼, i), JSON.stringify(목록))
+  return { ok: true, 묶음: i, 자리: 목록.length }
+}
+
+async function 기록더하기(kv, 달, 더할것) {
+  const 지금 = (await kv.get(칸.기록(달), 'json')) || { 보냄: 0, 성공: 0, 만료삭제: 0, 실행: 0 }
+  for (const k of Object.keys(더할것)) 지금[k] = (Number(지금[k]) || 0) + 더할것[k]
+  await kv.put(칸.기록(달), JSON.stringify(지금))
+}
+
+// ── VAPID (ES256) — WebCrypto 만 쓴다 ─────────────────────────────────────
+async function 열쇠꺼내기(kv) {
+  const 있는것 = await kv.get(칸.열쇠, 'json')
+  if (있는것?.pub && 있는것?.priv) return 있는것
+  const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify'])
+  const pub = b64url(new Uint8Array(await crypto.subtle.exportKey('raw', pair.publicKey)))
+  const priv = await crypto.subtle.exportKey('jwk', pair.privateKey)
+  const 열쇠 = { pub, priv }
+  await kv.put(칸.열쇠, JSON.stringify(열쇠))
+  return 열쇠
+}
+async function vapidJwt(열쇠, aud) {
+  const key = await crypto.subtle.importKey('jwk', 열쇠.priv, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'])
+  const enc = (o) => b64url(new TextEncoder().encode(JSON.stringify(o)))
+  const 몸 = `${enc({ typ: 'JWT', alg: 'ES256' })}.${enc({ aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: 연락처 })}`
+  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(몸))   // WebCrypto 는 r‖s 64바이트를 준다 — DER 변환 필요 없다
+  return `${몸}.${b64url(new Uint8Array(sig))}`
+}
+function b64url(bytes) { let s = ''; for (const b of bytes) s += String.fromCharCode(b); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') }
+
+// ── 시간(KST) — 서머타임 없는 UTC+9 고정(src/today.js 와 같은 산수) ────────────
+function kstDay(d) { return new Date(d.getTime() + 9 * 3600000).toISOString().slice(0, 10) }
+function kstMinutes(d) { const k = new Date(d.getTime() + 9 * 3600000); return k.getUTCHours() * 60 + k.getUTCMinutes() }
+
+function corsHeaders(origin) {
+  const ok = ALLOWED_ORIGINS.includes(origin)
+  return {
+    'Access-Control-Allow-Origin': ok ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, x-hankki-token, x-hankki-founder',
+    'Access-Control-Max-Age': '86400',
+  }
+}
+function json(obj, status, cors) {
+  return new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...cors } })
+}
