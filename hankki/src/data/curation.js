@@ -437,7 +437,7 @@ const CURATION_ALL = [
     items: [
       { name: '소화가 잘되는 우유', icon: 'cu_milk_long', brand: '연세우유', ingredients: '원유 99.03597%(국산), 칼슘혼합제제(탄산칼슘, 아라비아검, 정제수), 난소화성말토덱스트린, 락타아제, 열처리유산균', allergen: '우유 함유', nutrition: '100mL당 65kcal · 나트륨 50mg · 탄수화물 5g · 당류 5g · 지방 3.7g · 트랜스지방 0g · 포화지방 2.5g · 콜레스테롤 11mg · 단백질 3g · 칼슘 200mg (총 내용량 900mL)', checked: '2026-09-17', ingWho: '창업자', matches: ['우유'], benefit: '제가 라떼를 정말 좋아하는데, 라떼 조합으로 제일 맛있는 우유인 것 같아요. 약간의 첨가물이 있는데 제가 먹는 거니까 :) 아쉬운 건 1팩씩은 안 팔더라구요', q: '연세우유 소화가 잘되는 우유', mall: 'coupang', from: '2026-10-24', url: 'https://link.coupang.com/a/gRZhYWJypw' },
       { name: '마이카페라떼 마일드', icon: 'cu_latte', brand: '매일', ingredients: '원유(국산), 정제수, 골든모카에스프레소커피추출액(커피원두: 에티오피아산 31%, 브라질산 30%), 설탕, 유크림(국산), 혼합탈지분유, 콜롬비아커피추출액(콜롬비아산), 탄산수소나트륨, 유화제', allergen: '우유 함유', nutrition: '220mL · 140kcal', checked: '2026-11-01', ingWho: '창업자', benefit: '시판되는 많은 라떼들 중에 제 원픽은 매일카페라떼예요. 많이 달지 않고 제 입맛에는 그렇게 좋더라구요. 라떼 좋아하는 분들 강추합니다', q: '매일 마이카페라떼 마일드', mall: 'coupang', from: '2026-11-21', url: 'https://link.coupang.com/a/ikdfdkujE4' },
-      { name: '클로티드크림', icon: 'cu_clotted', brand: '데본', ingredients: '유크림(우유) 100% (원산지: 영국)', allergen: '우유 함유', nutrition: '170g', checked: '2026-11-18', ingWho: '창업자', benefit: '타르틴 슬랩 올리브오일 뿌려 살짝 구워서 이거 발라드세요. 꼭이요. (꿀도 추가…)', q: '데본 클로티드크림', mall: 'kurly', from: '2026-12-12' },
+      { name: '클로티드크림', icon: 'cu_clotted', brand: '데본', ingredients: '유크림(우유) 100% (원산지: 영국)', allergen: '우유 함유', nutrition: '170g', checked: '2026-11-18', ingWho: '창업자', benefit: '타르틴 슬랩 올리브오일 뿌려 살짝 구워서 이거 발라드세요. 꼭이요. (꿀도 추가…)', q: '데본 클로티드크림', mall: 'kurly', from: '2026-12-12', url: 'https://www.kurly.com/goods/5009380' },
     ],
   },
   {
