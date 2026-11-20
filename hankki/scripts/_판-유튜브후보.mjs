@@ -21,7 +21,7 @@ const 검색어들 = []; let after = ''; const 갈래들 = []
 for (let i = 0; i < 인자.length; i++) {
   if (인자[i] === '--after') after = 인자[++i]
   else if (인자[i] === '--갈래') 갈래들.push(인자[++i])
-  else if (인자[i] === '--좋아요') {}
+  else if (인자[i] === '--좋아요' || 인자[i] === '--사람') {}
   else 검색어들.push(인자[i])
 }
 if (!검색어들.length) { console.error('쓰기: _판-유튜브후보.mjs [--after YYYY-MM-DD] [--갈래 <브랜치>] "<검색어>" …'); process.exit(1) }
@@ -31,7 +31,8 @@ if (!검색어들.length) { console.error('쓰기: _판-유튜브후보.mjs [--a
 const 꼭넣을사람 = [
   ['강레오', '2026-10-28 · 11-20'], ['조서형', '2026-10-30'], ['성시경', '2026-11-20'],
 ]
-for (const [이름] of 꼭넣을사람) if (!검색어들.some((q) => q.includes(이름))) 검색어들.push(`${이름} 레시피`)
+// 💰 창업자 2026-11-20 「검색도 아낄 수 있게」 — 11/20 하루 검색 43번 중 18번(42%)이 이 이름 자동 검색이었다 → --사람 줄 때만 붙인다
+if (process.argv.includes('--사람')) for (const [이름] of 꼭넣을사람) if (!검색어들.some((q) => q.includes(이름))) 검색어들.push(`${이름} 레시피`)
 
 // ── 이미 있는 편 이름(겹침 거르기) — 지금 갈래 ＋ 준 갈래들 ─────────
 const 정규 = (s) => s.replace(/\s+/g, '').replace(/[^\p{L}\p{N}]/gu, '')
@@ -65,7 +66,7 @@ function 비슷한편(제목) {
 // ── 검색 (yt.mjs) ──────────────────────────────────────────
 const 영상 = new Map()
 for (const q of 검색어들) {
-  const 글 = execFileSync('node', [new URL('./yt.mjs', import.meta.url).pathname, 'search', q, '--n', '25', ...(after ? ['--after', after] : [])],
+  const 글 = execFileSync('node', [new URL('./yt.mjs', import.meta.url).pathname, 'search', q, '--n', '50', /* ⛔ order=rating 은 «좋아요 수»가 아니다 — 11/20 실측 = 조회 수백짜리만 왔다 → 인기순(viewCount)으로 50개 받고 «좋아요»는 여기서 정렬 */ ...(after ? ['--after', after] : [])],
     { encoding: 'utf8', maxBuffer: 20e6, stdio: ['ignore', 'pipe', 'inherit'] })
   for (const v of JSON.parse(글)) if (!영상.has(v.id)) 영상.set(v.id, { ...v, 검색어: q })
 }

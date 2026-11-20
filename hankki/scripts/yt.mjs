@@ -78,7 +78,7 @@ if (명령 === 'search') {
   const q = 인자; const n = Math.min(50, Number(옵션('--n', 10))); const after = 옵션('--after', '')
   if (!q) { console.error('쓰는 법: yt.mjs search "<검색어>" [--after YYYY-MM-DD] [--n 10]'); process.exit(1) }
   미리막기('search', 1); 미리막기('other', 1)
-  const p = new URLSearchParams({ part: 'id', q, type: 'video', order: 'viewCount', regionCode: 'KR', relevanceLanguage: 'ko', maxResults: String(n) })
+  const p = new URLSearchParams({ part: 'id', q, type: 'video', order: 옵션('--order', 'viewCount'), regionCode: 'KR', relevanceLanguage: 'ko', maxResults: String(n) })
   if (after) p.set('publishedAfter', `${after}T00:00:00Z`)
   const s = await 부르기(`search?${p}`)
   쓰기('search', 1, `search ${q} ${after}`)
