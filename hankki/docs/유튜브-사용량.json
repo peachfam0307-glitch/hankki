@@ -56,8 +56,8 @@
   ]
  },
  "2026-11-20": {
-  "search": 45,
-  "other": 45,
+  "search": 47,
+  "other": 47,
   "기록": [
    "13:13Z search+1 search 감자 아침 레시피 ",
    "13:13Z other+1 videos(검색 결과 25)",
@@ -148,7 +148,11 @@
    "13:47Z search+1 search 꼬막비빔밥 레시피 ",
    "13:47Z other+1 videos(검색 결과 50)",
    "13:47Z search+1 search 꼬막비빔밥 레시피 ",
-   "13:47Z other+1 videos(검색 결과 50)"
+   "13:47Z other+1 videos(검색 결과 50)",
+   "13:49Z search+1 search 꼬막 2026-05-20",
+   "13:49Z other+1 videos(검색 결과 50)",
+   "13:49Z search+1 search 애호박 2026-05-20",
+   "13:49Z other+1 videos(검색 결과 50)"
   ]
  }
 }
