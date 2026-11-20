@@ -21,6 +21,7 @@ const 검색어들 = []; let after = ''; const 갈래들 = []
 for (let i = 0; i < 인자.length; i++) {
   if (인자[i] === '--after') after = 인자[++i]
   else if (인자[i] === '--갈래') 갈래들.push(인자[++i])
+  else if (인자[i] === '--좋아요') {}
   else 검색어들.push(인자[i])
 }
 if (!검색어들.length) { console.error('쓰기: _판-유튜브후보.mjs [--after YYYY-MM-DD] [--갈래 <브랜치>] "<검색어>" …'); process.exit(1) }
@@ -69,7 +70,9 @@ for (const q of 검색어들) {
   for (const v of JSON.parse(글)) if (!영상.has(v.id)) 영상.set(v.id, { ...v, 검색어: q })
 }
 
-const 전부 = [...영상.values()].sort((a, b) => b.조회수 - a.조회수)
+// 👍 창업자 2026-11-20 「좋아요 많이 받은 레시피들 해도 좋고」 → --좋아요 면 좋아요 순(같은 statistics 라 사용량 그대로)
+const 좋아요순 = process.argv.includes('--좋아요')
+const 전부 = [...영상.values()].sort((a, b) => 좋아요순 ? (b.좋아요 || 0) - (a.좋아요 || 0) : b.조회수 - a.조회수)
 const 통과 = [], 빠짐 = []
 for (const v of 전부) {
   const 겹 = 겹친편(v.제목)
@@ -83,7 +86,7 @@ const 만 = (n) => (n >= 10000 ? `${(n / 10000).toFixed(n >= 100000 ? 0 : 1)}만
 const 칸 = (v, i) => `
 <div class="c" data-id="${v.id}">
   <div class="h"><b>${i + 1}. ${esc(v.제목)}</b></div>
-  <div class="m">${esc(v.채널)} · 조회 ${만(v.조회수)} · ${v.올린날} · 검색 「${esc(v.검색어)}」</div>
+  <div class="m">${esc(v.채널)} · 조회 ${만(v.조회수)} · 👍 ${만(v.좋아요 || 0)} · ${v.올린날} · 검색 「${esc(v.검색어)}」</div>
   ${(() => { const s = 비슷한편(v.제목); return s.length ? `<div class="sim">⚠️ 비슷한 우리 편 ${s.length}: ${esc(s.slice(0, 6).join(' · '))}${s.length > 6 ? ' …' : ''}</div>` : '<div class="sim ok">비슷한 우리 편 없음</div>' })()}
   <a href="https://youtu.be/${v.id}" target="_blank">https://youtu.be/${v.id}</a>
   <details><summary>설명란 보기</summary><pre>${esc(v.설명란 || '')}</pre></details>
