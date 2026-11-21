@@ -24,6 +24,9 @@ const 같은말 = [
   [/스푼|숟갈|숟가락|T(?![a-z])/g, '큰술'],
   [/작은스푼|t(?![a-z])/g, '작은술'],
   [/쳉궈|헹궈/g, '헹궈'],
+  [/(\d)\s*cc/g, '$1ml'], [/mL/g, 'ml'], // 300cc = 300ml
+  [/작은술\s*1\s*큰술/g, '1작은술'], // 10분 홍합 미역국 원문 「국간장 작은술 1큰술(5ml)」 = 1작은술(5ml) — 원문이 그렇게 썼다
+  [/한\s?(톨|줌|바퀴|꼬집|개|장|마리|대|모|쪽)/g, '1$1'],   // 생강 한톨 = 1톨
 ]
 const 꼴 = (s) => {
   let x = String(s)
@@ -37,7 +40,9 @@ const 숫자들 = (s) => { let x = String(s); for (const [a, b] of 같은말) x 
 const 편들 = []
 for (const m of src.matchAll(/\{\s*(?:\/\/[^\n]*\n\s*)*\.\.\.base,([\s\S]*?)\n  \},/g)) {
   const b = m[1]
-  if (!/review:\s*'원본대조'/.test(b)) continue
+  // 🔎 --전부 = 유튜브 원본이 있는 SNS 편 «모두» (창업자 2026-11-21 「다른 레시피들도 다시 검수해서 틀린 거 있나 찾아봐」) — 관문(배포 막기)은 여전히 '원본대조' 편만
+  if (!process.argv.includes('--전부') && !/review:\s*'원본대조'/.test(b)) continue
+  if (process.argv.includes('--전부') && !/sourceUrl:\s*'[^']*youtu/.test(b)) continue
   const 글 = (k) => { const r = b.match(new RegExp(`${k}:\\s*'([^']*)'`)); return r ? r[1] : '' }
   const 목록 = (k) => { const r = b.match(new RegExp(`${k}:\\s*\\[([\\s\\S]*?)\\n    \\]`)); return r ? [...r[1].matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((x) => x[1]) : [] }
   편들.push({ title: 글('title'), url: 글('sourceUrl'), 재료: 목록('ingredients'), 순서: 목록('steps') })
@@ -50,6 +55,10 @@ for (const r of 편들) {
   const p = id && join(ROOT, 'docs/원본설명', `${id}.txt`)
   if (!p || !existsSync(p)) { 말(r.title, `원문 스냅샷 없음 (docs/원본설명/${id || '?'}.txt)`); continue }
   const 원문 = readFileSync(p, 'utf8')
+  // 📭 설명란에 «분량 줄»이 둘도 없으면 = 레시피가 영상 안에만 있다 → 글자 대조가 안 된다(헛경보 수십 건 대신 한 줄로 알린다 · 영상 보고 대조할 몫)
+  // ⛔ 줄이 아니라 «분량 개수»로 센다 — 재료를 한 줄에 쉼표로 늘어놓은 원문도 있다(부추 홍합전 · 줄로 셌다가 헛경보)
+  const 분량줄 = (원문.match(/\d\s*(g|kg|ml|리터|L|큰술|작은술|스푼|숟갈|T|t|개|장|컵|cm|포|마리|줌|모|봉|알|쪽|대|송이)(?![a-zA-Z])/g) || []).length
+  if (분량줄 < 2) { 말(r.title, `📭 설명란에 레시피가 없다(분량 줄 ${분량줄}) — 영상 보고 대조해야 한다`); continue }
   const 원 = 꼴(원문)
   const 원숫자 = new Set(숫자들(원문))
   for (const x of r.재료) {
@@ -57,6 +66,15 @@ for (const r of 편들) {
     const 이름 = x.split(/[\s(]/)[0]
     if (이름 && !원.includes(꼴(이름))) 말(r.title, `재료 이름이 원문에 없다: 「${x}」`)
     for (const n of 숫자들(x)) if (!원숫자.has(n)) 말(r.title, `재료 양이 원문과 다르다: 「${x}」 (${n})`)
+    // ⑵-2 «짝» 대조 — 그 재료 이름 «바로 뒤»(같은 줄·쉼표 전)에 그 양이 있나
+    //   ⛔ 숫자만 원문 «어딘가»에 있으면 통과하던 구멍 — 견과류 멸치볶음 진간장 1큰술→1작은술 · 청주 4→2 를 놓쳤다(2026-11-21)
+    const 양 = (꼴(x.replace(/\([^)]*\)/g, '')).match(/(\d+(?:[./]\d+)?)([가-힣a-zA-Z]+)/) || [])
+    if (이름 && 양[1] && 원.includes(꼴(이름))) {
+      const 창들 = []
+      for (let i = 원.indexOf(꼴(이름)); i >= 0; i = 원.indexOf(꼴(이름), i + 1)) 창들.push(원.slice(i, i + 꼴(이름).length + 24))
+      const 맞음 = 창들.some((w) => w.includes(양[1] + 양[2]) || w.includes(양[1] + 양[2].slice(0, 1)))
+      if (!맞음) 말(r.title, `재료 양이 원문 그 재료 옆 양과 다르다: 「${x}」 ↔ 원문 「${(창들[0] || '').slice(0, 24)}」`)
+    }
   }
   for (const s of r.순서) for (const n of 숫자들(s)) if (!원숫자.has(n)) 말(r.title, `만드는 법 숫자가 원문에 없다: 「${s.slice(0, 40)}…」 (${n})`)
   // ④ 거꾸로 — 원문의 «재료 칸»(재료 머리 ~ 만드는 법 머리 사이) 줄마다 첫 낱말이 레시피 재료에 있나
