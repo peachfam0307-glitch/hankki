@@ -20,6 +20,10 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const 장부경로 = join(dirname(fileURLToPath(import.meta.url)), '../docs/유튜브-사용량.json')
+// 🚫 [절대원칙 · 창업자 2026-11-22 「쿡경희는 … 무단 도용·2차 편집·상업적 이용 금지래. 여기 레시피는 들고오지마」]
+//   설명란에 «퍼가지 마라»가 적힌 영상은 후보에서 뺀다 — 모든 검색·영상 결과에 `금지문구` 로 붙인다
+//   ⭐ 같은 잣대 = scripts/check-원본대조.mjs 의 `퍼감금지` (둘을 같이 고친다)
+export const 퍼감금지 = /무단\s*(도용|복제|배포|사용|전재|이용)|재배포|2차\s*(편집|가공|수정|배포|창작)|상업적\s*(이용|사용)[^\n]{0,30}금지|퍼가기\s*금지|(도용|복제|전재)[^\n]{0,10}금지|All rights reserved/i
 const 상한 = { search: 100, other: 10000 }
 const 멈춤 = { search: 90, other: 5000 }   // 🔼 창업자 2026-11-22 「90번으로 하자」 — 공식 안내 = 넘으면 «실패만»(403 quotaExceeded) · 과금 문구 못 찾음(2026-11-22 열람) · 10번은 비상용으로 남김
 
@@ -70,7 +74,7 @@ if (명령 === 'video') {
   const j = await 부르기(`videos?part=snippet,statistics&id=${ids.join(',')}`)
   찍기(쓰기('other', 1, `videos ${ids.join(',')}`))
   console.log(JSON.stringify(j.items.map((v) => ({ id: v.id, 제목: v.snippet.title, 채널: v.snippet.channelTitle,
-    올린날: v.snippet.publishedAt.slice(0, 10), 조회수: Number(v.statistics?.viewCount || 0), 좋아요: Number(v.statistics?.likeCount || 0), 설명란: v.snippet.description })), null, 1))
+    올린날: v.snippet.publishedAt.slice(0, 10), 조회수: Number(v.statistics?.viewCount || 0), 좋아요: Number(v.statistics?.likeCount || 0), 금지문구: (v.snippet.description.match(퍼감금지) || [])[0] || '', 설명란: v.snippet.description })), null, 1))
   process.exit(0)
 }
 
@@ -90,7 +94,7 @@ if (명령 === 'search') {
   const v = ids ? await 부르기(`videos?part=snippet,statistics&id=${ids}`) : { items: [] }
   찍기(쓰기('other', ids ? 1 : 0, `videos(검색 결과 ${s.items.length})`))
   const 결과 = v.items.map((x) => ({ id: x.id, 제목: x.snippet.title, 채널: x.snippet.channelTitle, 올린날: x.snippet.publishedAt.slice(0, 10),
-    조회수: Number(x.statistics?.viewCount || 0), 좋아요: Number(x.statistics?.likeCount || 0), 분량있음: /\d+\s*(g|ml|큰술|작은술|스푼|숟갈|T|컵|개|대)/.test(x.snippet.description),
+    조회수: Number(x.statistics?.viewCount || 0), 좋아요: Number(x.statistics?.likeCount || 0), 금지문구: (x.snippet.description.match(퍼감금지) || [])[0] || '', 분량있음: /\d+\s*(g|ml|큰술|작은술|스푼|숟갈|T|컵|개|대)/.test(x.snippet.description),
     순서있음: 순서줄수(x.snippet.description) >= 1, 설명란: x.snippet.description }))
     .sort((a, b) => b.조회수 - a.조회수)
   console.log(JSON.stringify(결과, null, 1))
