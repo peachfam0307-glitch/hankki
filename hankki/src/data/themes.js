@@ -54,6 +54,10 @@ export const THEMES = [
 // 🍚 한식 집밥 — 낱말로 찾는다(제목·태그에 그 말이 있으면) · 창업자 2026-11-21 「C에 한식도(반찬·국·찌개·조림)」
 //   ⛔ 「전」은 「전복」·「전골」도 걸린다 → 낱말 끝이 「전」이거나 태그가 「전」인 것만
 export const 한식낱말 = ['국', '찌개', '탕', '조림', '찜', '볶음', '나물', '무침', '전', '김치']
+// 🖼 한식 그림 — 창업자 2026-11-21 「한식류 반찬·국·찌개 이런 건 그림으로 안 만들어?」(탕 = 감자탕 · 국과 안 헷갈리게)
+const 한식그림파일 = import.meta.glob('../assets/theme/hs_*.webp', { eager: true, query: '?url', import: 'default' })
+const 한식영문 = { 국: 'guk', 찌개: 'jjigae', 탕: 'tang', 조림: 'jorim', 찜: 'jjim', 볶음: 'bokkeum', 나물: 'namul', 무침: 'muchim', 전: 'jeon', 김치: 'kimchi' }
+export const 한식그림 = (말) => 한식그림파일[`../assets/theme/hs_${한식영문[말]}.webp`]
 
 export function 한식에드나(r, 말) {
   const 제목 = r.title || ''

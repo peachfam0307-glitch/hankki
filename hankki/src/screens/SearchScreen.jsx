@@ -22,7 +22,34 @@ import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 import idxHeart from '../assets/ui/idx_heart.png'
 import FounderMark from '../components/FounderMark'
 // 🍽 테마로 찾기 ＋ 한식 집밥 (창업자 2026-11-21 시안 C 확정 · 🔑 열쇠 뒤 = 아이폰과 같이 연다)
-import { THEMES, 한식낱말, 한식에드나, 테마에드나, 테마열쇠 } from '../data/themes'
+import { THEMES, 한식낱말, 한식에드나, 테마에드나, 테마열쇠, 한식그림 } from '../data/themes'
+
+// 📂 접었다 펴는 제목 — 창업자 2026-11-21 「테마별 / 집밥 이런 제목 붙이고 아래 그림 아이콘 · 주제 옆엔 접었다 펼 수 있게」
+//   ⭐ 접힘 상태는 이 기기에 기억(다시 와도 그대로)
+function 접는칸({ 열쇠, 제목, 개수, children }) {
+  const 칸 = 'hankki:접음:' + 열쇠
+  const [열림, set열림] = useState(() => { try { return localStorage.getItem(칸) !== '0' } catch { return true } })
+  const 바꾸기 = () => { const v = !열림; set열림(v); try { localStorage.setItem(칸, v ? '1' : '0') } catch { /* noop */ } }
+  return (
+    <>
+      <button className="press" onClick={바꾸기} aria-expanded={열림} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', marginTop: 26, marginBottom: 13, textAlign: 'left' }}>
+        <span className="h-section" style={{ margin: 0 }}>{제목}</span>
+        <span style={{ fontSize: 13, color: 'var(--text-sub)' }}>{개수}</span>
+        <Icon name="chevron-down" size={18} color="var(--text-sub)" style={{ marginLeft: 'auto', transform: 열림 ? 'none' : 'rotate(-90deg)', transition: 'transform .2s' }} />
+      </button>
+      {열림 && children}
+    </>
+  )
+}
+function 그림칸({ img, 이름, n, onClick }) {
+  return (
+    <button className="press" onClick={onClick} style={{ background: 'var(--card, #fff)', borderRadius: 16, padding: '8px 6px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
+      <img src={img} alt="" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 12 }} />
+      <span style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text)' }}>{이름}</span>
+      <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>{n}편</span>
+    </button>
+  )
+}
 // 🍎 아이폰 앱은 «열쇠 없이» 켠다 — 창업자 2026-10-29 「아이폰 판은 열쇠 떼고 굽기」
 function 새검색열쇠() {
   try {
@@ -152,28 +179,18 @@ export default function SearchScreen() {
         ) : (
           <>
             {테마칸.length > 0 && (
-              <>
-                <div className="h-section" style={{ marginTop: 26, marginBottom: 13 }}>테마로 찾기</div>
+              <접는칸 열쇠="테마" 제목="테마별" 개수={`${테마칸.length}`}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
-                  {테마칸.map((t) => (
-                    <button key={t.id} className="press" onClick={() => setQ(t.name)} style={{ background: 'var(--card, #fff)', borderRadius: 16, padding: '8px 6px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
-                      <img src={t.img} alt="" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 12 }} />
-                      <span style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text)' }}>{t.name}</span>
-                      <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>{t.n}편</span>
-                    </button>
-                  ))}
+                  {테마칸.map((t) => <그림칸 key={t.id} img={t.img} 이름={t.name} n={t.n} onClick={() => setQ(t.name)} />)}
                 </div>
-              </>
+              </접는칸>
             )}
             {한식칸.length > 0 && (
-              <>
-                <div className="h-section" style={{ marginTop: 26, marginBottom: 13 }}>한식 집밥</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {한식칸.map((x) => (
-                    <button key={x.w} className="pill press" onClick={() => setQ(x.w)}>{x.w} {x.n}</button>
-                  ))}
+              <접는칸 열쇠="집밥" 제목="집밥" 개수={`${한식칸.length}`}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+                  {한식칸.map((x) => <그림칸 key={x.w} img={한식그림(x.w)} 이름={x.w} n={x.n} onClick={() => setQ(x.w)} />)}
                 </div>
-              </>
+              </접는칸>
             )}
             {/* 인기 검색어 */}
             <div className="h-section" style={{ marginTop: 26, marginBottom: 13 }}>인기 검색어</div>
