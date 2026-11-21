@@ -21,6 +21,8 @@ import idxChef from '../assets/ui/idx_chef.png'
 import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 import idxHeart from '../assets/ui/idx_heart.png'
 import FounderMark from '../components/FounderMark'
+// 🍽 테마로 찾기 ＋ 한식 집밥 (창업자 2026-11-21 시안 C 확정 · 🔑 열쇠 뒤 = 아이폰과 같이 연다)
+import { THEMES, 한식낱말, 한식에드나, 테마에드나, 테마열쇠 } from '../data/themes'
 // 🍎 아이폰 앱은 «열쇠 없이» 켠다 — 창업자 2026-10-29 「아이폰 판은 열쇠 떼고 굽기」
 function 새검색열쇠() {
   try {
@@ -36,6 +38,7 @@ function 새검색열쇠() {
 export default function SearchScreen() {
   const { recipes, setFavPin } = useStore()
   const [새검색] = useState(() => 새검색열쇠())
+  const [테마켬] = useState(() => 테마열쇠())
   const nav = useNav()
   // 다른 화면(내 레시피의 태그 등)에서 넘겨준 검색어가 있으면 그걸로 시작
   const [q, setQ] = useState(() => {
@@ -49,12 +52,21 @@ export default function SearchScreen() {
   const query = q.trim()
   const results = useMemo(() => {
     if (!query) return []
+    // 🍽 테마 이름·한식 낱말을 «그대로» 누른 것이면 그 묶음을 보여 준다(글자 겹침으로 찾지 않는다)
+    if (테마켬) {
+      const 테마 = THEMES.find((t) => t.name === query)
+      if (테마) return recipes.filter((r) => 테마에드나(r, 테마))
+      if (한식낱말.includes(query)) return recipes.filter((r) => 한식에드나(r, query))
+    }
     const k = query.toLowerCase()
     return recipes.filter((r) => {
       const hay = [r.title, r.category, ...(r.tags || []), ...(r.ingredients || [])].join(' ').toLowerCase()
       return 새검색 ? matchKo(hay, k) : hay.includes(k)
     })
-  }, [query, recipes, 새검색])
+  }, [query, recipes, 새검색, 테마켬])
+  // 🍽 열린 편이 있는 테마만 · 편수 같이
+  const 테마칸 = useMemo(() => 테마켬 ? THEMES.map((t) => ({ ...t, n: recipes.filter((r) => 테마에드나(r, t)).length })).filter((t) => t.n > 0) : [], [recipes, 테마켬])
+  const 한식칸 = useMemo(() => 테마켬 ? 한식낱말.map((w) => ({ w, n: recipes.filter((r) => 한식에드나(r, w)).length })).filter((x) => x.n > 0) : [], [recipes, 테마켬])
 
   // 📊 [2026-09-14] 🔍 「찾았는데 «0건»이었다」
   //   ⭐ 왜 재나 = 「뭘 찾다 못 찾고 나가나」는 «레시피를 더 만들 근거»가 된다. 지금은 통째로 깜깜하다.
@@ -139,6 +151,30 @@ export default function SearchScreen() {
           </div>
         ) : (
           <>
+            {테마칸.length > 0 && (
+              <>
+                <div className="h-section" style={{ marginTop: 26, marginBottom: 13 }}>테마로 찾기</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+                  {테마칸.map((t) => (
+                    <button key={t.id} className="press" onClick={() => setQ(t.name)} style={{ background: 'var(--card, #fff)', borderRadius: 16, padding: '8px 6px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
+                      <img src={t.img} alt="" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 12 }} />
+                      <span style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text)' }}>{t.name}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>{t.n}편</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            {한식칸.length > 0 && (
+              <>
+                <div className="h-section" style={{ marginTop: 26, marginBottom: 13 }}>한식 집밥</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {한식칸.map((x) => (
+                    <button key={x.w} className="pill press" onClick={() => setQ(x.w)}>{x.w} {x.n}</button>
+                  ))}
+                </div>
+              </>
+            )}
             {/* 인기 검색어 */}
             <div className="h-section" style={{ marginTop: 26, marginBottom: 13 }}>인기 검색어</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
