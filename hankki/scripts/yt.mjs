@@ -6,7 +6,7 @@
 // ⭐ 하는 일 = 부를 때마다 «쓴 양»을 장부(docs/유튜브-사용량.json)에 적고, 매번 남은 양을 찍는다.
 //   · 하루 기본 할당량(공식 · developers.google.com/youtube/data/determine_quota_cost · 2026-10-28 열람)
 //     = search.list 100번(1번 = 1단위, 따로 센다) · 그 밖 전부 합쳐 10,000단위 · 미국 서부 자정에 다시 찬다
-//   · ⛔ 넘으면 돈이 나가는지 «공식으로 확인 못 했다» → 그래서 **상한의 절반에서 스스로 멈춘다**(검색 50 · 그 밖 5,000)
+//   · ⛔ 넘으면 돈이 나가는지 «공식으로 확인 못 했다» → 그래서 **검색은 90에서 스스로 멈춘다**(창업자 2026-11-22 · 넘으면 실패만 한다고 공식 안내 확인) · 그 밖 5,000
 //   · 키는 저장소에 없다 — 환경의 Network secrets 가 www.googleapis.com/youtube/v3/ 요청에 헤더로 붙인다
 //
 // 쓰는 법
@@ -21,7 +21,7 @@ import { dirname, join } from 'node:path'
 
 const 장부경로 = join(dirname(fileURLToPath(import.meta.url)), '../docs/유튜브-사용량.json')
 const 상한 = { search: 100, other: 10000 }
-const 멈춤 = { search: 50, other: 5000 }   // 절반에서 멈춘다(돈이 나가는지 모르니까)
+const 멈춤 = { search: 90, other: 5000 }   // 🔼 창업자 2026-11-22 「90번으로 하자」 — 공식 안내 = 넘으면 «실패만»(403 quotaExceeded) · 과금 문구 못 찾음(2026-11-22 열람) · 10번은 비상용으로 남김
 
 // 할당량이 다시 차는 날 = 미국 서부(America/Los_Angeles) 날짜
 const 오늘PT = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
