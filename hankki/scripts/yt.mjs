@@ -74,6 +74,10 @@ if (명령 === 'video') {
   process.exit(0)
 }
 
+// 🔎 「만드는 순서」 = 번호·기호로 시작하고 «조리 동사»가 들거나 «~다·~요»로 끝나는 줄이 1줄은 있어야 한다(한 단계를 여러 줄로 쓰는 사람이 많다 · 0 이면 «재료만» 적은 영상) (창업자 2026-11-21 검수 전 실측)
+//   ⛔ 옛 잣대(줄 머리에 숫자+점)는 「1.5큰술」·「1. 서대 3마리」(재료 번호)도 순서로 셌다 → 꽈리고추무침·서대감자조림·무요리3가지가 «순서 없이» 통과했다
+const 순서줄수 = (글) => (글 || '').split(/\n/).filter((l) => /^\s*(\d+\s*[.)]\s*\D|[①-⑳]|[-•▶]\s|STEP|step)/.test(l) && (/(넣|끓|볶|썰|섞|버무|익|굽|구워|담그|부어|붓|데치|무치|씻|헹|짜|올려|뿌려|저어|말아|찌|쪄|튀|재우|불려|갈아|졸|조려|발라|싸|얹|빚|다져|묻혀|펼쳐|찢)/.test(l) || /(다|요|세요)\s*[.!~]*\s*$/.test(l))).length
+
 if (명령 === 'search') {
   const q = 인자; const n = Math.min(50, Number(옵션('--n', 10))); const after = 옵션('--after', '')
   if (!q) { console.error('쓰는 법: yt.mjs search "<검색어>" [--after YYYY-MM-DD] [--n 10]'); process.exit(1) }
@@ -87,7 +91,7 @@ if (명령 === 'search') {
   찍기(쓰기('other', ids ? 1 : 0, `videos(검색 결과 ${s.items.length})`))
   const 결과 = v.items.map((x) => ({ id: x.id, 제목: x.snippet.title, 채널: x.snippet.channelTitle, 올린날: x.snippet.publishedAt.slice(0, 10),
     조회수: Number(x.statistics?.viewCount || 0), 좋아요: Number(x.statistics?.likeCount || 0), 분량있음: /\d+\s*(g|ml|큰술|작은술|스푼|숟갈|T|컵|개|대)/.test(x.snippet.description),
-    순서있음: /(^|\n)\s*(\d+[.)]|[①②③④⑤]|STEP|step)/.test(x.snippet.description), 설명란: x.snippet.description }))
+    순서있음: 순서줄수(x.snippet.description) >= 1, 설명란: x.snippet.description }))
     .sort((a, b) => b.조회수 - a.조회수)
   console.log(JSON.stringify(결과, null, 1))
   process.exit(0)

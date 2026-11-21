@@ -88,7 +88,7 @@ const 칸 = (v, i) => `
 <div class="c" data-id="${v.id}">
   <div class="h"><b>${i + 1}. ${esc(v.제목)}</b></div>
   <div class="m">${esc(v.채널)} · 조회 ${만(v.조회수)} · 👍 ${만(v.좋아요 || 0)} · ${v.올린날} · 검색 「${esc(v.검색어)}」</div>
-  ${/대용량|단체\s*급식|([1-9]\d)\s*인분/.test((v.제목 || '') + (v.설명란 || '')) ? '<div class="sim">🍲 대용량·단체급식 — SNS 편은 분량도 원본 그대로라 집밥으로 못 줄인다(창업자 2026-11-20)</div>' : ''}
+  ${/대용량|단체\s*급식|([1-9]\d)\s*인분|(^|[^\d.])([3-9]|\d{2,})\s*(kg|키로)/.test((v.제목 || '') + (v.설명란 || '')) ? '<div class="sim">🍲 대용량·단체급식 — SNS 편은 분량도 원본 그대로라 집밥으로 못 줄인다(창업자 2026-11-20)</div>' : ''}
   ${(() => { const s = 비슷한편(v.제목); return s.length ? `<div class="sim">⚠️ 비슷한 우리 편 ${s.length}: ${esc(s.slice(0, 6).join(' · '))}${s.length > 6 ? ' …' : ''}</div>` : '<div class="sim ok">비슷한 우리 편 없음</div>' })()}
   <a href="https://youtu.be/${v.id}" target="_blank">https://youtu.be/${v.id}</a>
   <details><summary>설명란 보기</summary><pre>${esc(v.설명란 || '')}</pre></details>
