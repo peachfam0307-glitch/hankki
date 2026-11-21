@@ -13,6 +13,7 @@
 //   🧪 규칙 12 = 일부러 수량·재료·순서 숫자를 틀리게 바꿔 exit 1 확인(아래 --시험)
 import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
+import { todayKST } from '../src/today.js'
 
 const ROOT = join(new URL('..', import.meta.url).pathname)
 const src = readFileSync(process.env.대조_SRC || join(ROOT, 'src/data/basics.js'), 'utf8')
@@ -81,7 +82,7 @@ const 대조예외 = {
   '소고기메추리알조림': '창업자 검수 2026-11-10 (원본대조 정책 전)',
   '초간단 육개장': '창업자 검수 2026-11-10 (원본대조 정책 전)',
 }
-const 오늘 = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10)
+const 오늘 = todayKST()   // ⏰ 규칙 27 — 날짜는 today.js 한 곳에서
 const 빠진편 = []
 for (const m of src.matchAll(/\{\s*(?:\/\/[^\n]*\n\s*)*\.\.\.base,([\s\S]*?)\n  \},/g)) {
   const b = m[1]
