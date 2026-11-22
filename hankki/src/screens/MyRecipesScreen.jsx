@@ -958,9 +958,9 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               ) : (
                 <button key={k.id} className={`pill press ${!칩편집 && folder === k.id ? 'active' : ''}`}
                   {...(폴더앞켜짐 && !칩편집 ? hold(() => set칩편집(k.id)) : {})}
-                  style={칩편집 ? { borderStyle: 'dashed' } : undefined}
+                  style={칩편집 ? { borderStyle: 'dashed' } : k.id === '__prep' ? { background: 'var(--brown)', color: '#fff', borderColor: 'var(--brown)', display: 'inline-flex', alignItems: 'center', gap: 6 } : undefined}
                   onClick={() => { if (lpFired.current) { lpFired.current = false; return } if (칩편집) set칩편집(k.id); else if (k.id === '__prep') set손질법창(true); else setFolder(k.id) }}>
-                  {k.그림}{k.name}{칩편집 ? '' : ` ${k.n}`}
+                  {k.id === '__prep' && !칩편집 && <svg width="20" height="19" viewBox="0 0 20 19" aria-hidden="true"><path d="M7 1.5 L10 4.5 L13 1.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><rect x="1.2" y="4.6" width="17.6" height="12.6" rx="3.2" fill="none" stroke="currentColor" strokeWidth="1.9" /><path d="M8.2 8.2 L12.6 10.9 L8.2 13.6 Z" fill="currentColor" /></svg>}{k.그림}{k.name}{칩편집 ? '' : ` ${k.n}`}
                 </button>
               )
             ))}

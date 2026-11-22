@@ -1052,11 +1052,7 @@ export default function RecipeDetailScreen({ id }) {
                        (설정에서도 이미 그 두 낱말을 부제로 쓰고 있다).
                     ⚠️ 이 줄 오른쪽엔 「사러가기」가 있다 → 글자를 늘린 만큼 좁은 폰에서 밀릴 수 있어
                        `check-charside.mjs` 와 같이 폭을 재서 확인했다. */}
-                <button className="press" onClick={() => setGuide(true)} aria-label="계량·손질 가이드"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '3px 8px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap', flex: '0 0 auto' }}>
-                  <Icon name="help" size={12} color="var(--brown)" />
-                  계량·손질
-                </button>
+                {/* ✂️ [창업자 2026-11-22 Ⓒ] 「계량·손질」 단추를 뺐다 — 계량표는 손질법 시트(레시피 탭 「손질법」 칩)로 옮겼다. */}
                 {/* 📌 「메모 붙이기」 — 창업자 2026-10-29 ② 「재료」 옆 진한 단추. 붙어 있으면 「메모 고치기」 */}
                 {메모열쇠 && (
                   <button className="press" onClick={() => set메모창(true)}
@@ -1131,9 +1127,9 @@ export default function RecipeDetailScreen({ id }) {
                       {손질찾기(stripIngGroup(ing)) && (
                         <span role="button" tabIndex={0} className="press" data-prep-chip="1"
                           onClick={(e) => { e.stopPropagation(); set손질칸(손질찾기(stripIngGroup(ing))) }}
-                          style={{ flex: '0 0 auto', marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px 6px 9px', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15.5, fontWeight: 800, boxShadow: 'inset 0 0 0 1.5px color-mix(in srgb, var(--brown) 30%, transparent)' }}>
+                          style={{ flex: '0 0 auto', marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 15px 8px 11px', borderRadius: 14, background: 'var(--brown)', color: '#fff', fontSize: 17, fontWeight: 800 }}>
                           {/* 📺 [창업자 2026-11-22 「칩이 넘 작아 · 티비 모양 아이콘」] 영상이 붙은 손질법이라 TV 모양 */}
-                          <svg width="20" height="19" viewBox="0 0 20 19" aria-hidden="true" style={{ flex: '0 0 auto' }}>
+                          <svg width="23" height="22" viewBox="0 0 20 19" aria-hidden="true" style={{ flex: '0 0 auto' }}>
                             <path d="M7 1.5 L10 4.5 L13 1.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                             <rect x="1.2" y="4.6" width="17.6" height="12.6" rx="3.2" fill="none" stroke="currentColor" strokeWidth="1.9" />
                             <path d="M8.3 8.2 L12.6 10.9 L8.3 13.6 Z" fill="currentColor" />
