@@ -11,7 +11,7 @@ def 원(r):
     y, x = np.ogrid[-r:r + 1, -r:r + 1]
     return x * x + y * y <= r * r
 
-def 자르기(src, dst, 폭=620, 테=0.007, 밝기=232, 채도=18):
+def 자르기(src, dst, 폭=620, 테=0.007, 밝기=246, 채도=10, 열기=7, 흐림=7):
     im = Image.open(src).convert('RGB'); a = np.asarray(im).astype(np.int16)
     mx, mn = a.max(2), a.min(2)
     배경후보 = (mn >= 밝기) & ((mx - mn) <= 채도)
@@ -20,11 +20,11 @@ def 자르기(src, dst, 폭=620, 테=0.007, 밝기=232, 채도=18):
     배경 = np.isin(lab, list(테두리))
     몸 = ~배경
     몸 = ndimage.binary_fill_holes(몸)
-    몸 = ndimage.binary_opening(몸, structure=원(4))          # 그림자 털·가는 조각 떼기
+    몸 = ndimage.binary_opening(몸, structure=원(열기))          # 그림자 털·가는 조각 떼기
     lab2, n2 = ndimage.label(몸)
     if n2 == 0: raise SystemExit('⛔ 몸통 없음')
     크기 = ndimage.sum(몸, lab2, range(1, n2 + 1)); 몸 = lab2 == (int(np.argmax(크기)) + 1)
-    몸 = ndimage.gaussian_filter(몸.astype(float), 5) > 0.5   # 외곽 매끈하게
+    몸 = ndimage.gaussian_filter(몸.astype(float), 흐림) > 0.5   # 외곽 매끈하게
     몸 = ndimage.binary_fill_holes(몸)
     ys, xs = np.where(몸); h, w = ys.max() - ys.min() + 1, xs.max() - xs.min() + 1
     r = max(3, round(max(h, w) * 테))
