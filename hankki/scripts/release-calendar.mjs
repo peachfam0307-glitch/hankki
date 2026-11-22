@@ -20,6 +20,7 @@
 import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
+import { 본기록, 흔적 } from './본것.mjs'   // 👀 창업자가 이미 본 것은 안 묻는다 (2026-11-23)
 
 const ROOT = (() => {
   try { return execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim() } catch { return process.cwd() }
@@ -447,11 +448,15 @@ function 빈칸들(N) {
   const 장부 = 검수장부()
   gates().filter((x) => 안(x.date) && !x.todo && !['recipe', 'sns', 'cart', 'close'].includes(x.kind) && !장부[장부열쇠(x)])
     .forEach((x) => 칸.push(`📒 검수장부 없음 · ${x.date} ${x.where} — ${x.what}   [열쇠: ${장부열쇠(x)}]`))
-  return 칸
+  // 👀 [1겹 · 2026-11-23] 창업자가 «이미 본» 칸은 빼고 묻는다 — docs/창업자-본것.jsonl (scripts/본것.mjs --적기)
+  //    📮 창업자 = *"보고 확인한 것은 다시 보는 일 없도록"* · *"요거트도 내가 그냥 쓴다고 백번 말했어"*
+  return 칸.filter((t) => !본기록(t))
 }
 function 빈칸찍기(칸, N, 머리) {
   console.log(`⛔⛔ ${머리} — ${N}일 안(~${daysAheadKST(N)})에 열리는데 빈 것 ${칸.length}개. 창업자에게 «한 번에» 청한다:`)
-  칸.forEach((s) => console.log(`   · ${s}`))
+  // 🔎 [3겹 · 2026-11-23] 칸마다 «이미 본 흔적»(창업자 말·커밋)을 붙인다 — 흔적이 있으면 묻기 «전»에 읽고 확인한다
+  칸.forEach((s) => { console.log(`   · ${s}`); for (const h of 흔적(s)) console.log(`        ${h}`) })
+  console.log('   ⛔ 흔적(💬·🧾)이 붙은 칸은 창업자에게 묻기 «전»에 먼저 읽는다 — 이미 답한 걸 또 묻는 게 제일 큰 실수다(2026-11-23)')
   console.log(`   👉 링크·캡처·그림은 받아서 넣고 · 창업자가 「링크 안 만든다」면 scripts/안만드는재료.json · 화면 OK 면 --검수 "<열쇠>"`)
 }
 // 🚪 스모크(웹 배포)용 = 3일 칸만 · 조용히
