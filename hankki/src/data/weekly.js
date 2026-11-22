@@ -544,5 +544,5 @@ export const hankkiPickNow = (recipes = [], now = new Date(), 뺄것 = [], k = 4
     고른.push(r)
   }
   if (!고른.length) return null
-  return { kicker: '이번 주 골라 봤어요', title: '한끼 레시피', why: '한끼에 있는 레시피를 매주 4편씩 골라 드려요.', items: 고른 }
+  return { kicker: '이번 주 골라 봤어요', title: '한끼 레시피', why: '뭐 해먹을지 막막할 때, 이번 주엔 이 4편 어때요?',   /* ✏️ 창업자 2026-11-22 문구 */ items: 고른 }
 }
