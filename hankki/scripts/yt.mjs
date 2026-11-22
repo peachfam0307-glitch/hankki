@@ -25,7 +25,7 @@ const 장부경로 = join(dirname(fileURLToPath(import.meta.url)), '../docs/유�
 //   ⭐ 같은 잣대 = scripts/check-원본대조.mjs 의 `퍼감금지` (둘을 같이 고친다)
 export const 퍼감금지 = /무단\s*(도용|복제|배포|사용|전재|이용)|재배포|2차\s*(편집|가공|수정|배포|창작)|상업적\s*(이용|사용)[^\n]{0,30}금지|퍼가기\s*금지|(도용|복제|전재)[^\n]{0,10}금지|All rights reserved/i
 const 상한 = { search: 100, other: 10000 }
-const 멈춤 = { search: 90, other: 5000 }   // 🔼 창업자 2026-11-22 「90번으로 하자」 — 공식 안내 = 넘으면 «실패만»(403 quotaExceeded) · 과금 문구 못 찾음(2026-11-22 열람) · 10번은 비상용으로 남김
+const 멈춤 = { search: Number(process.env.YT_SEARCH_STOP) || 90, other: 5000 }   // 🔼 창업자 2026-11-22 21:12 「100까지 괜찮으니까 돌려봐」 = 그날만 YT_SEARCH_STOP=100 ·   // 🔼 창업자 2026-11-22 「90번으로 하자」 — 공식 안내 = 넘으면 «실패만»(403 quotaExceeded) · 과금 문구 못 찾음(2026-11-22 열람) · 10번은 비상용으로 남김
 
 // 할당량이 다시 차는 날 = 미국 서부(America/Los_Angeles) 날짜
 const 오늘PT = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
