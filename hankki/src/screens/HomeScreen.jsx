@@ -57,7 +57,7 @@ import uiPengSearch from '../assets/ui/wave/pn_search.png'
 import { needsOnboarding } from '../작은함수.js'   // 📏 Onboarding 통째로 안 끌고 오게
 import { backupNudgeStep, dismissBackupNudge, askOpenBackup, myRecipeCount, myDiaryCount, needsCloudHome, markCloudHomeSeen, askOpenCloud, 클라우드보임 } from '../nudges'
 import { 로그인해뒀나 } from '../cloud'
-import { weeklyNow, homemadeNow, snsNow } from '../data/weekly'
+import { weeklyNow, homemadeNow, snsNow, 홈칸바뀜나, thisWeekNow, hankkiPickNow } from '../data/weekly'
 // 🌕 특집 — 날짜가 열고 «닫는다». 철이 지나면 스스로 사라진다(`data/specials.js`)
 import { nowSpecial, specialRecipes } from '../data/specials.js'
 import { whatsNew } from '../data/whatsnew'
@@ -274,6 +274,11 @@ export default function HomeScreen() {
   //    ⛔ 손으로 적은 목록이 없다 — `source: 'hankki'` ＋ `sourceUrl` 로 «직접» 고른다(`weekly.js` snsNow).
   //    ⛔ 재고가 없으면 `null` 이라 박스를 아예 안 그린다(위 둘과 같은 규칙).
   const sns = useMemo(() => snsNow(recipes), [recipes])
+  // 🏠 [창업자 2026-11-22 「아아 좋아」] 11/30 부터 우리집 자리 = 이번 주 레시피 · SNS 자리 = 한끼 레시피 (weekly.js 홈칸바뀜)
+  const 새칸 = 홈칸바뀜나()
+  const 이번주 = useMemo(() => (새칸 ? thisWeekNow(recipes) : null), [recipes, 새칸])
+  const 한끼칸 = useMemo(() => (새칸 ? hankkiPickNow(recipes, new Date(), [...(이번주?.items || []), ...(weekly?.items || [])]) : null), [recipes, 새칸, 이번주, weekly])
+  const 둘째칸 = 새칸 ? 이번주 : homemade
 
   // 📣 소식 한 줄 — ⛔손으로 적지 않는다. 날짜 게이트와 «같은 데이터»를 세어 만든다.
   //    새로 열린 게 있으면 그걸 먼저 말하고, 없으면 다음에 열릴 것을, 그것도 없으면 예고 목록을 말한다.
@@ -759,10 +764,10 @@ export default function HomeScreen() {
           </div>
         )}
 
-        {(weekly || homemade) && (
-          <div className={`week-pair${weekly && homemade ? ' two' : ''}`}>
+        {(weekly || 둘째칸) && (
+          <div className={`week-pair${weekly && 둘째칸 ? ' two' : ''}`}>
             {weekly && <WeekBox w={weekly} 기본="이번 주 제철" open={open} 요일="월" 줄컷={명절컷 && 명절컷[줄장식[명절]]} />}
-            {homemade && <WeekBox w={homemade} 기본="우리집레시피" open={open} 요일="월" />}
+            {둘째칸 && <WeekBox w={둘째칸} 기본="우리집레시피" open={open} 요일={새칸 ? '수·금' : '월'} />}
           </div>
         )}
 
@@ -772,7 +777,8 @@ export default function HomeScreen() {
             ⭐ 위 두 상자와 «똑같은» `WeekBox` 를 쓴다 — 마크업을 두 번 적지 않는다(2026-08-11 규칙).
             ⭐ 상세 화면을 따로 만들지 않는다 — 레시피 탭 안에 그대로 있고 「영상」 칩으로 모아 본다.
             ⛔ 재고가 없으면 `sns` 가 null 이라 이 줄이 통째로 안 그려진다(빈 자리 금지). */}
-        {sns && <div className="week-pair"><WeekBox w={sns} 기본="SNS 요리" open={open} 요일="수" /></div>}
+        {!새칸 && sns && <div className="week-pair"><WeekBox w={sns} 기본="SNS 요리" open={open} 요일="수" /></div>}
+        {새칸 && 한끼칸 && <div className="week-pair"><WeekBox w={한끼칸} 기본="한끼 레시피" open={open} /></div>}
 
         {/* 2. 자주 해먹는 요리 */}
         {often.length > 0 && (
@@ -989,13 +995,13 @@ function XmasSnow() {
 //   · 가장자리 다섯 = 홈 «맨 위»에서 잰 y(px)·x(%) · 글과 같이 굴러간다(높이 0 닻에 박는다 · ⛔`.screen` 에 relative 를 주지 않는다)
 //   · 카드 셋 = «글자»로 카드를 찾아 그 카드에 붙인다 — 카드 문구가 바뀌면 그 소품만 안 나온다(앱은 그대로)
 const 가장자리 = [
-  { k: 'xg04', x: 86, y: 80, w: 46, r: 12 }, { k: 'xg06', x: -1, y: 760, w: 46, r: -6 }, { k: 'xg03', x: 89, y: 1010, w: 40, r: 14 },
+  { k: 'xg04', x: 31, y: 12, w: 40, r: 38 }, { k: 'xg06', x: -1, y: 760, w: 46, r: -6 }, { k: 'xg03', x: 89, y: 1010, w: 40, r: 14 },
   { k: 'xg07', x: 88, y: 1620, w: 44, r: -12 }, { k: 'xg09', x: -1, y: 1950, w: 48, r: 6 },
 ]
 const 카드자리 = [
   { 찾기: '.today-label', k: 'xg02', w: 50, dx: -78, dy: 14 },                 // 오늘 뭐 해먹지 — 「다른 추천」 왼쪽 하트
   { 찾기: '.weekly-day', 옆: true, k: 'xg01', w: 40, dx: 6, dy: -10 },        // 이번 주 재료 「월」 바로 옆 진저맨
-  { 글: 'SNS 요리', k: 'xg08', w: 64, dx: -14, dy: -4 },                       // SNS 요리 제목 줄 오른쪽 과자집
+  { 글: '이번 주 골라 봤어요', k: 'xg08', w: 56, dx: -10, dy: -34 },                       // SNS 요리 제목 줄 오른쪽 과자집
 ]
 function XmasProps({ 컷 }) {
   const 닻 = useRef(null)
