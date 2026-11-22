@@ -216,7 +216,6 @@ export const ING_LINKS = {
   '페퍼론치노': 'https://link.coupang.com/a/hrfqzuUbhA', // ⛇묶음: 페퍼론치노 / 페페론치노
   '페페론치노': 'https://link.coupang.com/a/hrfqzuUbhA', // ⛇묶음: 페퍼론치노 / 페페론치노
   '그라나파다노 치즈': 'https://link.coupang.com/a/hrfHP6DKiO',
-  '슈레드 치즈': 'https://link.coupang.com/a/gZj6blHyHB', // ⛇묶음: 모차렐라 치즈 / 모짜렐라 치즈 / 슈레드 치즈
   '생강즙': 'https://link.coupang.com/a/gYWRWEezHE', // ⛇묶음: 생강 / 다진 생강 / 생강즙
   // [창업자 2026-10-02] 10/7·10/12·10/14·10/16 편 재료 링크 (3일 전 관문 · 아이폰 반영)
   '미나리': 'https://link.coupang.com/a/hwk88hFYjs',

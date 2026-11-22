@@ -22,6 +22,7 @@ const R = dirname(dirname(fileURLToPath(import.meta.url)))
 
 // 🔓 화면이 «안 읽어도 되는» 칸 — 우리 도구만 읽는다
 const 내부용 = {
+  제철: '🌱 새싹 제철 배지용 재료 이름 — 배지 화면(FounderMark 같은 자리)은 테마 화면과 «한 아이폰 판»에 같이 만든다(창업자 2026-11-21 새싹 승인 · 그 전까진 화면이 안 읽는다)',
   decorFrom: '꾸민 표지가 열리는 날 — basics.js 꾸밈거르기·store.jsx 꾸밈열기가 읽는다(유저에겐 표지가 보이냐 안 보이냐로만 드러난다 · 2026-11-11)',
   decorUntil: '꾸민 표지를 내리는 날 — basics.js 꾸밈거르기·store.jsx 꾸밈열기가 읽는다(꽃게탕 12/1 · 2026-11-11)',
   열쇠: '창업자 미리보기 열쇠 — basics.js basicRecipes 가 거를 때 읽는다(?할로윈=1 폰에서만 from 전에 보인다 · 2026-09-30)',

@@ -17,6 +17,7 @@
 // ⚠️ 「검수했다」는 **창업자가 실제로 그 편을 보고 말했을 때만** 붙인다.
 //    ⛔ 내가 잘 썼다고 생각해서 붙이는 표시가 아니다. 그러면 이 관문도 종이가 된다.
 import { readFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { join } from 'node:path'
 
 const ROOT = new URL('..', import.meta.url).pathname
@@ -80,7 +81,11 @@ const 사흘뒤 = daysAheadKST(3)
 const 오늘 = todayKST()
 const 내일 = tomorrowKST()
 const 열린것 = 편들.filter((r) => !r.from || r.from <= 사흘뒤)
-const 안된것 = 열린것.filter((r) => r.review !== '창업자')
+// 🔍 [창업자 2026-11-21 「SNS 레시피는 네가 원본이랑 비교해서 맞으면 그대로 내」] `review: '원본대조'` = check-원본대조.mjs 가 통과해야만 검수로 친다
+//   ⛔ 표시만 붙이고 대조가 안 맞으면 «검수 안 된 편»으로 되돌린다 — 표시가 종이가 되지 않게
+let 대조통과 = false
+try { execFileSync('node', [join(ROOT, 'scripts/check-원본대조.mjs')], { stdio: 'pipe' }); 대조통과 = true } catch { 대조통과 = false }
+const 안된것 = 열린것.filter((r) => !(r.review === '창업자' || (r.review === '원본대조' && 대조통과)))
 const 내일열림 = (r) => r.from === 내일
 
 console.log(`🛑 검수 관문 — 레시피 ${편들.length}편 중 «열린 것 ＋ 내일 열릴 것» ${열린것.length}편 (오늘 ${오늘} · 내일 ${내일})`)

@@ -33,6 +33,7 @@ import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 import { dateLabel, matchKo } from '../utils'
 // 📺 「영상」 칩이 쓰는 잣대 — 상세에서 재생하는 것과 «같은 자»다(절대원칙 30)
 import { embedUrl, SNS인가, 영상인가, SNS표 } from '../embed'
+import { THEMES, 테마에드나, 테마열쇠 } from '../data/themes'
 // 📺 이 화면에서 묻는 것은 «둘»이고, 자도 «둘»이다 — 이름으로 갈라 둔다(⛔같은 걸로 착각하지 말 것).
 //
 // ⭐⭐ [창업자 확정 2026-09-03] 칩 이름 = **「SNS」**. 📮 창업자 = *"ⓐ로 가자"*
@@ -316,6 +317,12 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   //   ⭐⭐ 잣대는 «한 곳»에 둔다 — 칩 개수 · 거르기 · 썸네일 ▶ 표 셋이 같은 자를 쓴다.
   //      ⛔ 같은 식을 세 군데 적으면 하나만 고쳤을 때 「칩엔 3편인데 ▶ 는 5개」처럼 갈린다.
   const SNS수 = useMemo(() => sorted.filter(SNS인가).length, [sorted])
+  // 🍽 [창업자 2026-11-21 시안 A] 「테마」 칩 하나 → 누르면 아랫줄이 테마 칩으로 바뀐다 · 🔑 열쇠(?테마=1) 뒤 = 아이폰과 같이 연다
+  //   ⭐ 열린 편이 있는 테마만 · 칩 값 = 'th:<id>' (폴더 이름과 안 겹치게)
+  const [테마켬] = useState(() => 테마열쇠())
+  const 테마칸 = useMemo(() => 테마켬 ? THEMES.map((t) => ({ ...t, n: sorted.filter((r) => 테마에드나(r, t)).length })).filter((t) => t.n > 0) : [], [sorted, 테마켬])
+  const 테마모두 = useMemo(() => sorted.filter((r) => 테마칸.some((t) => 테마에드나(r, t))), [sorted, 테마칸])
+  const 테마보는중 = folder === '__theme' || String(folder).startsWith('th:')
   // 👤 「내 것」 = 유저가 자기 손으로 담은 편 (잣대는 data/seed.js 한 곳 — 여기서 다시 판정하지 않는다)
   const 내것수 = useMemo(() => sorted.filter(내것인가).length, [sorted])
   // 🔖🔖 [2026-08-18] 책갈피가 카드 «위로 14px» 나가므로 그만큼 자리를 비운다.
@@ -355,6 +362,8 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
       : folder === '__often' ? sorted.filter((r) => (r.cooked || 0) > 0).sort((a, b) => (b.cooked || 0) - (a.cooked || 0))
       : folder === '__mine' ? sorted.filter(내것인가)
       : folder === '__sns' ? sorted.filter(SNS인가)
+      : folder === '__theme' ? 테마모두
+      : String(folder).startsWith('th:') ? sorted.filter((r) => { const t = 테마칸.find((x) => 'th:' + x.id === folder); return t ? 테마에드나(r, t) : false })
       : sorted.filter((r) => 여기드나(r, folder))
   const countIn = (name) => sorted.filter((r) => 여기드나(r, name)).length
   // ⛔ 새 칩 열쇠()를 여기 «안» 넣으면 「폴더 삭제」 단추가 뜬다 — 폴더가 아닌데 폴더로 읽힌다
@@ -402,6 +411,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     heartCount > 0 && { id: '__heart', name: pinName('heart'), n: heartCount, 그림: <Icon name="heart" size={13} style={{ fill: 'currentColor' }} /> },
     favCount > 0 && heartCount > 0 && { id: '__pinned', name: '모두', n: pinnedCount, 그림: <><img src={idxChef} alt="" className="pill-chef" /><Icon name="heart" size={13} style={{ fill: 'currentColor', marginLeft: -3 }} /></> },
     SNS수 > 0 && { id: '__sns', name: 'SNS', n: SNS수, 그림: <Icon name="play" size={13} /> },
+    테마칸.length > 0 && { id: '__theme', name: '테마', n: 테마칸.length, 그림: null },
     oftenCount > 0 && { id: '__often', name: '자주', n: oftenCount, 그림: null },
   ].filter(Boolean)
   const 윗칩목록 = (() => {
@@ -428,7 +438,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     // 👀 옮긴 칩이 줄 밖으로 밀려 안 보이면 따라가 준다(옆으로 넘기는 줄이라 끝에선 금방 가려진다)
     requestAnimationFrame(() => { try { document.querySelector('[data-chip-edit="1"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) } catch { /* noop */ } })
   }
-  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__heart' && folder !== '__pinned' && folder !== '__often' && folder !== '__sns' && folder !== '__mine' && !DEFAULT_FOLDERS.has(folder)
+  const isUserFolder = folder !== '전체' && folder !== '__fav' && folder !== '__heart' && folder !== '__pinned' && folder !== '__often' && folder !== '__sns' && folder !== '__mine' && folder !== '__theme' && !String(folder).startsWith('th:') && !DEFAULT_FOLDERS.has(folder)
 
   // 요리 기록(내가 만든 요리 아카이브) — 앨범 + 캘린더
   // 📔📔 **요리 기록과 다이어리를 가른다** — 둘 다 `diary` 배열에 살고 `kind` 로만 구분된다.
@@ -967,7 +977,16 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
               <button className="pill press" style={{ background: 'var(--brown)', color: '#fff', fontWeight: 800, flex: '0 0 auto' }} onClick={() => { set칩편집(null); nav.showToast('칩 순서를 바꿨어요') }}>완료</button>
             </div>
           )}
-          <div className="hscroll" style={{ marginBottom: 8, display: query ? 'none' : undefined }}>
+          {테마보는중 && !query && (
+            <div className="hscroll" style={{ marginBottom: 8 }}>
+              {테마칸.map((t) => (
+                <button key={t.id} className={`pill press ${folder === 'th:' + t.id ? 'active' : ''}`} onClick={() => setFolder(folder === 'th:' + t.id ? '__theme' : 'th:' + t.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <img src={t.img} alt="" style={{ width: 22, height: 22, borderRadius: 6, objectFit: 'cover' }} />{t.name} {t.n}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="hscroll" style={{ marginBottom: 8, display: query || 테마보는중 ? 'none' : undefined }}>
             {칩목록.map((c, i) => (
               칩편집 === c ? (
                 // ↔ 고른 칩 — 양옆 화살표로 한 칸씩. 끝에 닿으면 그쪽 화살표는 흐리게(눌러도 안 움직인다)
