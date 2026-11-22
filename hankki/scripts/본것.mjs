@@ -59,7 +59,7 @@ export function 흔적(칸글자) {
   return [...말, ...커밋]
 }
 
-const kst = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10)
+import { todayKST as kst } from '../src/today.js'   // ⏰ 오늘(KST)은 한 곳에서만(규칙 27)
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const [mode, a, b, c] = process.argv.slice(2)
