@@ -20,8 +20,11 @@ case "$CMD" in
   *"git push"*"annyeong-yoi12y"*) BAKE=1 ;;
 esac
 [ "$BAKE" = 1 ] || exit 0
+# 🔧 [2026-11-23] 문서 갈래($CLAUDE_PROJECT_DIR)는 배포판보다 낡았다 → 배포 작업 폴더(/home/user/xmas)가 있으면 그걸 읽는다
+#    뿌리 = 11/23 굽기 검사가 v14.84 자료를 읽고 이미 넣은 바비브레드 그림·원재료 캡처·링크를 「없다」고 함 (창업자 「다 캡쳐해줬는데 왜 자꾸 없대」)
+R="$CLAUDE_PROJECT_DIR"; [ -f /home/user/xmas/hankki/src/version.js ] && R=/home/user/xmas
 # 📸 [2026-10-22] 창업자가 인스타에 올렸다고 한 날(insta-posted.json)이 INSTA_NEW_AT 에 없으면 막는다 — 창업자 「구울때 새로 좀 넣어줘」
-MISS=$(python3 - "$CLAUDE_PROJECT_DIR" <<'PY'
+MISS=$(python3 - "$R" <<'PY'
 import json,os,re,sys
 r=sys.argv[1]; f=os.path.join(r,"hankki/scripts/insta-posted.json")
 if not os.path.exists(f): sys.exit()
@@ -34,7 +37,7 @@ if [ -n "$MISS" ]; then
   printf "📸 ⛔ 아이폰 굽기 막음 — 창업자가 인스타에 올렸다고 한 날 %s 이 version.js INSTA_NEW_AT 에 없다.\n   👉 넣거나(올린 날이 다르면 hankki/scripts/insta-posted.json 을 고친다) 다시 굽는다.\n" "$MISS" >&2
   exit 2
 fi
-OUT=$(node "$CLAUDE_PROJECT_DIR/hankki/scripts/release-calendar.mjs" --bake 2>&1)
+OUT=$(cd "$R/hankki" && node scripts/release-calendar.mjs --bake 2>&1)
 RC=$?
 if [ "$RC" -ne 0 ]; then
   printf '%s\n' "$OUT" >&2
