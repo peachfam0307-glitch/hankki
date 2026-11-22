@@ -1187,6 +1187,8 @@
    📮 원문 = *"앞으로 뽑을때 깨 빼고, 징그럽지않게 실제 제품이랑 같이 뽑아달라고 해줘"*
    ④ **[창업자 2026-11-21] 「일러스트처럼 꾸민 음식」 금지** — 밥알이 눈꽃·별처럼 무늬진 것, 샌드위치 속이 도장 찍은 듯 반복 무늬인 것 = «징그럽고 기괴하다». 음식은 **실제 사진처럼** 그리거나, 아예 **단순한 아이콘**처럼(무늬·잔디테일 없이). 그 중간(꾸민 일러스트)은 안 된다.
    ⑤ **[절대원칙 · 창업자 2026-11-21] 힉스필드로 음식을 뽑을 땐 «무조건» 실제 음식처럼** — ⛔밥알 무늬 · ⛔면을 격자로 엮은 듯 배치 · ⛔고기 표면에 징그러운 무늬. ✅ **확정 프롬프트 틀(창업자 2026-11-21 「그림 훨씬 좋아. 앞으로 이 프롬프트 유지해줘」)** = `Real food photograph, 3/4 angle, soft natural daylight, plain white background, isolated: <음식>. Looks exactly like real food in a real photo, natural textures, nothing stylized or patterned. No sesame seeds, no text.` · 참고 그림(image_references) 없이 · 보기 = design/테마아이콘-2611/사진판/
+      ➕ **앱 아이콘으로 자를 땐** 뒤에 `The whole bowl is fully visible and centered, small in the frame with wide empty white margin on every side.` 를 붙이고 배경은 `plain pure white background (#FFFFFF)` — 그릇이 양 끝에서 잘리면 `cut.py` 가 못 자른다(2026-11-22 실측)
+      ➕ **[창업자 2026-11-22 「훨씬 좋아. 이것도 프롬프트에 넣어둬」] 채·면·나물은 «사람이 그냥 집어 담은» 모양** — ⛔지그재그로 하나하나 격자처럼 쌓아 올린 모양 금지(📮 「보통 음식 담을 때 지그재그로 하나하나 격자로 쌓지 않잖아」). ✅ 붙일 말 = `soft wilted strands that cling together in a few loose clumps, simply scooped onto the plate, no stacking, no lattice or crisscross, no repeating texture` (무생채 4판으로 확인)
       📮 원문 = *"힉스에서 음식뽑을때 무조건 실제음식처럼. 밥알 모양금지, 면도 격자로 엮은 것 처럼 배치금지. 고기도 징그러운 모양(표면에) 넣기 금지야."*
       📮 원문 = *"다 실제음식처럼 뽑아야하는데, 도시락 한그릇 등에 밥모양이 눈꽃모양인 거 징그럽고.. 샌드위치 속도 모양이 있어. 그런 거 다 너무 징그럽고 기괴해"*
 
