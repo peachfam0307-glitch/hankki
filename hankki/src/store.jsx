@@ -262,6 +262,10 @@ function migrateBasics(saved0) {
       (r) => !(r && r.id === 'basic-aglioolio' && r.source === 'hankki' && !r.favorite && !(r.cooked > 0))
     )
   }
+  // ➖ [2026-11-22 · 창업자 「무단은 내리자」] 원문이 퍼가기를 금지한 편은 내린다 — 이미 깔린 폰에서도
+  //   ⭐ 알리오올리오(v10)와 같은 잣대 = 유저가 «안 건드린» 것만 뺀다(꽂았거나 만들어 봤으면 유저 것이라 둔다)
+  const 내린편 = new Set(['basic-eonam-15min-kkakdugi'])   // 어남선생 15분 깍두기(KBS 「무단 전재·재배포·이용 금지」)
+  fixed = fixed.filter((r) => !(r && 내린편.has(r.id) && r.source === 'hankki' && !r.favorite && !(r.cooked > 0)))
   // v11: 팟타이를 '아시안' 카테고리로 이동 (사용자가 안 바꾼 경우에만)
   fixed = fixed.map((r) =>
     r && r.id === 'basic-padthai' && r.category === '양식'
