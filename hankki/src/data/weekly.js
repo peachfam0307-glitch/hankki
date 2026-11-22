@@ -489,3 +489,60 @@ export const snsNow = (recipes = [], now = new Date(), k = 4) => {   // ✅ 2026
     items: 것들,
   }
 }
+
+// 🏠🏠 [창업자 확정 2026-11-22 「아아 좋아」 · 바탕 = 2026-10-28 배치] 11/30 부터 홈 칸 둘이 바뀐다
+//   📮 창업자 11-22 = 「30일부터 어제 우리가 만든 테마 시작하면 되는거 아냐??」 → 「오늘 아이폰 올리면 내일은 승인통과돼」
+//   · 「우리집레시피」 자리 → **이번 주 레시피** = 그 주 수·금에 새로 열린 편(테마) · 최근 연 순 4편
+//   · 「SNS 요리」 자리   → **한끼 레시피**   = 이미 열린 레시피 4편 무작위 · 1주일마다 바뀜
+//   · 「이번 주 제철」(월)은 그대로
+//   📄 규칙 전문 = docs/레시피-출처-규칙-2026-09-27.md 「제철·우리집이 끝난 뒤 홈 칸 배치」
+export const 홈칸바뀜 = '2026-11-30'
+export const 홈칸바뀜나 = (now = new Date()) => todayKST(now) >= 홈칸바뀜
+
+// 🗓 'YYYY-MM-DD' 가 월요일인가 — 「이번 주 레시피」는 월요일 제철 편을 뺀다(제철 칸에 이미 선다)
+const 월요일인가 = (d) => { const [y, m, dd] = String(d || '').split('-').map(Number); return y ? new Date(Date.UTC(y, m - 1, dd)).getUTCDay() === 1 : false }
+
+export const thisWeekNow = (recipes = [], now = new Date(), k = 4) => {
+  const t = todayKST(now)
+  const 것들 = recipes
+    .filter((r) => r && r.source === 'hankki' && r.from && r.from <= t && !월요일인가(r.from))
+    .sort((a, b) => String(b.from).localeCompare(String(a.from)))
+    .slice(0, k)
+  if (!것들.length) return null
+  return { kicker: '수·금 새로 와요', title: '이번 주 레시피', why: '이번 주 새로 들어온 레시피예요.', items: 것들 }
+}
+
+// 🎲 한끼 레시피 — 10/28 창업자 규칙 그대로
+//   ① 그 주 4편은 모든 유저가 같다(KST 월요일 주 번호가 씨앗 · 서버 0)
+//   ② 한 바퀴 돌 때까지 안 겹친다(고정 씨앗으로 섞은 줄을 4칸씩 걸어간다)
+//   ③ 빼는 것 = 그 주 「이번 주 레시피」·제철 칸에 선 편 · 아직 안 열린 편 · 폰에서 지운 편(목록에 없음)
+//   ④ 같은 종류(국물·면·밥)는 4편 중 최대 2편 — 이름으로 가른다(폴더 아님)
+const 종류 = (title = '') => /국|찌개|탕|전골/.test(title) ? '국물' : /국수|파스타|우동|면/.test(title) ? '면' : /밥|덮밥|죽|리조또/.test(title) ? '밥' : ''
+const 섞은줄 = (() => {
+  const ids = allBasicRecipes.map((r) => r.id).sort()
+  let s = 20261130
+  const rnd = () => { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648 }
+  for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]] }
+  return ids
+})()
+const 주번호 = (t) => { const [y, m, d] = t.split('-').map(Number); return Math.floor((Date.UTC(y, m - 1, d) - Date.UTC(2026, 10, 30)) / (7 * 864e5)) }
+
+export const hankkiPickNow = (recipes = [], now = new Date(), 뺄것 = [], k = 4) => {
+  const t = todayKST(now)
+  const byId = new Map(recipes.filter((r) => r && r.source === 'hankki' && (!r.from || r.from <= t)).map((r) => [r.id, r]))
+  const 뺌 = new Set(뺄것.map((r) => r.id))
+  const n = 섞은줄.length
+  if (!n) return null
+  const 시작 = (((주번호(t) * k) % n) + n) % n
+  const 고른 = [], 셈 = {}
+  for (let i = 0; i < n && 고른.length < k; i++) {
+    const r = byId.get(섞은줄[(시작 + i) % n])
+    if (!r || 뺌.has(r.id)) continue
+    const g = 종류(r.title)
+    if (g && (셈[g] || 0) >= 2) continue
+    셈[g] = (셈[g] || 0) + 1
+    고른.push(r)
+  }
+  if (!고른.length) return null
+  return { kicker: '이번 주 골라 봤어요', title: '한끼 레시피', why: '한끼에 있는 레시피를 매주 4편씩 골라 드려요.', items: 고른 }
+}

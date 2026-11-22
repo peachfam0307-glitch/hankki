@@ -26,6 +26,7 @@ import soup from '../assets/theme/th_soup.webp'
 import juk from '../assets/theme/th_juk.webp'
 import world from '../assets/theme/th_world.webp'
 import xmas from '../assets/theme/th_xmas.webp'
+import { todayKST } from '../today.js'
 
 export const THEMES = [
   { id: 'breakfast', name: '간단 아침', img: breakfast, 편: ['간장버터 달걀밥', '마늘간장계란밥', '치즈 샌드위치', '아보카도 바나나 스무디', '전복죽'] },
@@ -80,6 +81,8 @@ export function 테마열쇠() {
     const v = new URLSearchParams(location.search).get('테마')
     if (v === '1') localStorage.setItem('hankki:테마', '1')
     if (v === '0') localStorage.removeItem('hankki:테마')
+    // 📅 [창업자 2026-11-22] 11/30 부터는 모두에게 열린다 — 아이폰 판(오늘 굽기)과 같은 날(절대원칙 2026-09-18)
+    if (todayKST() >= '2026-11-30') return true
     return localStorage.getItem('hankki:테마') === '1'
   } catch { return false }
 }
