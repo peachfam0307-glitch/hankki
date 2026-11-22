@@ -155,7 +155,8 @@ function recipes() {
     날짜별.set(f[1], [...(날짜별.get(f[1]) || []), { 제목: t[1], 검수: r ? r[1] : null, sns }])
   }
   return [...날짜별].map(([date, 편]) => {
-    const 미검수 = 편.filter((x) => x.검수 !== '창업자')
+    // 🔍 [2026-11-23] check-review 와 같은 잣대 — 「원본대조」(SNS 원본과 대조 통과)도 검수로 친다 (창업자 2026-11-21 「원본이랑 비교해서 맞으면 그대로 내」 · 11/23 굽기 검사만 이걸 몰라 테마 8편을 「안 받음」이라 함)
+    const 미검수 = 편.filter((x) => x.검수 !== '창업자' && x.검수 !== '원본대조')
     const 줄 = 줄이름.get(date)
     return {
       date, where: '🍳 레시피', kind: 편.every((x) => x.sns) ? 'sns' : 'recipe',
