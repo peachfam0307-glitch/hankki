@@ -30,6 +30,7 @@ const 내부용 = {
   물어볼것: '창업자에게 물어볼 것 — 검수판과 recipe.mjs 가 ❓ 로 띄운다',
   origin: '출처 표시 — check-origin 이 읽는다',
   sourceName: '출처 이름 — 화면이 sourceUrl 과 함께 쓴다',
+  theme: '테마 이름 — src/data/themes.js 테마에드나가 읽어 테마 칸에 넣는다(화면파일 목록 밖 · 2026-11-22)',
 }
 // 👀 유저 화면을 그리는 파일들 — 여기서 한 번도 안 읽히면 그 칸은 «죽은 칸»이다
 const 화면파일 = [
