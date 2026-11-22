@@ -1,5 +1,7 @@
 import Portal from './Portal'
-import { MEASURE, PREP } from '../data/kitchenGuide'
+import { MEASURE, PREP, CUT, CUT_SRC } from '../data/kitchenGuide'
+const 썰기그림 = import.meta.glob('../assets/guide/cut/*.webp', { eager: true, import: 'default' })
+const 썰기src = (k) => 썰기그림[`../assets/guide/cut/${k}.webp`]
 import { useModalBack } from '../useBackHandler'
 
 // 요리 가이드 시트 — 계량 지표(고정표) + 재료 손질법(사전). 초보 배려.
@@ -55,6 +57,19 @@ export default function KitchenGuideSheet({ onClose, only, prepOnly }) {
               ))}
             </div>
             </>}
+
+            {/* 써는 법 — 그림으로 (창업자 2026-11-22) */}
+            <div className="h-section" style={{ fontSize: 16, margin: '6px 0 8px' }}>써는 법</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 6 }}>
+              {CUT.map((c) => (
+                <div key={c.name} className="card" style={{ padding: 8, margin: 0 }}>
+                  <img src={썰기src(c.img)} alt={c.name} loading="lazy" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 10, display: 'block' }} />
+                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', margin: '7px 2px 2px' }}>{c.name}</div>
+                  {c.뜻 && <div className="t-sub" style={{ fontSize: 14.5, lineHeight: 1.5, margin: '0 2px' }}>{c.뜻}</div>}
+                </div>
+              ))}
+            </div>
+            <div className="t-sub" style={{ fontSize: 13, marginBottom: 18 }}>{CUT_SRC}</div>
 
             {/* 재료 손질법 */}
             <div className="h-section" style={{ fontSize: 16, margin: '6px 0 4px' }}>재료 손질법</div>
