@@ -21,6 +21,7 @@ const 칸 = (좋나, 이름, 덧 = '') => { if (!좋나) 나쁨++; console.log(`
 const 옛 = [
   { id: 'basic-jinmichae-bokkeum', title: '간장진미채볶음', source: 'hankki', icon: 'n3050', sourceName: '윤반찬', ingredients: ['진미채 200g'], steps: ['볶아요.'] },
   { id: 'basic-yaki-udon', title: '야끼우동', source: 'hankki', icon: 'fe_400', sourceName: '@Ohtodaymenu', ingredients: ['우동면 2개'], steps: ['볶아요.'] },
+  { id: 'basic-yangbaechu-cheese-jeon', title: '양배추 치즈전', source: 'hankki', icon: 'n3019', sourceName: '성시경 SUNG SI KYUNG', ingredients: ['양배추 1/4통'], steps: ['부쳐요.'] },
 ]
 const { SEED_COACH_SEEN } = await import('../src/coach.js')
 const b = await chromium.launch(process.env.SMOKE_CHROMIUM ? { executablePath: process.env.SMOKE_CHROMIUM } : {})
@@ -40,6 +41,10 @@ console.log('\n🔁 원본 교체 — 이미 깔린 폰\n')
 칸(진.icon === 'n3049', '진미채 그림이 고추장 컷(n3049)으로', 진.icon)
 칸((우.ingredients || []).includes('우동면 1개 (200g)'), '야끼우동 재료가 새 원문', (우.ingredients || []).slice(0, 2).join(' · '))
 칸(우.sourceName === '백종원 PAIK JONG WON', '야끼우동 출처가 새 영상', 우.sourceName)
+칸(우.icon === 'n3072', '야끼우동 그림이 새 컷(n3072 · 새우 없음)으로', 우.icon)
+const 양 = 찾('basic-yangbaechu-cheese-jeon')
+칸(양.icon === 'n3073', '양배추 치즈전 그림이 새 컷(n3073 · 베이컨 없음)으로', 양.icon)
+칸((양.ingredients || [])[0] === '감자 2개', '양배추 치즈전 재료가 새 원문', (양.ingredients || [])[0])
 await b.close(); srv.close()
 console.log(나쁨 ? `\n⛔ ${나쁨}칸 실패` : '\n✅ 전부 통과')
 process.exit(나쁨 ? 1 : 0)
