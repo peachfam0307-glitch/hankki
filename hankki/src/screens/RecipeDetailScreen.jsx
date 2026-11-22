@@ -1131,8 +1131,14 @@ export default function RecipeDetailScreen({ id }) {
                       {손질찾기(stripIngGroup(ing)) && (
                         <span role="button" tabIndex={0} className="press" data-prep-chip="1"
                           onClick={(e) => { e.stopPropagation(); set손질칸(손질찾기(stripIngGroup(ing))) }}
-                          style={{ flex: '0 0 auto', marginLeft: 8, padding: '3px 9px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 800 }}>
-                          🔪 손질
+                          style={{ flex: '0 0 auto', marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px 6px 9px', borderRadius: 12, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15.5, fontWeight: 800, boxShadow: 'inset 0 0 0 1.5px color-mix(in srgb, var(--brown) 30%, transparent)' }}>
+                          {/* 📺 [창업자 2026-11-22 「칩이 넘 작아 · 티비 모양 아이콘」] 영상이 붙은 손질법이라 TV 모양 */}
+                          <svg width="20" height="19" viewBox="0 0 20 19" aria-hidden="true" style={{ flex: '0 0 auto' }}>
+                            <path d="M7 1.5 L10 4.5 L13 1.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                            <rect x="1.2" y="4.6" width="17.6" height="12.6" rx="3.2" fill="none" stroke="currentColor" strokeWidth="1.9" />
+                            <path d="M8.3 8.2 L12.6 10.9 L8.3 13.6 Z" fill="currentColor" />
+                          </svg>
+                          손질법
                         </span>
                       )}
                     </button>
