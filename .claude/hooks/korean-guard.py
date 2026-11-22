@@ -48,7 +48,9 @@ for e in reversed(줄들):
 if not 본문.strip():
     끝(0)
 
-깨끗 = re.sub(r'```.*?```', ' ', 본문, flags=re.S)          # 코드 블록
+깨끗 = re.sub(r'<system-reminder>.*?</system-reminder>', ' ', 본문, flags=re.S)   # 시스템이 붙인 알림 = 내 글 아님(2026-11-22 헛경보)
+깨끗 = re.sub(r"(?m)^.*(The task tools haven't been used|consider using TaskCreate|This is just a gentle reminder).*$", ' ', 깨끗)
+깨끗 = re.sub(r'```.*?```', ' ', 깨끗, flags=re.S)          # 코드 블록
 깨끗 = re.sub(r'`[^`\n]*`', ' ', 깨끗)                         # 백틱
 깨끗 = re.sub(r'\]\([^)]*\)', ']', 깨끗)                        # 링크 주소
 깨끗 = re.sub(r'https?://\S+', ' ', 깨끗)                       # 주소
