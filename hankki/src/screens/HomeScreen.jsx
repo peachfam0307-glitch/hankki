@@ -1001,7 +1001,7 @@ const 가장자리 = [
 const 카드자리 = [
   { 찾기: '.today-label', k: 'xg02', w: 50, dx: -78, dy: 14 },                 // 오늘 뭐 해먹지 — 「다른 추천」 왼쪽 하트
   { 찾기: '.weekly-day', 옆: true, k: 'xg01', w: 40, dx: 6, dy: -10 },        // 이번 주 재료 「월」 바로 옆 진저맨
-  { 글: '이번 주 골라 봤어요', k: 'xg08', w: 64, dx: -14, dy: -4 },                       // SNS 요리 제목 줄 오른쪽 과자집
+  { 글: '이번 주 골라 봤어요', k: 'xg08', w: 56, dx: -10, dy: -34 },                       // SNS 요리 제목 줄 오른쪽 과자집
 ]
 function XmasProps({ 컷 }) {
   const 닻 = useRef(null)
