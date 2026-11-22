@@ -509,7 +509,7 @@ export const thisWeekNow = (recipes = [], now = new Date(), k = 4) => {
     .sort((a, b) => String(b.from).localeCompare(String(a.from)))
     .slice(0, k)
   if (!것들.length) return null
-  return { kicker: '수·금 새로 와요', title: '이번 주 레시피', why: '이번 주 새로 들어온 레시피예요.', items: 것들 }
+  return { kicker: '이번 주 테마', title: '이번 주 레시피', why: '수요일, 금요일마다 새 테마 레시피가 올라와요.'   // ✏️ 창업자 2026-11-22 문구, items: 것들 }
 }
 
 // 🎲 한끼 레시피 — 10/28 창업자 규칙 그대로
