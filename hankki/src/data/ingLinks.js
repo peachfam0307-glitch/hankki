@@ -209,14 +209,14 @@ export const ING_LINKS = {
   '기름': 'https://www.costco.co.kr/Foods/Processed-Food/Oils/KS-Siurana-Extra-Virgin-Olive-Oil-1L/p/892188', // ⛇묶음: 올리브유 / 식용유 / 기름
   '전분물': 'https://link.coupang.com/a/gYWQr9gXIa', // ⛇묶음: 감자전분 / 전분가루 / 전분물 / 전분
   '당면': 'https://link.coupang.com/a/hod4irlEIv', // [창업자 2026-09-27] 남은 나물 잡채(9/28)
-  '닭날개': 'https://link.coupang.com/a/hrfwOoUYCa', // [창업자 2026-09-29] 마늘 간장 닭날개조림 — 레시피는 날개 그대로
+  // ⏸ [2026-11-22] 닭날개조림 → 「간장 조림닭」 원본 교체로 재료 줄이 없어져 잠시 뺌(다시 쓰면 주석만 풀기) · '닭날개': 'https://link.coupang.com/a/hrfwOoUYCa', // [창업자 2026-09-29] 마늘 간장 닭날개조림 — 레시피는 날개 그대로
   '닭봉': 'https://link.coupang.com/a/hrfmkfSUHA',   // [창업자 2026-09-29] 날개 대신 찾아 준 것 — 닭봉이 나오는 편에 쓰인다
   '우동면': 'https://link.coupang.com/a/hrfCbis8Oq', // [창업자 2026-09-29] 면사랑 우동면 · 야끼우동
   '흑설탕': 'https://link.coupang.com/a/g3fOzcNQiG', // [창업자 2026-09-29] 「흑설탕은 아우노슈가하면돼」 — 주부의 장바구니 아우노슈가와 같은 링크 · 닭날개조림
   '페퍼론치노': 'https://link.coupang.com/a/hrfqzuUbhA', // ⛇묶음: 페퍼론치노 / 페페론치노
   '페페론치노': 'https://link.coupang.com/a/hrfqzuUbhA', // ⛇묶음: 페퍼론치노 / 페페론치노
   '그라나파다노 치즈': 'https://link.coupang.com/a/hrfHP6DKiO',
-  '생강즙': 'https://link.coupang.com/a/gYWRWEezHE', // ⛇묶음: 생강 / 다진 생강 / 생강즙
+  // ⏸ [2026-11-22] 생강즙 재료 줄이 없어져 잠시 뺌(다시 쓰면 주석만 풀기) · '생강즙': 'https://link.coupang.com/a/gYWRWEezHE', // ⛇묶음: 생강 / 다진 생강 / 생강즙
   // [창업자 2026-10-02] 10/7·10/12·10/14·10/16 편 재료 링크 (3일 전 관문 · 아이폰 반영)
   '미나리': 'https://link.coupang.com/a/hwk88hFYjs',
   '겨자': 'https://link.coupang.com/a/hwl0H6be5Q', // ⛇묶음: 겨자 / 연겨자
