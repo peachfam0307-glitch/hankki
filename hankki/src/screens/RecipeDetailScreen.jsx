@@ -20,6 +20,7 @@ import TidyWaiting from '../components/TidyWaiting'
 import DecorLayer from '../components/DecorLayer'
 import DecorEditor from '../components/DecorEditor'
 import KitchenGuideSheet from '../components/KitchenGuideSheet'
+import { 손질찾기 } from '../data/kitchenGuide'
 import { shareDecoratedCover, buildCoverPayload } from '../shareCover'
 import { warmFontCSS } from '../fontEmbed'
 import SendNowSheet from '../components/SendNowSheet'
@@ -163,6 +164,7 @@ export default function RecipeDetailScreen({ id }) {
   const [메모창, set메모창] = useState(false)
   const [decorOpen, setDecorOpen] = useState(false)
   const [guide, setGuide] = useState(false) // 요리 가이드(계량·손질) 시트
+  const [손질칸, set손질칸] = useState(null) // 🔪 재료 옆 「손질」 칩 → 그 재료 손질법만(창업자 2026-11-22)
   const [drawOpen, setDrawOpen] = useState(false) // 공유 뽑기카드
   const [shareSheet, setShareSheet] = useState(false) // 공유 두 갈래 시트
   const [coverBusy, setCoverBusy] = useState(false) // 꾸민 표지 이미지 만드는 중(로딩)
@@ -1125,6 +1127,14 @@ export default function RecipeDetailScreen({ id }) {
                           체크는 「장보기에 담을 것」을 고르는 것이지 「재료를 지우는 것」이 아니다. */}
                       {/* 🏷 묶음 이름은 «위 소제목 줄»이 맡는다 — 여기선 늘 뗀다 */}
                       <span style={{ flex: 1, minWidth: 0 }}>{stripIngGroup(scaleIngredient(ing, ratio))}</span>
+                      {/* 🔪 [창업자 2026-11-22 「레시피에서 손질법을 바로 볼 수 있게」] 손질법이 있는 재료만 · 누르면 체크 대신 손질법 */}
+                      {손질찾기(stripIngGroup(ing)) && (
+                        <span role="button" tabIndex={0} className="press" data-prep-chip="1"
+                          onClick={(e) => { e.stopPropagation(); set손질칸(손질찾기(stripIngGroup(ing))) }}
+                          style={{ flex: '0 0 auto', marginLeft: 8, padding: '3px 9px', borderRadius: 999, background: 'var(--cream)', color: 'var(--brown)', fontSize: 14, fontWeight: 800 }}>
+                          🔪 손질
+                        </span>
+                      )}
                     </button>
                   </Fragment>
                   )
@@ -1436,6 +1446,7 @@ export default function RecipeDetailScreen({ id }) {
       )}
 
       {guide && <KitchenGuideSheet onClose={() => setGuide(false)} />}
+      {손질칸 && <KitchenGuideSheet only={손질칸} onClose={() => set손질칸(null)} />}
       {메모창 && (
         <MemoPinSheet title={r.title} text={r.postit?.text || ''} onClose={() => set메모창(false)}
           onSave={(t) => { updateRecipe(r.id, { postit: t ? { text: t, at: Date.now() } : null }); nav.showToast(t ? '메모를 붙였어요' : '메모를 뗐어요') }} />

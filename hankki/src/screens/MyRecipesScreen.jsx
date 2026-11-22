@@ -61,6 +61,8 @@ import idxHeart from '../assets/ui/idx_heart.png'
 import StoredImg from '../photoView'
 import SeasonHeadCut from '../components/SeasonHeadCut.jsx'
 import { 기본레시피표시 } from '../stats'
+import KitchenGuideSheet from '../components/KitchenGuideSheet'
+import { PREP } from '../data/kitchenGuide'
 
 // 레시피 탭 첫 방문 코치마크 — 모아보기·요리 기록 세그먼트 안내
 const MYRECIPES_COACH_KEY = COACH.myrecipes
@@ -320,6 +322,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
   // 🍽 [창업자 2026-11-21 시안 A] 「테마」 칩 하나 → 누르면 아랫줄이 테마 칩으로 바뀐다 · 🔑 열쇠(?테마=1) 뒤 = 아이폰과 같이 연다
   //   ⭐ 열린 편이 있는 테마만 · 칩 값 = 'th:<id>' (폴더 이름과 안 겹치게)
   const [테마켬] = useState(() => 테마열쇠())
+  const [손질법창, set손질법창] = useState(false)
   const 테마칸 = useMemo(() => 테마켬 ? THEMES.map((t) => ({ ...t, n: sorted.filter((r) => 테마에드나(r, t)).length })).filter((t) => t.n > 0) : [], [sorted, 테마켬])
   const 테마모두 = useMemo(() => sorted.filter((r) => 테마칸.some((t) => 테마에드나(r, t))), [sorted, 테마칸])
   const 테마보는중 = folder === '__theme' || String(folder).startsWith('th:')
@@ -412,6 +415,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
     favCount > 0 && heartCount > 0 && { id: '__pinned', name: '모두', n: pinnedCount, 그림: <><img src={idxChef} alt="" className="pill-chef" /><Icon name="heart" size={13} style={{ fill: 'currentColor', marginLeft: -3 }} /></> },
     SNS수 > 0 && { id: '__sns', name: 'SNS', n: SNS수, 그림: <Icon name="play" size={13} /> },
     테마칸.length > 0 && { id: '__theme', name: '테마', n: 테마칸.length, 그림: null },
+    테마칸.length > 0 && { id: '__prep', name: '손질법', n: PREP.reduce((s, g) => s + g.items.length, 0), 그림: null },   // 🔪 창업자 2026-11-22 Ⓑ — 누르면 손질법 시트(폴더 아님)
     oftenCount > 0 && { id: '__often', name: '자주', n: oftenCount, 그림: null },
   ].filter(Boolean)
   const 윗칩목록 = (() => {
@@ -644,6 +648,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
 
   return (
     <>
+      {손질법창 && <KitchenGuideSheet prepOnly onClose={() => set손질법창(false)} />}
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           {/* 인사하는 꼬르곰 — 홈 상단에 있던 걸 이리로 옮겼다(창업자 2026-07-29).
@@ -954,7 +959,7 @@ export default function MyRecipesScreen({ initView = 'grid' }) {
                 <button key={k.id} className={`pill press ${!칩편집 && folder === k.id ? 'active' : ''}`}
                   {...(폴더앞켜짐 && !칩편집 ? hold(() => set칩편집(k.id)) : {})}
                   style={칩편집 ? { borderStyle: 'dashed' } : undefined}
-                  onClick={() => { if (lpFired.current) { lpFired.current = false; return } if (칩편집) set칩편집(k.id); else setFolder(k.id) }}>
+                  onClick={() => { if (lpFired.current) { lpFired.current = false; return } if (칩편집) set칩편집(k.id); else if (k.id === '__prep') set손질법창(true); else setFolder(k.id) }}>
                   {k.그림}{k.name}{칩편집 ? '' : ` ${k.n}`}
                 </button>
               )
