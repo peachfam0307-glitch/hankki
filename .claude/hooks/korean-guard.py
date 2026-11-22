@@ -59,7 +59,8 @@ if not 본문.strip():
 한 = len(re.findall(r'[가-힣]', 깨끗))
 조각 = [m.group(0) for m in re.finditer(r"\b[A-Za-z][A-Za-z'’-]*(?:[ ,]+[A-Za-z][A-Za-z'’-]*){3,}", 깨끗)]
 
-if not 조각 and 영 <= 한:
+# 비율 잣대는 «긴 영어 글»만 — 짧은 답에 고유명(채널·제품)이 끼면 영어 글자가 한글보다 많을 수 있다(2026-11-22 헛경보)
+if not 조각 and not (영 > 40 and 영 > 한 * 2):
     try: os.remove(표식)
     except Exception: pass
     끝(0)
