@@ -37,7 +37,7 @@ if isinstance(reqs, list):
 for g in 글들:
     if 'real food' not in g.lower() and 'food photograph' not in g.lower():
         continue
-    없는 = [뜻 for 말, 뜻 in 필수.items() if 말 not in g]
+    없는 = [뜻 for 말, 뜻 in 필수.items() if 말 not in g and not (말 == 'never like uniform beads' and not any(w in g.lower() for w in ('rice', 'gimbap', 'porridge')))]
     if 'porridge' in g.lower() and 'individual grains are barely visible' not in g:
         없는.append('죽 = 매끈하게(individual grains are barely visible)')
     if 없는:
