@@ -95,6 +95,15 @@
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/hf-guard.sh"
           }
         ]
+      },
+      {
+        "matcher": "mcp__Higgsfield__generate_image|mcp__Higgsfield__generate_image_batch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/food-prompt-guard.py"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
