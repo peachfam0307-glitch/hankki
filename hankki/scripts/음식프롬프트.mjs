@@ -5,7 +5,7 @@
 //   ⚠️ --밥 = 밥알이 보이는 음식(김밥·볶음밥)만 · 밥 없는 음식에 밥 문장을 넣으면 밥을 그려 넣는다(11/23 마녀스프에 밥알 생김)
 //   ⭐ 음식 설명은 recipe.mjs 로 레시피를 열어 «재료 모양 그대로» 쓴다
 const 앞 = 'Real food photograph, 3/4 angle, soft natural daylight, plain pure white background (#FFFFFF), isolated: '
-const 몸 = 'Looks exactly like real food in a real photo, natural textures, nothing stylized or patterned.'
+const 몸 = 'Looks exactly like real food in a real photo, natural textures, nothing stylized or patterned. It looks like a casual smartphone photo of real homemade food, slightly uneven and imperfect, never like a plastic food model, a display replica or an illustration.'   // ➕ 창업자 2026-11-25 「실제그림처럼. 모형같지않게」 · 오믈렛·김국수 다시 뽑아 「좋아」
 const 밥 = 'Rice grains look soft, irregular and naturally clumped, never like uniform beads, dots or a repeating pattern.'
 const 죽 = 'The porridge is silky and smooth, rice fully softened and melted into the porridge so individual grains are barely visible, not lumpy, not clumped, never like uniform beads, dots or a repeating pattern.'
 const 다짐 = 'The minced meat is in tiny loose flecks, no meatballs, no round lumps, not crumbly clusters.'

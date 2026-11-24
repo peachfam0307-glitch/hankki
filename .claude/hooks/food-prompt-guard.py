@@ -11,6 +11,7 @@ import json, sys
     'No disturbing surface patterns on meat': '고기 표면 무늬 금지',
     'nothing stylized or patterned': '꾸민 무늬 금지',
     'No sesame seeds': '깨 금지',
+    'never like a plastic food model': '모형·그림 같지 않게(휴대폰 사진처럼)',
 }
 틀 = ("Real food photograph, 3/4 angle, soft natural daylight, plain pure white background (#FFFFFF), isolated: <음식>. "
       "Looks exactly like real food in a real photo, natural textures, nothing stylized or patterned. "
