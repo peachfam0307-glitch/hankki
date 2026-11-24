@@ -81,7 +81,7 @@ if (!isMain) { /* import 용 */ } else {
     console.log(`\n${'─'.repeat(64)}`)
     console.log(`🍳 ${r.title}   (${r.id})`)
     console.log(한줄(r).slice(2))
-    console.log(`   ${r.time}분 · ${r.servings}인분 · ${r.difficulty} · ${r.folder}`)
+    console.log(`   ${r.time ? r.time + '분 · ' : ''}${r.servings ? r.servings + '인분 · ' : ''}${r.difficulty} · ${r.folder}`)
     console.log(`\n   재료 ${r.ingredients.filter((x) => !/^\[/.test(x)).length}줄`)
     r.ingredients.forEach((x) => console.log(`     ${/^\[/.test(x) ? x : '· ' + x}`))
     console.log(`\n   만드는 법 ${r.steps.length}걸음`)

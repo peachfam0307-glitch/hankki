@@ -149,7 +149,7 @@ export default function SearchScreen() {
                     <button className="grid-card press" style={{ textAlign: 'left', width: '100%' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
                       <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                       <div className="name">{r.title}<FounderMark recipe={r} /></div>
-                      <div className="date">{r.category} · {r.time}분</div>
+                      <div className="date">{r.category}{r.time ? ` · ${r.time}분` : ''}</div>
                     </button>
                     <button
                       className={`fav-dot press${r.favorite ? ' on' : ''}`}
@@ -170,7 +170,7 @@ export default function SearchScreen() {
                   <button key={r.id} className="grid-card press" style={{ textAlign: 'left' }} onClick={() => nav.push({ name: 'detail', id: r.id })}>
                     <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                     <div className="name">{r.title}<FounderMark recipe={r} /></div>
-                    <div className="date">{r.category} · {r.time}분</div>
+                    <div className="date">{r.category}{r.time ? ` · ${r.time}분` : ''}</div>
                   </button>
                 ))}
               </div>

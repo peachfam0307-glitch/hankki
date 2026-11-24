@@ -31,7 +31,7 @@ export default function FavoritesScreen() {
                 <Thumb recipe={r} ratio="1/1" radius={16} showDecor />
                 <div className="fav-dot"><Icon name="bookmark" size={16} color="var(--brown)" style={{ fill: 'var(--brown)' }} /></div>
                 <div className="name">{r.title}<FounderMark recipe={r} /></div>
-                <div className="date">{r.category} · {r.time}분</div>
+                <div className="date">{r.category}{r.time ? ` · ${r.time}분` : ''}</div>
               </button>
             ))}
           </div>
