@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useStore } from '../store'
 import { useNav } from '../App'
+import { useBackHandler } from '../useBackHandler'
 import Icon from '../components/Icon'
 import Thumb from '../components/Thumb'
 import TabTips from '../components/TabTips'
@@ -75,6 +76,14 @@ export default function SearchScreen() {
       return t
     } catch { return '' }
   })
+  // ↩️ [창업자 2026-11-25 「검색해서 테마 그림보고 하나 눌렀다가 뒤로가기하면 바로 홈으로 나와져」]
+  //    그림·칩을 «눌러서» 목록이 열린 상태면 뒤로가기(폰·‹ 둘 다)가 먼저 그림판으로 돌아온다 → 한 번 더 누르면 홈
+  const [골라서, set골라서] = useState(false)
+  const 고르기 = (w) => { setQ(w); set골라서(true) }
+  const 골라서닫기 = () => { setQ(''); set골라서(false) }
+  //    ⛔ useLayerBack 은 안 된다 — 목록에서 레시피를 연 뒤 뒤로가기가 레시피보다 «검색어»를 먼저 지웠다(시험 11/25)
+  //    → tabLevel 핸들러: 위에 레시피 화면이 떠 있으면 잠자고, 검색 화면이 맨 위일 때만 먼저 받는다
+  useBackHandler(() => { if (골라서 && q) { 골라서닫기(); return true } return false }, { tabLevel: true })
 
   const query = q.trim()
   const results = useMemo(() => {
@@ -116,7 +125,7 @@ export default function SearchScreen() {
     <>
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <button className="icon-btn press" onClick={() => nav.go('home')} aria-label="뒤로" style={{ marginLeft: -6 }}>
+          <button className="icon-btn press" onClick={() => (골라서 && q ? 골라서닫기() : nav.go('home'))} aria-label="뒤로" style={{ marginLeft: -6 }}>
             <Icon name="chevron-left" size={24} />
           </button>
           <div className="h-title">검색</div>
@@ -126,9 +135,9 @@ export default function SearchScreen() {
       <div className="pad">
         <div className="searchbar" style={{ marginTop: 2 }}>
           <Icon name="search" size={19} color="var(--text-sub)" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={새검색 ? "요리 이름·재료로 찾기 · 초성(ㄷㅂ)도 돼요" : "검색어를 입력하세요"} autoComplete="off" />
+          <input value={q} onChange={(e) => { setQ(e.target.value); set골라서(false) }} placeholder={새검색 ? "요리 이름·재료로 찾기 · 초성(ㄷㅂ)도 돼요" : "검색어를 입력하세요"} autoComplete="off" />
           {q && (
-            <button className="press" onClick={() => setQ('')} aria-label="지우기">
+            <button className="press" onClick={골라서닫기} aria-label="지우기">
               <Icon name="x" size={18} color="var(--text-sub)" />
             </button>
           )}
@@ -181,14 +190,14 @@ export default function SearchScreen() {
             {테마칸.length > 0 && (
               <접는칸 열쇠="테마" 제목="테마별" 개수={`${테마칸.length}`}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
-                  {테마칸.map((t) => <그림칸 key={t.id} img={t.img} 이름={t.name} n={t.n} onClick={() => setQ(t.name)} />)}
+                  {테마칸.map((t) => <그림칸 key={t.id} img={t.img} 이름={t.name} n={t.n} onClick={() => 고르기(t.name)} />)}
                 </div>
               </접는칸>
             )}
             {한식칸.length > 0 && (
               <접는칸 열쇠="집밥" 제목="집밥" 개수={`${한식칸.length}`}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
-                  {한식칸.map((x) => <그림칸 key={x.w} img={한식그림(x.w)} 이름={x.w} n={x.n} onClick={() => setQ(x.w)} />)}
+                  {한식칸.map((x) => <그림칸 key={x.w} img={한식그림(x.w)} 이름={x.w} n={x.n} onClick={() => 고르기(x.w)} />)}
                 </div>
               </접는칸>
             )}
@@ -196,7 +205,7 @@ export default function SearchScreen() {
             <div className="h-section" style={{ marginTop: 26, marginBottom: 13 }}>인기 검색어</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {POPULAR_SEARCHES.map((t) => (
-                <button key={t} className="pill press" onClick={() => setQ(t)}>{t}</button>
+                <button key={t} className="pill press" onClick={() => 고르기(t)}>{t}</button>
               ))}
             </div>
 
@@ -204,7 +213,7 @@ export default function SearchScreen() {
             <div className="h-section" style={{ marginTop: 28, marginBottom: 13 }}>태그로 찾기</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {TAG_LIST.slice(0, 6).map((t) => (
-                <button key={t} className="tag press" onClick={() => setQ(t)}># {t}</button>
+                <button key={t} className="tag press" onClick={() => 고르기(t)}># {t}</button>
               ))}
             </div>
 
@@ -212,7 +221,7 @@ export default function SearchScreen() {
             <div className="h-section" style={{ marginTop: 28, marginBottom: 15 }}>재료로 찾기</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '18px 8px' }}>
               {INGREDIENT_CHIPS.map((c) => (
-                <button key={c.name} className="press" onClick={() => setQ(c.name)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
+                <button key={c.name} className="press" onClick={() => 고르기(c.name)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
                   <div className="emoji-tile" style={{ width: 56, height: 56, borderRadius: '50%' }}>
                     <FoodIcon name={c.icon || guessIngredientIcon(c.name)} size={34} />
                   </div>
