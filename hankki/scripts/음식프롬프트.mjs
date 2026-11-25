@@ -13,7 +13,9 @@ const 다짐 = 'The minced meat is in tiny loose flecks, no meatballs, no round 
 // ⚠️ 나물·면 문장은 «그 음식일 때만» 넣는다 — 늘 넣었더니 또띠아 토스트 옆에 면·나물을 그려 넣었다(2026-11-26 · 밥 문장 때와 같은 사고)
 const 나물 = 'The noodles or namul look picked up by hand and dropped onto the plate in a soft relaxed mound, strands curving and lying in different directions, never arranged in a grid, never piled into a net, mesh or woven stack.'   // ➕ 창업자 2026-11-26 「나물류 특히 배치에 신경써줘. 손으로 집어 담은 것 처럼. 그물모양으로 쌓아올리는 것 절대금지」 → --나물
 // ➕ 창업자 2026-11-26 「훨씬좋아 이대로 하자. 프롬프트 수정해줘」(스팸땡초김밥 2판) → --김밥 · 1판(썬 조각만 줄지어) = 단면 밥알이 구슬처럼 「완전 징그럽다」
-const 김밥 = 'Show one long uncut gimbap roll wrapped in glossy dark seaweed lying on the plate, with only three thick slices cut from its end leaning against it. The cut faces show sticky rice pressed together into one smooth soft mass like real compact gimbap rice, shot slightly soft-focus on the cut faces.'
+// ⏩ 정정(08:22) 창업자가 좋다고 한 건 2판이 아니라 «지금 앱 김밥 그림 n3096» 이었다(「위에 잘나왔는데」「이게 진짜 김밥같아」「이거를 그릇에 넣자」)
+//    → 김밥은 «앱에 이미 있는 그 레시피 그림»을 참고 그림 ①로 넣고 「음식은 그대로, 접시만 바꿔」로 뽑는다(3판 = 창업자 OK 대기)
+const 김밥 = 'Thick gimbap slices piled casually, cut faces showing chunky fillings and real sticky rice, glossy dark seaweed.'
 const 데침 ='The blanched or boiled vegetables are soft, limp and wilted, gently curving and bending naturally, never stiff or straight like sticks.'   // ➕ 창업자 2026-11-26 「나물류중에 데쳐서 무치는 종류는 부드럽게 그리면 더 좋을 듯해」 → --데침
 const 국 ='Green onion is cut on a long diagonal bias into slanted oval slices (Korean eoseut-sseolgi), never round rings.'   // ➕ 창업자 2026-11-26 「파를 어슷썰면 더 좋겠다- 다음에 탕이나 국 뽑을때」 → --국
 // ➕ 창업자 2026-11-26 「구슬모양 너무 징그러워」(만능양념간장 다진 양파가 구슬로 나옴) → 끝에 «다진 채소 = 납작한 제각각 조각» 문장
