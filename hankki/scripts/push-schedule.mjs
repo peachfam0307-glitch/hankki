@@ -37,7 +37,8 @@ export function 일정만들기(부터 = todayKST()) {
   for (const g of gates()) {
     if (g.date < 부터) continue
     if (g.kind === 'recipe') 더하기(g.date, 'recipe', `${String(g.what).split(' — ')[0].split(' · ')[0].replace(/\s+⛔.*$/, '').trim()} 레시피가 열렸어요`)
-    else if (g.kind === 'sns') 더하기(g.date, 'sns', '새 SNS 레시피가 열렸어요')
+    // ✏️ [창업자 2026-11-25 「알림문구 바꾸자」] 「새 SNS 레시피」 → 「새 레시피」(레시피 개편 · 겨울 릴스 알림 장면과 같은 글) → 이모지 🍳
+    else if (g.kind === 'sns') 더하기(g.date, 'sns', '새 레시피가 열렸어요')
     else if (g.kind === 'cart') 더하기(g.date, 'cart', null)
     else if (/^꾸미기 서랍/.test(String(g.where || ''))) 더하기(g.date, 'decor', '새 꾸미기가 열렸어요')
   }
