@@ -217,9 +217,14 @@ export default {
       // 🔔 처음 보는 오류 = 30일 «본 것» 표 하나(최대 400) — 같은 오류는 다시 안 울린다
       // 🧹 [창업자 2026-11-19 「진짜오류만 알람받게」] 알림은 «진짜»만 — ops.html 의 잡음·서비스워커 잣대와 «같은» 판정
       //    (11/19 07:00 알림 = 진짜 0 · 서비스워커 거절·그림 42장 실패뿐이었는데 울렸다) · 목록(ops)에는 그대로 남긴다
+      // 🕰 [창업자 2026-11-25 「안울리게해줘 진짜오류아니면」] «옛 판»이 그림 못 찾은 것도 안 울린다(ops.html 과 같은 잣대)
+      const 판수 = (v) => { const m = String(v || '').match(/v(\d+)\.(\d+)/); return m ? Number(m[1]) * 1000 + Number(m[2]) : 0 }
+      //    ⚠️ 그날 옛 판만 들어오면 «최신»을 모른다 → 본 적 있는 가장 새 판을 KV 에 남겨 둔다
+      let 최신판 = Math.max(0, ...목록.map((e) => 판수(e.판)))
+      try { const 전 = Number(await kv.get('err:latest')) || 0; if (최신판 > 전) await kv.put('err:latest', String(최신판)); else 최신판 = 전 } catch { /* 그날 목록만으로 */ }
       const 잡음 = (e) => e.종류 === '바깥'
         || ((e.종류 === 'error' || e.종류 === 'promise') && e.위치 && !/peachfam0307-glitch\.github\.io\/hankki|capacitor:\/\//.test(e.위치))
-        || ((e.종류 === '그림' || e.종류 === '자원') && e.몇번 >= 5)
+        || ((e.종류 === '그림' || e.종류 === '자원') && (e.몇번 >= 5 || 판수(e.판) < 최신판))
         || e.종류 === '서비스워커' || /register a ServiceWorker|serviceWorker\.register|registerSW\.js/i.test((e.메시지 || '') + '\n' + (e.위치 || ''))
       const 진짜새것 = 새것.filter((k) => !잡음(k))
       let 처음수 = 0
