@@ -8,7 +8,7 @@ const 그림체 = 'ART STYLE: a warm cozy children\'s picture-book illustration.
 const 캐릭터 = {
   곰: 'Use the bear in the reference images as the exact same character (꼬르곰): fluffy curly-textured honey-orange fur drawn with soft wavy strokes, round head, small round ears with pink inner ears, small black dot eyes, small dark brown oval nose, cream muzzle, rosy cheek blush, white chef hat, cream striped apron with a fried-egg pocket and a white bow at the back, big head with a short chubby body. Do not redesign or restyle it.',
   뾰미: 'Use the fennec fox girl in the reference images as the exact same character (뾰미): keep her face, ears, outfit and colors identical to the references. Do not redesign or restyle her.',
-  펭펭: 'Use the penguin in the reference images as the exact same character (펭펭): keep its face, hair, outfit and colors identical to the references. Do not redesign or restyle it.',
+  펭펭: 'Use the penguin in the reference images as the exact same character (펭펭): keep its face, hair, outfit and colors identical to the references, with a chubby round body and soft plump droopy cheeks. Do not redesign or restyle it.',   // ➕ 창업자 2026-11-25 「펭펭 더 통통하고 쳐진 볼이 너무 귀여워」(개편 릴스)
 }
 const 끝 = 'COMPOSITION: vertical, characters large and clearly readable, generous calm empty space at the top for a headline. No text, no letters, no logos, no watermark.'
 export function 장면프롬프트(장면, 누구 = []) {
