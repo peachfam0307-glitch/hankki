@@ -82,7 +82,8 @@ export function 테마열쇠() {
     if (v === '1') localStorage.setItem('hankki:테마', '1')
     if (v === '0') localStorage.removeItem('hankki:테마')
     // 📅 [창업자 2026-11-22] 11/30 부터는 모두에게 열린다 — 아이폰 판(오늘 굽기)과 같은 날(절대원칙 2026-09-18)
-    if (todayKST() >= '2026-11-30') return true
+    // ✏️ [창업자 2026-11-25 「아이폰은 날짜내일로변경해서 구우면안돼?」→「배포해」] 11/30 → 11/26 (테마 릴스 인스타 11/26)
+    if (todayKST() >= '2026-11-26') return true
     return localStorage.getItem('hankki:테마') === '1'
   } catch { return false }
 }
