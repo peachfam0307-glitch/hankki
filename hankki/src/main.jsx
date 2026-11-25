@@ -2,7 +2,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import ErrorBoundary from './ErrorBoundary'
-import { 오류받기시작 } from './errorReport'   // ⚠️ 운영 2단계 — 켜는 날 전엔 «직전 행동»만 메모리에 적는다(보내지 않음)
+import { 오류받기시작, 오류보내기 } from './errorReport'   // ⚠️ 운영 2단계 — 켜는 날 전엔 «직전 행동»만 메모리에 적는다(보내지 않음)
 import { StoreProvider } from './store'
 import { TimerProvider } from './timer'
 import { applyTheme, getTheme } from './theme'
@@ -146,7 +146,17 @@ if ('serviceWorker' in navigator) {
     window.location.reload()
   })
   navigator.serviceWorker.ready.then((reg) => {
-    const check = () => reg.update().catch(() => {})
+    // 🩺 [2026-11-25 창업자 「넣어줘」] 새 판으로 «못 넘어가는» 까닭을 오류 보고로 받는다
+    //    뿌리 = 갤럭시 한 대가 v14.76 에 2주 머묾 — 저장 공간 부족인지 sw.js 못 받는 건지 가를 길이 없었다
+    //    ① 확인(update) 자체 실패 = sw.js 를 못 받음 ② 새 판 설치가 중간에 버려짐(redundant) = 내려받기 실패(공간·파일)
+    const 남은공간 = async () => { try { const e = await navigator.storage?.estimate?.(); return e ? ` · 공간 ${Math.round((e.usage || 0) / 1048576)}/${Math.round((e.quota || 0) / 1048576)}MB` : '' } catch { return '' } }
+    const 업데이트오류 = async (무엇, err) => { const 공간 = await 남은공간(); 오류보내기({ message: `${무엇}: ${String(err?.message || err || '').slice(0, 200)}${공간}`, stack: '' }, '업데이트') }
+    reg.addEventListener('updatefound', () => {
+      const w = reg.installing
+      if (!w) return
+      w.addEventListener('statechange', () => { if (w.state === 'redundant') 업데이트오류('새 판 설치 실패', 'redundant') })
+    })
+    const check = () => reg.update().catch((e) => { if (navigator.onLine !== false) 업데이트오류('새 판 확인 실패', e) })
     check()
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') check()
