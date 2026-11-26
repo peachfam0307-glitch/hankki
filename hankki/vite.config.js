@@ -74,7 +74,7 @@ export default defineConfig({
         //   ✅ 빼면 «로그인을 누른 그 순간»에 받는다. 그 뒤론 브라우저 캐시에 남는다.
         //   ⚠️ 이름을 못 박아야 뺄 수 있다 — 그래서 아래 `manualChunks` 로 `firebase-*` 로 이름을 고정했다
         //      (기본 이름은 `index.esm-<해시>.js` 라 다른 조각과 구별이 안 된다).
-        globIgnores: ['assets/**/*.png', 'assets/**/*.webp', 'assets/firebase-*.js'],
+        globIgnores: ['assets/**/*.png', 'assets/**/*.webp', 'assets/firebase-*.js', 'ev/**'],   // 🎄 이벤트 그릇 그림(public/ev)도 미리 안 받는다 — 2026-11-26 이걸 빼먹어 precache 8.2MB 로 게이트에 걸렸다
       },
       includeAssets: ['favicon.svg', 'icons/icon-192-v7.png', 'icons/icon-512-v7.png'],
       manifest: {
