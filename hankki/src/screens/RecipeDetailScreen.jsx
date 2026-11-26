@@ -72,6 +72,7 @@ import { 항목묶어 } from '../stepBreak'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 // 📺 링크 → 앱 안에서 재생할 수 있는 «공식» 임베드 주소 (유튜브·인스타)
 import { embedUrl, SNS표 } from '../embed'
+import { 고를그릇 } from '../data/eventBowls' // 🎄 그릇 바꾸기(이벤트 그릇) · 2026-11-26
 import avGom from '../assets/avatars/av_gom.png' // 🧑‍🍳 창업자가 «직접 만든» 레시피 뱃지 (made:'창업자' · 2026-09-27)
 
 // 🏷 출처(어디서 왔나) — 주소에서 «읽어» 낸다 (창업자 2026-09-03 *"원본링크에-출처도 붙이자"*)
@@ -456,7 +457,7 @@ export default function RecipeDetailScreen({ id }) {
     // ⭐ iconPicked = 「사람이 직접 골랐다」 — 나중에 제목을 손봐도 이 아이콘을 안 덮는다.
     //   (EditorScreen 의 자동 재추천이 직접 고른 것까지 덮던 것 · 창업자 제보 2026-08-05)
     const 사진이었다 = r.thumb === 'photo'
-    updateRecipe(r.id, { thumb: 'icon', icon: k, iconPicked: true, touched: true })
+    updateRecipe(r.id, { thumb: 'icon', icon: k, iconPicked: true, bowl: '', touched: true })   // 🎄 아이콘을 직접 고르면 이벤트 그릇은 푼다(안 풀면 고른 아이콘이 안 보인다)
     // ③ 사진 → 아이콘으로 «되돌릴» 때 일기 사진도 뺄지 묻는다(창업자 2026-08-23)
     //    ⛔ 일기에 사진이 있을 때만 — 없으면 물어봐야 할 것이 없다
     if (사진이었다 && latestEntry?.photo) { setAskDiaryRemove(true); return }
@@ -693,7 +694,7 @@ export default function RecipeDetailScreen({ id }) {
              (여태 갤러리 글리프였다 — 2026-07-28 에 «연결»만 픽커로 바꾸고 그림은 안 바꾼 흔적).
           ⚠️ 채움색은 오른쪽만 — 주 동작은 어디까지나 「레시피 꾸미기」다(위계 유지).
           ✅ 캡처 제외 표시(`data-nocapture`)가 필요 없어졌다 — 캡처는 위 `coverRef` 안만 찍는다. */}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '12px 20px 0' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '12px 20px 0' }}>
         <button
           className="press"
           onClick={() => setIconSheet(true)}
@@ -713,6 +714,19 @@ export default function RecipeDetailScreen({ id }) {
           <Icon name="palette" size={14} />
           레시피 꾸미기
         </button>
+        {/* 🎄 그릇 바꾸기 — 이벤트 그릇 그림이 있는 레시피에만(src/data/eventBowls.js) · 누를 때마다 흰 그릇 ↔ 이벤트 그릇
+            📮 창업자 2026-11-26 「그릇바꾸기 좋은 것 같아. 고를수있는 레시피에만」 · 🔑 열쇠 뒤(아이폰과 같은 날 연다) */}
+        {고를그릇(r.id).slice(0, 1).map((g) => (
+          <button
+            key={g.키}
+            className="press"
+            onClick={() => { const 켬 = r.bowl !== g.키; updateRecipe(r.id, { bowl: 켬 ? g.키 : '', touched: true }); nav.showToast(켬 ? `${g.이름}에 담았어요` : '흰 그릇으로 돌려놨어요') }}
+            aria-label="그릇 바꾸기"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15.5, fontWeight: 800, padding: '0 13px', borderRadius: 999, border: 'none' }}
+          >
+            그릇 바꾸기
+          </button>
+        ))}
       </div>
       </div>
       {iconSheet && (
