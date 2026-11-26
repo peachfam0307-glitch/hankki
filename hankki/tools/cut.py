@@ -480,6 +480,15 @@ def cut(sheet, outdir, prefix, is_frame=False, min_px=8000, diecut=0, join=5, dr
                         f'   📮 창업자 *"두껍게 하면 모든스티커가 다 띠부씰같자나… 나머지는 최대한 얇게 가자"*\n'
                         f'   ⚠️ 띠부씰 팩으로 «일부러» 두껍게 낼 때만 --allow-thick')
         _albl, _an2 = ndimage.label(alpha > 0.16)
+        # 🧹 [2026-11-26] 30px 미만 «점 티끌»(가장자리 흐림이 남긴 1~몇 px)은 조각이 아니라 먼지다 → 지우고 센다
+        #    실측 = 크리스마스 그릇 사진 10장이 1px 점 1~2개로 막혔다(하트·반짝 같은 «보이는 조각»은 그대로 막는다)
+        if _an2 > 1:
+            _asz0 = ndimage.sum(alpha > 0.16, _albl, range(1, _an2 + 1))
+            for _i, _s in enumerate(_asz0):
+                if _s < 30:
+                    alpha[_albl == _i + 1] = 0.0
+            out[..., 3] = (alpha * 255).astype(np.uint8)
+            _albl, _an2 = ndimage.label(alpha > 0.16)
         if _an2 > 1:
             _asz2 = ndimage.sum(alpha > 0.16, _albl, range(1, _an2 + 1))
             _조각 = int(sum(1 for s in _asz2 if s / _asz2.max() < 0.12))
