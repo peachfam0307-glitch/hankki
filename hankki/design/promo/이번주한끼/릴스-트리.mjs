@@ -113,7 +113,7 @@ window.render=(t)=>{
   for(const id of ['표지','갈래','끝','머리','이름판'])$(id).style.opacity=0
   $('어둠').style.opacity=0;$('카드').style.opacity=0
   if(c.종류==='표지'){const o=a*(p>0.85?1-(p-0.85)/0.15:1);$('표지').style.opacity=o;$('어둠').style.opacity=0.35*o;$('표지').style.transform='translateY('+(50*(1-a))+'px)'}
-  if(c.종류==='갈래'){const o=a*(p>0.8?1-(p-0.8)/0.2:1);$('갈래').style.opacity=o;$('갈래').style.transform='scale('+(0.6+0.4*a)+') rotate(-3deg)';$('어둠').style.opacity=0.3*o}
+  if(c.종류==='갈래'){$('갈래t').textContent=c.제목;const o=a*(p>0.8?1-(p-0.8)/0.2:1);$('갈래').style.opacity=o;$('갈래').style.transform='scale('+(0.6+0.4*a)+') rotate(-3deg)';$('어둠').style.opacity=0.3*o}
   if(c.종류==='음식'||c.종류==='장'){
     $('머리').style.opacity=1;$('머리t').textContent=c.위+' · '+c.번
     const 이미지=c.종류==='음식'?그림[c.n]:장그림[c.n]; if($('카드img').dataset.k!==c.종류+c.n){$('카드img').src=이미지;$('카드img').dataset.k=c.종류+c.n}
