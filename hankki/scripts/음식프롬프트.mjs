@@ -11,7 +11,9 @@ const 밥 = 'Rice grains look soft, irregular and naturally clumped, never like 
 const 죽 = 'The porridge is silky and smooth, rice fully softened and melted into the porridge so individual grains are barely visible, not lumpy, not clumped, never like uniform beads, dots or a repeating pattern.'
 const 다짐 = 'The minced meat is in tiny loose flecks, no meatballs, no round lumps, not crumbly clusters.'
 // ⚠️ 나물·면 문장은 «그 음식일 때만» 넣는다 — 늘 넣었더니 또띠아 토스트 옆에 면·나물을 그려 넣었다(2026-11-26 · 밥 문장 때와 같은 사고)
-const 나물 = 'The noodles or namul look picked up by hand and dropped onto the plate in a soft relaxed mound, strands curving and lying in different directions, never arranged in a grid, never piled into a net, mesh or woven stack.'   // ➕ 창업자 2026-11-26 「나물류 특히 배치에 신경써줘. 손으로 집어 담은 것 처럼. 그물모양으로 쌓아올리는 것 절대금지」 → --나물
+// ⏩ 창업자 2026-11-26 17:13 「이대로 쓰고 프롬프트도 바꿔줘」(양파 무나물·무생채 3판) — 옛 「strands curving and lying in different directions」 = 나물마다 격자의 원인이라 뺐다(창업자 「나물 저거 뽑을때 매번 저러네」)
+//    채 = 성냥개비처럼 가늘게(3mm) · 젓가락으로 한 번 집어 놓은 작은 한 더미 · 대체로 한 방향 · 엇갈리는 선 금지 (2판 = 「뭉친」만 넣었더니 떡처럼 굵어짐)
+const 나물 = 'The noodles or namul look picked up once with chopsticks and set down as one small compact moist heap, the strands clinging together in soft bunches and mostly lying the same way, never spread out flat, never fanned out, never crossing each other in thin lines, never arranged in a grid, never piled into a net, mesh, crosshatch or spider-web look. Julienned vegetables are thin matchstick strips about 3 mm wide, never thick like sticks or fries.'   // ➕ 창업자 2026-11-26 「나물류 특히 배치에 신경써줘. 손으로 집어 담은 것 처럼. 그물모양으로 쌓아올리는 것 절대금지」 → --나물
 // ➕ 창업자 2026-11-26 「면위로 토핑들이 보이니까 면이 덜보여서 훨씬좋아」(해물오일파스타 2판 · 1판 = 가는 면 「거미줄같아」) → 면 = 굵게 · 토핑 위로
 // ➕ 창업자 2026-11-26 「소면은 따로 쓰고」(비빔김국수 1판 = 굵기 문장 때문에 우동처럼 나옴) → 재료에 소면이면 --소면 (가늘게 한 다발)
 const 면 = 'Noodles are thick and smooth, bundled in a few soft twisted ropes, never thin crossing lines or a spider-web look, and the toppings rest on top so less of the noodles shows.'
