@@ -47,6 +47,9 @@ jobs:
     env:
       TEAM_ID: 6YM72N6FPD
       BUNDLE_ID: kr.hankki.app
+      # 99판(2026-11-26) 두 번 연속 xcodebuild -showBuildSettings 가 3·6·12·24초 안에 못 끝나 멈췄다 → 기다림 120초
+      FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "120"
+      FASTLANE_XCODEBUILD_SETTINGS_RETRIES: "3"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
