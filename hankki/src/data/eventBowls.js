@@ -10,6 +10,7 @@
 //
 // 🔑 열쇠 = ?크리스마스그릇=1 — 아이폰과 같은 날 연다(절대원칙 2026-09-18 · 유저에게 보이는 시점 맞추기)
 import { 열쇠있나 } from '../components/Stickers'
+import { todayKST } from '../today'
 
 const 웹주소 = 'https://peachfam0307-glitch.github.io/hankki/'
 const 앱안인가 = () => { try { return !!window.Capacitor?.isNativePlatform?.() } catch { return false } }
@@ -18,6 +19,7 @@ export const 이벤트그릇 = {
   xmas: {
     이름: '크리스마스 그릇',
     열쇠: '크리스마스그릇',
+    from: '2026-12-01',   // 📅 이날부터 «모두»에게 저절로 열린다 — 크리스마스 홈과 같은 날 · 창업자 2026-11-26 20:00 「응 12/1 날짜로 하자」(아이폰 99판에 3일 전까지 실어야 한다)
     레시피: {
       'basic-gamja-cheese-omelet': 1, // 감자 치즈 오믈렛
       'basic-goguma-sun-bokkeum': 1, // 고구마순볶음
@@ -69,7 +71,7 @@ export const 이벤트그릇 = {
 
 // 이 레시피에 고를 수 있는 이벤트 그릇(열쇠가 열린 것만) — 없으면 []
 export const 고를그릇 = (id) => Object.entries(이벤트그릇)
-  .filter(([, e]) => e.레시피[id] && 열쇠있나(e.열쇠))
+  .filter(([, e]) => e.레시피[id] && (todayKST() >= e.from || 열쇠있나(e.열쇠)))
   .map(([키, e]) => ({ 키, 이름: e.이름 }))
 
 // 그림 주소 — 표에 없으면 null(그러면 원래 아이콘)
@@ -77,4 +79,12 @@ export const 이벤트그릇주소 = (키, id) => {
   const e = 이벤트그릇[키]
   if (!e || !e.레시피[id]) return null
   return (앱안인가() ? 웹주소 : './') + `ev/${키}/${id}.webp`
+}
+
+// 🎄 지금 보일 그릇 — 유저가 고른 적 없으면(bowl 없음) «이벤트 그릇이 기본» · '' = 흰 그릇을 고른 것
+//   📮 창업자 2026-11-26 19:38 「우선 크리스마스그릇으로 보였음좋겠고」
+export const 지금그릇 = (r) => {
+  if (!r) return ''
+  if (typeof r.bowl === 'string') return r.bowl
+  return 고를그릇(r.id)[0]?.키 || ''
 }

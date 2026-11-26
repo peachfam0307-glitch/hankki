@@ -8,7 +8,7 @@ import { FRAME_WINDOW } from '../data/frameWindows'
 import { dishCatOf } from './FoodIcon'
 import { graphemes } from '../utils'
 import { 기본표지 } from '../store'
-import { 이벤트그릇주소 } from '../data/eventBowls'
+import { 이벤트그릇주소, 지금그릇 } from '../data/eventBowls'
 // 🔍 사진 자리·배율 규칙 = 일기 속지 사진과 «같은 곳»에서 온다 (src/photoPan.js)
 import { clampZoom, photoImgStyle } from '../photoPan'
 // 🎴 「이 그림은 자랑카드다」의 문턱 = 화면과 클라우드가 **한 곳**을 쓴다 (2026-08-31)
@@ -48,7 +48,8 @@ import { 카드높이문턱, 카드비율, 카드비율허용 } from '../cardCov
 export default function Thumb({ recipe, radius = 16, ratio, style, className = '', emojiSize = '2rem', iconSize = '56%', showDecor = false, panProps, eager = false }) {
   const [failed, setFailed] = useState(false)
   // 🎄 이벤트 그릇(크리스마스 등) — 고른 레시피만 · 그림은 웹에서 받는다 · 못 받으면 원래 아이콘(src/data/eventBowls.js)
-  const 이벤트주소 = recipe?.bowl ? 이벤트그릇주소(recipe.bowl, recipe.id) : null
+  const 이벤트키 = 지금그릇(recipe)
+  const 이벤트주소 = 이벤트키 ? 이벤트그릇주소(이벤트키, recipe.id) : null
   const [이벤트깨짐, set이벤트깨짐] = useState(false)
   // 🎴🎴 「이 그림은 자랑카드다」 — `imageFit` 이 없던 시절에 저장한 표지를 되살리는 자리.
   //   ⭐ 값에 **그림 자체**를 담는다(참/거짓이 아니라) — 표지를 바꾸면 저절로 무효가 된다.

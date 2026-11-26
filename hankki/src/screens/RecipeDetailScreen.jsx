@@ -72,7 +72,7 @@ import { 항목묶어 } from '../stepBreak'
 import { 열쇠받기, EARN, KEY_NAME, KEY_UNIT } from '../ocr'
 // 📺 링크 → 앱 안에서 재생할 수 있는 «공식» 임베드 주소 (유튜브·인스타)
 import { embedUrl, SNS표 } from '../embed'
-import { 고를그릇 } from '../data/eventBowls' // 🎄 그릇 바꾸기(이벤트 그릇) · 2026-11-26
+import { 고를그릇, 지금그릇, 이벤트그릇주소 } from '../data/eventBowls' // 🎄 그릇 바꾸기(이벤트 그릇) · 2026-11-26
 import avGom from '../assets/avatars/av_gom.png' // 🧑‍🍳 창업자가 «직접 만든» 레시피 뱃지 (made:'창업자' · 2026-09-27)
 
 // 🏷 출처(어디서 왔나) — 주소에서 «읽어» 낸다 (창업자 2026-09-03 *"원본링크에-출처도 붙이자"*)
@@ -449,6 +449,7 @@ export default function RecipeDetailScreen({ id }) {
   const 표지보임 = !!(영상 && 영상.type === 'youtube' && 영상.thumb && !썸네일깨짐)
 
   const del = () => setConfirmDel(true)
+  const 그릇칸 = 고를그릇(r.id).length > 0   // 🎄 그릇 단추가 있으면 세 단추를 한 줄에(창업자 2026-11-26 「첫줄가능하면옮겨줘」) — 글씨·여백만 조금 줄인다
 
   // 🍱 표지 아이콘 바꾸기 — 예전엔 편집 진입 → 썸네일 탭 → 고르기 → 맨 아래 저장까지 가야 했다
   // (창업자 "레시피 음식사진 변경이 불편해"). 이제 상세 표지에서 한 번 눌러 고르면 즉시 저장된다.
@@ -694,12 +695,12 @@ export default function RecipeDetailScreen({ id }) {
              (여태 갤러리 글리프였다 — 2026-07-28 에 «연결»만 픽커로 바꾸고 그림은 안 바꾼 흔적).
           ⚠️ 채움색은 오른쪽만 — 주 동작은 어디까지나 「레시피 꾸미기」다(위계 유지).
           ✅ 캡처 제외 표시(`data-nocapture`)가 필요 없어졌다 — 캡처는 위 `coverRef` 안만 찍는다. */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', padding: '12px 20px 0' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 그릇칸 ? 6 : 8, alignItems: 'center', padding: 그릇칸 ? '12px 14px 0' : '12px 20px 0' }}>
         <button
           className="press"
           onClick={() => setIconSheet(true)}
           aria-label="표지 아이콘 바꾸기"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15.5, fontWeight: 800, padding: '0 13px 0 9px', borderRadius: 999, border: 'none' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--cream)', color: 'var(--brown)', fontSize: 그릇칸 ? 14 : 15.5, fontWeight: 800, padding: 그릇칸 ? '0 10px 0 7px' : '0 13px 0 9px', borderRadius: 999, border: 'none' }}
         >
           <FoodIcon name={r.icon || guessFoodIcon(r.title)} size={20} />
           아이콘 바꾸기
@@ -709,7 +710,7 @@ export default function RecipeDetailScreen({ id }) {
           onClick={() => setDecorOpen(true)}
           data-coach="decor"
           aria-label="레시피 꾸미기"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--brown)', color: '#fff', fontSize: 15.5, fontWeight: 800, padding: '0 13px', borderRadius: 999, border: 'none' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--brown)', color: '#fff', fontSize: 그릇칸 ? 14 : 15.5, fontWeight: 800, padding: 그릇칸 ? '0 10px' : '0 13px', borderRadius: 999, border: 'none' }}
         >
           <Icon name="palette" size={14} />
           레시피 꾸미기
@@ -720,11 +721,15 @@ export default function RecipeDetailScreen({ id }) {
           <button
             key={g.키}
             className="press"
-            onClick={() => { const 켬 = r.bowl !== g.키; updateRecipe(r.id, { bowl: 켬 ? g.키 : '', touched: true }); nav.showToast(켬 ? `${g.이름}에 담았어요` : '흰 그릇으로 돌려놨어요') }}
+            onClick={() => { const 켬 = 지금그릇(r) !== g.키; updateRecipe(r.id, { bowl: 켬 ? g.키 : '', touched: true }); nav.showToast(켬 ? `${g.이름}에 담았어요` : '흰 그릇으로 돌려놨어요') }}
             aria-label="그릇 바꾸기"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 34, background: 'var(--cream)', color: 'var(--brown)', fontSize: 15.5, fontWeight: 800, padding: '0 13px', borderRadius: 999, border: 'none' }}
+            // 🎄 창업자 2026-11-26 「그릇바꾸기가 잘안보여서 한창찾았어」 → 크리스마스 빨강 ＋ «바꿀 그릇» 미니 그림
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, background: '#C8432F', color: '#fff', fontSize: 14, fontWeight: 800, padding: '0 10px 0 5px', borderRadius: 999, border: 'none', boxShadow: '0 2px 6px rgba(200,67,47,.35)' }}
           >
-            그릇 바꾸기
+            {지금그릇(r) === g.키
+              ? <span style={{ width: 24, height: 24, borderRadius: '50%', background: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><FoodIcon name={r.icon || guessFoodIcon(r.title)} size={20} /></span>
+              : <img src={이벤트그릇주소(g.키, r.id)} alt="" width={24} height={24} style={{ objectFit: 'contain', background: '#fff', borderRadius: '50%' }} />}
+            {지금그릇(r) === g.키 ? '흰 그릇' : '크리스마스'}
           </button>
         ))}
       </div>
