@@ -11,7 +11,7 @@ const 밥 = 'Rice grains look soft, irregular and naturally clumped, never like 
 const 죽 = 'The porridge is silky and smooth, rice fully softened and melted into the porridge so individual grains are barely visible, not lumpy, not clumped, never like uniform beads, dots or a repeating pattern.'
 const 다짐 = 'The minced meat is in tiny loose flecks, no meatballs, no round lumps, not crumbly clusters.'
 // ⚠️ 나물·면 문장은 «그 음식일 때만» 넣는다 — 늘 넣었더니 또띠아 토스트 옆에 면·나물을 그려 넣었다(2026-11-26 · 밥 문장 때와 같은 사고)
-const 나물 = 'The noodles or namul look picked up by hand and dropped onto the plate in a soft relaxed mound, strands curving and lying in different directions, never arranged in a grid, never piled into a net, mesh or woven stack.'   // ➕ 창업자 2026-11-26 「나물류 특히 배치에 신경써줘. 손으로 집어 담은 것 처럼. 그물모양으로 쌓아올리는 것 절대금지」 → --나물
+const 나물 = 'The noodles or namul look picked up by hand and dropped onto the plate in a soft relaxed mound, strands curving and lying in different directions, never arranged in a grid, never piled into a net, mesh or woven stack. Noodles are thick and smooth, bundled in a few soft twisted ropes, never thin crossing lines or a spider-web look, and the toppings rest on top so less of the noodles shows.'   // ➕ 창업자 2026-11-26 「면위로 토핑들이 보이니까 면이 덜보여서 훨씬좋아」(해물오일파스타 2판 · 1판 = 가는 면 「거미줄같아」)   // ➕ 창업자 2026-11-26 「나물류 특히 배치에 신경써줘. 손으로 집어 담은 것 처럼. 그물모양으로 쌓아올리는 것 절대금지」 → --나물
 // ➕ 창업자 2026-11-26 「훨씬좋아 이대로 하자. 프롬프트 수정해줘」(스팸땡초김밥 2판) → --김밥 · 1판(썬 조각만 줄지어) = 단면 밥알이 구슬처럼 「완전 징그럽다」
 // ⏩ 정정(08:22) 창업자가 좋다고 한 건 2판이 아니라 «지금 앱 김밥 그림 n3096» 이었다(「위에 잘나왔는데」「이게 진짜 김밥같아」「이거를 그릇에 넣자」)
 //    → 김밥은 «앱에 이미 있는 그 레시피 그림»을 참고 그림 ①로 넣고 「음식은 그대로, 접시만 바꿔」로 뽑는다(3판 = 창업자 OK 대기)
