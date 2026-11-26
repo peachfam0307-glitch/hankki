@@ -8,6 +8,7 @@ import { FRAME_WINDOW } from '../data/frameWindows'
 import { dishCatOf } from './FoodIcon'
 import { graphemes } from '../utils'
 import { 기본표지 } from '../store'
+import { 이벤트그릇주소, 지금그릇 } from '../data/eventBowls'
 // 🔍 사진 자리·배율 규칙 = 일기 속지 사진과 «같은 곳»에서 온다 (src/photoPan.js)
 import { clampZoom, photoImgStyle } from '../photoPan'
 // 🎴 「이 그림은 자랑카드다」의 문턱 = 화면과 클라우드가 **한 곳**을 쓴다 (2026-08-31)
@@ -46,6 +47,10 @@ import { 카드높이문턱, 카드비율, 카드비율허용 } from '../cardCov
 //      **캡처처럼 「안 보이는데 그림이 꼭 필요한」 자리만** 이 스위치를 켠다.
 export default function Thumb({ recipe, radius = 16, ratio, style, className = '', emojiSize = '2rem', iconSize = '56%', showDecor = false, panProps, eager = false }) {
   const [failed, setFailed] = useState(false)
+  // 🎄 이벤트 그릇(크리스마스 등) — 고른 레시피만 · 그림은 웹에서 받는다 · 못 받으면 원래 아이콘(src/data/eventBowls.js)
+  const 이벤트키 = 지금그릇(recipe)
+  const 이벤트주소 = 이벤트키 ? 이벤트그릇주소(이벤트키, recipe.id) : null
+  const [이벤트깨짐, set이벤트깨짐] = useState(false)
   // 🎴🎴 「이 그림은 자랑카드다」 — `imageFit` 이 없던 시절에 저장한 표지를 되살리는 자리.
   //   ⭐ 값에 **그림 자체**를 담는다(참/거짓이 아니라) — 표지를 바꾸면 저절로 무효가 된다.
   //      (목록에서 카드 하나가 다른 레시피를 그리게 될 때 옛 판정이 남는 것을 막는다)
@@ -275,7 +280,9 @@ export default function Thumb({ recipe, radius = 16, ratio, style, className = '
                FoodIcon 은 그냥 <img> 라 자리를 안 잡아서, 「뒤에 깐다」고 쓴 원이 92% 흰 장막이 됐다
                (실측 — 같은 아이콘이 밝은 판에선 채도 52%인데 딥플럼 위에선 8%·밝기 244까지 죽었다).
                ⭐ 그래서 층을 고칠 게 아니라 **원 자체가 없는 게 답이었다.** 🔒 `check-thumb.mjs` 가 다시 들어오는 걸 막는다. */}
-        <FoodIcon name={recipe.icon || guessFoodIcon(recipe.title)} size={iconSize} />
+        {이벤트주소 && !이벤트깨짐
+          ? <img src={이벤트주소} alt="" draggable={false} width={iconSize} height={iconSize} onError={() => set이벤트깨짐(true)} style={{ display: 'block', objectFit: 'contain' }} />
+          : <FoodIcon name={recipe.icon || guessFoodIcon(recipe.title)} size={iconSize} />}
       </div>
     )
   }

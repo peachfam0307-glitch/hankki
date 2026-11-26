@@ -79,6 +79,7 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm run build
+          rm -rf dist/ev   # 🎄 이벤트 그릇 그림은 아이폰 앱에 안 넣는다 — 웹에서 받는다(src/data/eventBowls.js · 앱 크기 유지)
           du -sh dist
 
       - name: 📦 껍데기에 웹 넣기 (cap sync)
