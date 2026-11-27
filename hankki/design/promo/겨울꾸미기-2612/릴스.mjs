@@ -45,8 +45,11 @@ body{width:1080px;height:1920px;overflow:hidden;position:relative;font-family:'J
 .pill{display:inline-block;background:${C.red};color:#fff;border-radius:999px;padding:12px 38px;font-size:46px;box-shadow:0 8px 18px rgba(59,44,37,.25)}
 #표지 .big{font-size:170px;line-height:1.05;margin-top:30px;color:${C.ink}}
 #표지 .lead{font-family:'GowunDodum';font-size:48px;margin-top:34px;line-height:1.5;color:${C.ink}}
-#끝{left:0;right:0;top:1180px;text-align:center}
-#끝 .h{font-size:104px;line-height:1.12}
+#끝{left:0;right:0;top:1080px;text-align:center}
+#끝 .h{font-size:104px;line-height:1.12;margin-top:26px}
+.pill.오픈{font-size:60px;padding:14px 48px}
+#날짜{position:absolute;left:0;right:0;top:40px;text-align:center;opacity:0;z-index:50}
+#날짜 span{display:inline-block;background:rgba(255,255,255,.92);color:${C.red};border:3px solid ${C.red};border-radius:999px;padding:6px 26px;font-size:36px;box-shadow:0 6px 14px rgba(59,44,37,.18)}
 .알약{display:inline-flex;align-items:center;gap:22px;background:${C.ink};color:#fff;border-radius:999px;padding:20px 44px;font-size:48px;margin-top:34px;box-shadow:0 16px 36px rgba(59,44,37,.35)}
 .알약 img{width:76px;height:76px;border-radius:20px}
 #끝 .검{font-family:'GowunDodum';font-size:46px;margin-top:22px}
@@ -57,7 +60,7 @@ body{width:1080px;height:1920px;overflow:hidden;position:relative;font-family:'J
 `
 const 반html = (id, n = 7) => `<div id="${id}">${Array.from({ length: n }, (_, k) => `<span class="반">${k % 2 ? '✦' : '❤'}</span>`).join('')}</div>`
 const 표지html = (pill, big, lead) => `<div id="표지" class="겉"><span class="pill">${pill}</span><div class="big">${big}</div><div class="lead">${lead}</div></div>`
-const 끝html = (h) => `<div id="끝" class="겉"><div class="h">${h}</div><div class="알약"><img src="${앱}">App Store · Google Play</div><div class="검">「한끼 레시피북」 검색</div></div>`
+const 끝html = (h) => `<div id="날짜"><span>❄ 12월 1일 오픈</span></div><div id="끝" class="겉"><span class="pill 오픈">❄ 12월 1일 오픈</span><div class="h">${h}</div><div class="알약"><img src="${앱}">App Store · Google Play</div><div class="검">「한끼 레시피북」 검색</div></div>`
 const 공통js = `
 const 이즈=(x)=>1-Math.pow(1-Math.min(1,Math.max(0,x)),3), 튐=(x)=>{x=Math.min(1,Math.max(0,x));return 1+2.2*Math.pow(x-1,3)+1.2*Math.pow(x-1,2)}, $=(i)=>document.getElementById(i)
 const 눈=${JSON.stringify(눈)}
@@ -76,7 +79,10 @@ function 반짝(묶,cx,cy,시작,p,크){묶.forEach((s,k)=>{const q=(p-시작-k*
   s.style.opacity=q>0&&q<1?Math.sin(q*Math.PI):0; s.style.left=(cx+Math.cos(a)*r-20)+'px'; s.style.top=(cy+Math.sin(a)*r-20)+'px'; s.style.transform='scale('+(0.6+0.8*Math.sin(Math.max(0,Math.min(1,q))*Math.PI))+') rotate('+(q*90)+'deg)'})}
 function 겉(c,p,t){for(const id of ['표지','끝'])$(id).style.opacity=0
   const a=이즈(p/0.25)
-  if(c.종류==='표지'){const o=a*(p>0.86?1-(p-0.86)/0.14:1);$('표지').style.opacity=o;$('표지').style.transform='translateY('+(60*(1-a))+'px)'}
+  // 표지는 «첫 장부터» 다 보인다 — 인스타 미리보기 그림에 날짜가 박히게 (창업자 11/27 「첫 화면부터 넣어주면 더 좋고」)
+  if(c.종류==='표지'){const o=(p>0.86?1-(p-0.86)/0.14:1);$('표지').style.opacity=o;$('표지').style.transform='none'}
+  // 영상 내내 맨 위 «12월 1일 오픈» 작은 알약 (표지·끝엔 큰 글자가 있어 숨김)
+  $('날짜').style.opacity=(c.종류==='표지'||c.종류==='끝')?0:1
   if(c.종류==='끝'){const o=이즈((p-0.15)/0.25);$('끝').style.opacity=o;$('끝').style.transform='translateY('+(50*(1-o))+'px)'}}
 `
 const 눈html = 눈.map(() => `<div class="눈" style="width:${0}px"></div>`).join('')
@@ -152,7 +158,7 @@ window.render=(t)=>{
   $('가림').style.opacity=0;$('이름표').style.opacity=0;$('새것').style.opacity=0
   document.querySelectorAll('.밖').forEach(el=>{el.style.opacity=0})
   for(let i=0;i<7;i++)$('속'+i).style.opacity=0; for(let i=0;i<3;i++)$('간'+i).style.opacity=0
-  if(c.종류==='표지'){const o=이즈(p/0.25)*(p>0.86?1-(p-0.86)/0.14:1);$('가림').style.opacity=0.8*o}
+  if(c.종류==='표지'){const o=(p>0.86?1-(p-0.86)/0.14:1);$('가림').style.opacity=0.8*o}
   if(c.종류==='끝'){$('가림').style.opacity=0.7*이즈((p-0.15)/0.25)}
   if(c.종류==='묶음'){
     const 들=이즈(p/0.15), 나=p>0.85?1-(p-0.85)/0.15:1
