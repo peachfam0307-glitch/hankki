@@ -52,7 +52,10 @@ body{width:1080px;height:1920px;overflow:hidden;position:relative;font-family:'J
 #끝 .검{font-family:'GowunDodum';font-size:46px;margin-top:22px}
 #머리{left:0;right:0;top:120px;text-align:center}
 .s{position:absolute;filter:drop-shadow(0 8px 10px rgba(59,44,37,.28))}
+.반{position:absolute;width:40px;height:40px;line-height:40px;text-align:center;font-size:54px;color:#E9B949;text-shadow:0 0 10px rgba(255,230,150,.9);opacity:0;pointer-events:none}
+.반:nth-child(3n){color:#fff}.반:nth-child(3n+1){color:#F08FA8}
 `
+const 반html = (id, n = 7) => `<div id="${id}">${Array.from({ length: n }, (_, k) => `<span class="반">${k % 2 ? '✦' : '❤'}</span>`).join('')}</div>`
 const 표지html = (pill, big, lead) => `<div id="표지" class="겉"><span class="pill">${pill}</span><div class="big">${big}</div><div class="lead">${lead}</div></div>`
 const 끝html = (h) => `<div id="끝" class="겉"><div class="h">${h}</div><div class="알약"><img src="${앱}">App Store · Google Play</div><div class="검">「한끼 레시피북」 검색</div></div>`
 const 공통js = `
@@ -60,12 +63,17 @@ const 이즈=(x)=>1-Math.pow(1-Math.min(1,Math.max(0,x)),3), 튐=(x)=>{x=Math.mi
 const 눈=${JSON.stringify(눈)}
 function 눈그리기(t){document.querySelectorAll('.눈').forEach((el,i)=>{const s=눈[i];const y=(s.y+t*s.v)%1960-20;const x=s.x+Math.sin(t*s.w+i)*30;el.style.transform='translate('+x+'px,'+y+'px)'})}
 // 🩷 스티커 붙이기 — 손으로 들고 와서(크게·기울어져·그림자 멀리) 탁 눌러 붙이고(살짝 눌림) 그 뒤엔 숨 쉬듯 흔들 (창업자 2026-11-27 「스티커 붙이는 것도 움직이게」)
-function 붙이기(el,시작,p,t,각,오는쪽){const x=(p-시작)/0.2; if(x<=0){el.style.opacity=0;return}
+// 살 = 한끼 친구들 캐릭터 → 붙은 뒤에 «살아 움직인다»(통통 뛰기·갸웃) (창업자 2026-11-27 「애들 움직임이나 효과도 넣어줘」)
+function 붙이기(el,시작,p,t,각,오는쪽,살){const x=(p-시작)/0.2; if(x<=0){el.style.opacity=0;return}
   const a=이즈(x), 눌=x>0.8&&x<1.15?Math.sin((x-0.8)/0.35*Math.PI)*0.08:0
   const dx=(오는쪽||1)*320*(1-a), dy=-380*(1-a), 들림=1-a
+  const 뜀=살&&x>1.1?-Math.abs(Math.sin(t*5.2))*16:0, 갸웃=살&&x>1.1?Math.sin(t*2.6)*6:0, 숨=살&&x>1.1?Math.abs(Math.sin(t*5.2))*0.04:0
   el.style.opacity=Math.min(1,x*4)
-  el.style.transform='translate('+dx+'px,'+dy+'px) rotate('+(각+30*(오는쪽||1)*들림+(x>1?Math.sin(t*2.2+각)*2:0))+'deg) scale('+(1+0.35*들림-눌)+','+(1+0.35*들림-눌*0.6)+')'
+  el.style.transform='translate('+dx+'px,'+(dy+뜀)+'px) rotate('+(각+30*(오는쪽||1)*들림+(x>1?Math.sin(t*2.2+각)*2:0)+갸웃)+'deg) scale('+(1+0.35*들림-눌-숨*0.5)+','+(1+0.35*들림-눌*0.6+숨)+')'
   el.style.filter='drop-shadow(0 '+(6+40*들림)+'px '+(8+24*들림)+'px rgba(59,44,37,'+(0.3-0.12*들림)+'))'}
+// ✦ 반짝이 터짐 — 캐릭터가 붙는 순간 둘레로 튀어 나갔다 사라진다
+function 반짝(묶,cx,cy,시작,p,크){묶.forEach((s,k)=>{const q=(p-시작-k*0.01)/0.22, a=k*1.1+0.4, r=(크||110)*(0.5+0.9*Math.max(0,q))
+  s.style.opacity=q>0&&q<1?Math.sin(q*Math.PI):0; s.style.left=(cx+Math.cos(a)*r-20)+'px'; s.style.top=(cy+Math.sin(a)*r-20)+'px'; s.style.transform='scale('+(0.6+0.8*Math.sin(Math.max(0,Math.min(1,q))*Math.PI))+') rotate('+(q*90)+'deg)'})}
 function 겉(c,p,t){for(const id of ['표지','끝'])$(id).style.opacity=0
   const a=이즈(p/0.25)
   if(c.종류==='표지'){const o=a*(p>0.86?1-(p-0.86)/0.14:1);$('표지').style.opacity=o;$('표지').style.transform='translateY('+(60*(1-a))+'px)'}
@@ -175,7 +183,7 @@ if (편 === '일꾸') {
   const 날 = [
     // 일기 = [오늘 먹은 것 한 줄, 힘나는 한마디] (창업자 2026-11-27 「일기에 힘나는 글귀들도 적어줘」·「큼직큼직하게」)
     ['월요일', 1, 'basic-gamja-cheese-omelet', '감자 치즈 오믈렛', ['wg_02', 'xd06'], ['첫눈 온 날, 치즈 오믈렛', '이번 주도 천천히,|잘 해낼 거야']],
-    ['화요일', 2, 'basic-cheese-yubu-jumeokbap', '치즈 유부주먹밥', ['xk_c02_02', 'xg01'], ['도시락엔 유부주먹밥', '작은 한 끼에도|정성 한 스푼']],
+    ['화요일', 2, 'basic-cheese-yubu-jumeokbap', '치즈 유부주먹밥', ['xk_c02_02', 'xg01'], ['도시락엔|유부주먹밥', '작은 한 끼에도|정성 한 스푼']],
     ['수요일', 3, 'basic-onepan-cream-pasta', '원팬 크림 파스타', ['xk_n05_01', 'xd14'], ['크리스마스 기분 파스타', '오늘 하루도|충분히 잘했어']],
     ['목요일', 4, 'basic-yangsongi-gamja-soup', '양송이감자스프', ['xk_c02_03', 'xg07'], ['추운 날엔 따끈한 스프', '따뜻한 한 그릇이면|힘이 나']],
     ['금요일', 5, 'basic-gul-jeon', '굴전', ['xk_n012_02', 'xi03'], ['불금엔 바삭한 굴전!', '고생한 나에게|맛있는 선물']],
@@ -184,14 +192,15 @@ if (편 === '일꾸') {
   ]
   const 스티커그림 = (k) => (k.startsWith('wg_') ? 간식(k) : 스(k))
   // 자리 = 속지 원본(896×1200) 픽셀 «가운데» — 창(사진)·일기 메모를 피해 모서리에 (창업자 2026-11-27 「귀여운 스티커들도 좀 큼직하게」)
-  const 붙일자리 = [[[170, 220], [770, 700]], [[740, 230], [140, 700]], [[170, 200], [760, 690]], [[760, 200], [140, 700]], [[160, 220], [770, 690]], [[760, 210], [140, 700]], [[170, 200], [770, 690]]]
+  // 소품 스티커는 그릇에서 먼 아래 모서리로(창업자 11/27 「그릇에 간섭 많이 되지 않게」)
+  const 붙일자리 = [[[170, 220], [760, 200]], [[740, 230], [760, 1080]], [[170, 200], [110, 1110]], [[760, 200], [160, 330]], [[160, 220], [790, 600]], [[760, 210], [140, 700]], [[170, 200], [130, 1110]]]
   const 붙크기 = [370, 240]
   // 일기 메모 = 우리 줄노트 스티커(xn07) 위 손글씨 · 스노우볼은 속지 아래 흰 글칸에 바로 (창업자 2026-11-27 「일기에 글도 들어가야할 것 같아」)
   // 장마다 «다른 날 쓴 것처럼» — 메모지·글씨체·펜 색·기울기·자리를 다 바꾼다 (창업자 2026-11-27 「하루에 다 몰아쓴 것 처럼」·「각장마다 차별화」)
   //   [가운데x, 가운데y, 폭, 기울기, 메모지(null = 속지 글칸), 높이/폭, 글자 칸 [왼%,위%,오른%], 글씨체, 펜 색, 글자 크기]
   const 메모자리 = [
     [448, 960, 880, -2, 'xn09', 263 / 391, [22, 27, 9], 'NanumPen', '#2E4A7A', 60],   // 월 · 크리스마스 카드 · 남색 펜
-    [600, 930, 620, 4, 'xn07', 310 / 343, [11, 30, 9], 'Gaegu', '#7A4A24', 50],       // 화 · 줄노트 · 갈색 연필
+    [230, 892, 265, 0, null, 406 / 265, [5, 27, 5], 'Gaegu', '#7A4A24', 38],          // 화 · 속지의 엽서 칸에 바로(메모지 위에 메모지 금지 · 창업자 11/27) · 갈색 연필
     [440, 980, 760, -4, 'xn12', 259 / 381, [12, 30, 12], 'Jua', '#FFFDF4', 50],       // 수 · 초록 종이 · 흰 펜
     [448, 1030, 640, 0, null, 170 / 640, [4, 9, 4], 'GowunDodum', '#B23A3A', 33],    // 목 · 스노우볼 속지 글칸 · 빨간 펜
     [448, 965, 760, 3, 'xn02', 306 / 373, [18, 40, 18], 'NanumPen', '#2F6B45', 50],  // 금 · 레이스 메모 · 초록 펜
@@ -225,7 +234,7 @@ ${날.map((d, i) => { const w = 창[String(d[1])].bbox; const [x0, y0, x1, y1] =
   return `<div class="판" id="판${i}"><img class="바" src="${속지(d[1])}"><div class="사" style="-webkit-mask-image:url(${데(join(MASK, `c${d[1]}.png`))});mask-image:url(${데(join(MASK, `c${d[1]}.png`))})"><img id="사${i}" src="${크(d[2])}" style="left:${cx0}px;top:${cy0}px;width:${cw}px;height:${ch}px"></div>
   ${(() => { const [mx, my, mw, mr, 지, 비, [gl, gt, gr], 체, 펜, 크] = 메모자리[i], 칸 = !지, W = mw * 판비, H = mw * 비 * 판비
     return `<div class="메모${칸 ? ' 칸' : ''}" id="메모${i}" style="left:${mx * 판비 - W / 2}px;top:${my * 판비 - H / 2}px;width:${W}px;height:${H}px;--r:${mr}deg">${칸 ? '' : `<img src="${스(지)}">`}<div class="글" style="left:${gl}%;top:${gt}%;right:${gr}%;font-family:'${체}';color:${펜};font-size:${크}px">${d[5].flatMap((l) => l.split('|')).map((l) => `<span class="줄">${l}</span>`).join('')}</div></div>` })()}
-  ${d[4].map((k, j) => { const [px, py] = 붙일자리[i][j], s = 붙크기[j] * 판비; return `<img class="붙" id="붙${i}_${j}" src="${스티커그림(k)}" style="width:${s}px;height:${s}px;left:${px * 판비 - s / 2}px;top:${py * 판비 - s / 2}px;opacity:0">` }).join('')}</div>` }).join('')}
+  ${d[4].map((k, j) => { const [px, py] = 붙일자리[i][j], s = 붙크기[j] * 판비; return `<img class="붙" id="붙${i}_${j}" src="${스티커그림(k)}" style="width:${s}px;height:${s}px;left:${px * 판비 - s / 2}px;top:${py * 판비 - s / 2}px;opacity:0">` }).join('')}${반html('반' + i)}</div>` }).join('')}
 ${날.map((d, i) => `<img class="작" id="작${i}" src="${속지(d[1])}">`).join('')}
 <div id="요일" class="겉"><span class="d" id="요일t"></span></div>
 <div id="음식" class="겉"><span id="음식t"></span><small>새 겨울 속지 · <span id="속이름"></span></small></div>
@@ -248,7 +257,8 @@ window.render=(t)=>{
     const 메=$('메모'+i), 칸=메.classList.contains('칸'), r=parseFloat(메.style.getPropertyValue('--r'))
     if(칸){메.style.opacity=1}else{붙이기(메,0.26,p,t,r,1);메.style.filter='none'}
     메.querySelectorAll('.줄').forEach((줄,k)=>{const w=Math.min(1,Math.max(0,(p-0.38-k*0.12)/0.12));줄.style.clipPath='inset(0 '+((1-w)*100)+'% 0 0)'})   // 줄마다 0.12 간격으로 써진다(세 줄 = 0.38~0.74)
-    for(let j=0;j<2;j++)붙이기($('붙'+i+'_'+j),0.6+j*0.12,p,t,j?8:-8,j?-1:1)
+    for(let j=0;j<2;j++)붙이기($('붙'+i+'_'+j),0.6+j*0.12,p,t,j?8:-8,j?-1:1,j===0)
+    { const 캐=$('붙'+i+'_0'); 반짝([...$('반'+i).children], parseFloat(캐.style.left)+parseFloat(캐.style.width)/2, parseFloat(캐.style.top)+parseFloat(캐.style.height)/2, 0.75, p, 150) }
     $('요일').style.opacity=들*(1-나); $('요일t').textContent=날[i][0]
     $('음식').style.opacity=이즈((p-0.25)/0.15)*(1-나); $('음식t').textContent=날[i][1]; $('속이름').textContent=날[i][2]
     if(i>0){const 앞=$('판'+(i-1));앞.style.opacity=1-들;앞.style.transform='perspective(1800px) rotateY('+(80)+'deg)'}
@@ -262,7 +272,7 @@ window.render=(t)=>{
 // ══════════════════════════════════════════════════════════
 if (편 === '레꾸') {
   const 짝 = [
-    ['n3088', 'basic-gamja-cheese-omelet', '감자 치즈 오믈렛', ['xf01', 'xg01']],
+    ['n3088', 'basic-gamja-cheese-omelet', '감자 치즈 오믈렛', ['xd13', 'xg01']],   // 프레임(xf01)은 안 어울려 선물상자로(창업자 11/27)
     ['n3096', 'basic-spam-ttaengcho-gimbap', '스팸 땡초 김밥', ['xh02', 'xk_n05_02']],
     ['n3090', 'basic-cheese-yubu-jumeokbap', '치즈 유부주먹밥', ['xi01', 'xg03']],
     ['n3108', 'basic-yangsongi-gamja-soup', '양송이감자스프', ['xh01', 'xk_n012_02']],
@@ -292,7 +302,7 @@ ${눈html}
 <div id="머리" class="겉"><span class="pill" id="머리t"></span></div>
 <div id="카드"><div id="접시"><img id="흰"><img id="크"></div><div id="반짝">${Array.from({ length: 10 }, (_, i) => `<span class="별" id="별${i}">✦</span>`).join('')}</div>
 <div id="제목"></div><div id="단추"><span>🎄</span><span>크리스마스 그릇</span></div><div id="톡"></div>
-<img class="붙" id="붙0"><img class="붙" id="붙1"></div>
+<img class="붙" id="붙0"><img class="붙" id="붙1">${반html('반카')}</div>
 ${모음.map((k, i) => `<img class="모" id="모${i}" src="${크(k)}">`).join('')}
 <div id="모음글" class="겉"><span class="pill">12월 1일부터</span><div class="h">레시피 44편이<br>크리스마스 그릇으로</div></div>
 ${표지html('12월 1일 · 그릇 바꾸기', '레시피도<br>크리스마스 옷!', '흰 그릇 → 🎄 크리스마스 그릇, 단추 한 번')}
@@ -301,7 +311,7 @@ ${눈크기}
 <script>${공통js}
 const 장면=${JSON.stringify(장면)},짝=${JSON.stringify(짝.map((x) => [스(x[0]), 크(x[1]), x[2], x[3].map((k) => [k, 스(k)])]))}
 // 카드(820×1080) «안» 자리 [x,y,폭] — 제목(720~)·단추(860~)를 안 가리고 카드 밖으로 안 나가게 · 테이프는 카드 윗변에 걸쳐 붙인다(진짜 마테처럼)
-const 붙자리=[[[24,24,240],[624,470,170]],[[160,-30,500],[604,450,200]],[[24,24,210],[624,470,170]],[[160,-30,500],[24,450,210]],[[616,24,180],[24,460,200]]]
+const 붙자리=[[[6,6,170],[636,830,180]],[[160,-30,500],[636,830,180]],[[6,6,160],[636,830,180]],[[160,-30,500],[4,830,180]],[[616,24,180],[4,830,180]]]   // 캐릭터는 카드 아래 모서리(그릇 안 가리게 · 창업자 11/27)
 window.render=(t)=>{
   const c=장면.find(x=>t>=x.s&&t<x.s+x.d)||장면[장면.length-1], p=(t-c.s)/c.d
   눈그리기(t); 겉(c,p,t)
@@ -317,7 +327,7 @@ window.render=(t)=>{
     $('단추').className=p>0.32?'켬':''
     const 톡=(p-0.28)/0.14; $('톡').style.opacity=톡>0&&톡<1?1-톡:0; $('톡').style.left=(410-75)+'px';$('톡').style.top=(920-75)+'px';$('톡').style.transform='scale('+(0.4+1.2*Math.max(0,톡))+')'
     for(let k=0;k<10;k++){const s=$('별'+k), q=(p-0.36-k*0.015)/0.25, a=k*0.63;s.style.opacity=q>0&&q<1?1-q:0;s.style.left=(410+Math.cos(a)*(120+260*Math.max(0,q)))+'px';s.style.top=(370+Math.sin(a)*(110+240*Math.max(0,q)))+'px'}
-    for(let j=0;j<2;j++){const [x,y,w]=붙자리[i][j], s=$('붙'+j);s.style.width=w+'px';s.style.left=x+'px';s.style.top=y+'px';붙이기(s,0.5+j*0.17,p,t,j?6:-5,j?-1:1)}
+    for(let j=0;j<2;j++){const [x,y,w]=붙자리[i][j], s=$('붙'+j);s.style.width=w+'px';s.style.left=x+'px';s.style.top=y+'px';const 살=d[3][j][0].startsWith('xk');붙이기(s,0.5+j*0.17,p,t,j?6:-5,j?-1:1,살);if(살)반짝([...$('반카').children],x+w/2,y+w/2,0.5+j*0.17+0.15,p,w*0.6)}
   }
   if(c.종류==='모음'){const 들=이즈(p/0.15), 나=p>0.9?1-(p-0.9)/0.1:1;$('모음글').style.opacity=들*나
     for(let i=0;i<9;i++){const q=튐((p-0.1-i*0.04)/0.22), el=$('모'+i), x=540+((i%3)-1)*330, y=760+Math.floor(i/3)*300;el.style.opacity=Math.min(1,Math.max(0,q))*나
