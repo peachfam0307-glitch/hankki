@@ -1920,7 +1920,8 @@ export default function DecorEditor({ recipe, onSave, onClose, closeRef, ratio =
                     ⭐ `auto-fill` 은 폭에 맞춰 칸 수를 정하고 남는 폭을 나눠 갖는다 —
                        다섯이면 한 줄, 더 늘면 알아서 두 줄. 다시 손댈 일이 없다. */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(54px, 1fr))', gap: 8 }}>
-                  {ax.list.map((o) => {
+                  {/* 🔑 겨울 속지·그레이지 = 12/1 전엔 열쇠(?크리스마스=1)로만 — 스티커 묶음과 같은 잣대(열쇠켬) */}
+                  {ax.list.filter(열쇠켬).map((o) => {
                     // ⭐ 틀이 「이 선과 짝」이라고 말하면(`pickRule`) 선도 같이 바꿔 준다 —
                     //    도트 틀을 골랐는데 줄이 그어져 있으면 «내가 고른 그 종이»가 아니다.
                     const next = { ...paperPick, [ax.key]: o.key, ...(ax.key === 'art' && o.pickRule ? { rule: o.pickRule } : {}) }
