@@ -61,7 +61,7 @@ import { weeklyNow, homemadeNow, snsNow, 홈칸바뀜나, thisWeekNow, hankkiPic
 // 🌕 특집 — 날짜가 열고 «닫는다». 철이 지나면 스스로 사라진다(`data/specials.js`)
 import { nowSpecial, specialRecipes } from '../data/specials.js'
 import { whatsNew } from '../data/whatsnew'
-import { pantryScore, pantryUrgent, 남은날수, 기한말 } from '../pantryMatch'
+import { pantryScore, 남은날수 } from '../pantryMatch'
 import SeasonDecor from '../components/SeasonDecor.jsx'
 // 🇰🇷 명절엔 홈의 «우리 애» 둘도 한복을 입는다 — 📮창업자 2026-09-09 *"쟤들만 한복아니니까 이상해서.."*
 import { 홈컷, 줄장식 } from '../data/seasonDecor.js'
