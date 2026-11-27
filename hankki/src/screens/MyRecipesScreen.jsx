@@ -32,7 +32,7 @@ import idxChefFaint from '../assets/ui/idx_chef_faint.png'
 //    (DiaryEntrySheet · ReviewAskSheet · shouldAskReview import 제거)
 import { dateLabel, matchKo } from '../utils'
 // 📺 「영상」 칩이 쓰는 잣대 — 상세에서 재생하는 것과 «같은 자»다(절대원칙 30)
-import { embedUrl, SNS인가, 영상인가, SNS표 } from '../embed'
+import { SNS인가, SNS표 } from '../embed'
 import { THEMES, 테마에드나, 테마열쇠 } from '../data/themes'
 // 📺 이 화면에서 묻는 것은 «둘»이고, 자도 «둘»이다 — 이름으로 갈라 둔다(⛔같은 걸로 착각하지 말 것).
 //
@@ -51,7 +51,7 @@ import CoachMarks, { needsCoach } from '../components/CoachMarks'
 import gomHeader from '../assets/gom-header.png' // 뉴 물결 꼬르곰(인사) — 레시피 탭 상단 마스코트
 import pengNyam from '../assets/ui/wave/peng_nyam1.png' // 🐧 펭펭(한 술) — 한끼 일기 상단
 // 🔖 이름은 «한 곳»에서만 온다(`src/favName.js`)
-import { FAV_NAME, FAV_ADD, FAV_REMOVE, MINE_NAME } from '../favName'
+import { FAV_NAME, MINE_NAME } from '../favName'
 // 🔖 핀의 «종»도 한 곳에서만 온다(`src/favPin.js` · 2026-09-08 두 종 확정)
 import { isPinned, pinName, pinOf, nextPin, FAV_PINS } from '../favPin'
 // 🔖 하트 핀(최애) — 창업자가 2026-09-08 에 «클립 골격으로» 새로 뽑아 준 컷(`cp02`)

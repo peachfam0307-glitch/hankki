@@ -1,4 +1,4 @@
-import { isSeason, isPeakSeason, inCardWindow, seasonsNow } from '../season'
+import { isPeakSeason, inCardWindow, seasonsNow } from '../season'
 import { SEASON_CUTS } from '../data/cardSeasons'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toJpeg, toCanvas } from 'html-to-image'

@@ -4,7 +4,7 @@ import { useStore, 다읽었나 } from './store'
 import { consumeSharedIntake, detectSource, firstUrl, captionFrom, firstLine } from './shareIntake'
 import { consumeIosShared, onIosShare } from './iosShare'
 import { makeInboxRecipe, needsOnboarding } from './작은함수.js'   // 📏 화면 통째로 안 끌고 오게(2026-11-10)
-import { ocrImage, getOcrLeft, 열쇠셈, 밀린열쇠보내기, 밀린기본보내기, KEY_NAME, KEY_UNIT } from './ocr'
+import { ocrImage, getOcrLeft, 열쇠셈, 밀린열쇠보내기, 밀린기본보내기 } from './ocr'
 import { parseRecipeText, keepRaw, 자리표제목 } from './parseRecipe'
 import { tidyRecipe, mergeTidy, tidyTail, tidyFounder, AI다듬는중, 번호알림받기, 선반집기, 동의안함으로끝났나 } from './tidy'
 import AIConsentSheet from './components/AIConsentSheet'   // 🔐 AI 로 보내기 전 허락 시트(큰 틀 6-② ⓑ)

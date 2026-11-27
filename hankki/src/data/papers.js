@@ -33,6 +33,15 @@ import dpAuScrap from '../assets/paper/dp_auscrap.webp'
 import dpAuTwo from '../assets/paper/dp_autwo.webp'
 import dpAuThree from '../assets/paper/dp_authree.webp'
 import dpPinkLace from '../assets/paper/dp_pinklace.webp'
+// ❄️ 겨울 속지 7장 — 창업자 2026-10-21 「아쥬 찰떡이네 다다 살리자」 · 「12월 1일에 겨울 꾸미기랑 같이 열자」
+//    원본 = docs/stickers/속지-겨울-시험-2026-10-21/2차-1~7 (896×1200 → 984 폭 WebP)
+import dpWWindow from '../assets/paper/dp_wwindow.webp'
+import dpWStamp from '../assets/paper/dp_wstamp.webp'
+import dpWKnit from '../assets/paper/dp_wknit.webp'
+import dpWGlobe from '../assets/paper/dp_wglobe.webp'
+import dpWOrnament from '../assets/paper/dp_wornament.webp'
+import dpWGoguma from '../assets/paper/dp_wgoguma.webp'
+import dpWBungeo from '../assets/paper/dp_wbungeo.webp'
 
 /** ⑴ 선 — 무지가 기본. 「양식을 안 정한다」는 확정 그대로 빈 종이에서 시작한다. */
 export const PAPER_RULES = [
@@ -55,7 +64,8 @@ export const PAPER_SKINS = [
   // 🎨 [창업자 2026-09-06] *"아이보리 빼고, 크림이랑 그레이지(연한)"* · *"아이보리가 좀 누래보여"*
   //    ivory 키는 CSS 기본값으로 남는다(옛 저장본 호환) — 값 자체를 크림으로 바꿨으니 화면은 같이 밝아진다.
   { key: 'cream', label: '크림', cls: 'cream' },
-  // 🧊 그레이지는 피커에서 «아직» 안 보인다 — 창업자 2026-09-06 *"크림만 하고 그레이지는 겨울에 하나 더 넣을까"* (CSS 값은 살아 있다)
+  // 🧊 그레이지 = «겨울에» 연다 — 창업자 2026-09-06 *"크림만 하고 그레이지는 겨울에 하나 더 넣을까"* → 2026-10-21 「12월 1일에 겨울 꾸미기랑 같이」
+  { key: 'greige', label: '그레이지', cls: 'greige', key열쇠: '크리스마스', 열쇠까지: '2026-12-01' },
   { key: 'sky', label: '하늘', cls: 'sky' },
   { key: 'blush', label: '분홍', cls: 'blush' },
   // 🌿 세이지 — 창업자가 색을 콕 집어 줬다 (2026-08-06 *"소프트 세이지 #F3F5ED"*)
@@ -398,6 +408,84 @@ export const PAPER_ARTS = [
       write: { top: 18, left: 10, right: 10, bottom: 30 },
       // 카드 왼쪽 아래 하트(x57~62)를 피해 63 부터 — 첫 판에서 글 첫 글자가 하트에 물렸다(규칙 21)
       line: { top: 80, left: 63, right: 9, label: '오늘의 한 줄' },
+    },
+  },
+  // ❄️❄️ 겨울 속지 7장 (2026-11-27 · 12/1 저절로 열림 · 그 전엔 열쇠 ?크리스마스=1)
+  //   📐 사진칸 = 원본 흰 창을 flood 로 잰 값(scratchpad 창재기 · 896×1200 기준 %) — 둥근 창은 «안에 드는 네모»로 좁혔다
+  //   ✍️ 글칸 = 창 밖 빈 자리(그림 장식을 피해서) · 줄은 쓰는 칸 안에만(`rule:'write'`)
+  //   🧊 창업자 방향(2026-10-21) = 「아주 연한 그레이지 ＋ 눈 · 장식 최소 → 꾸미기는 유저 몫」
+  {
+    key: 'wwindow', label: '겨울 창문', src: dpWWindow, note: '아치 창 사진 ＋ 아래 글칸', key열쇠: '크리스마스', 열쇠까지: '2026-12-01',
+    // 실측 창 x22.9~77.3 · y17.7~75.6
+    fields: {
+      rule: 'write',
+      photo: { top: 19, bottom: 26, left: 24, right: 24, key: 'ph_ww' },
+      title: { top: 6, left: 12, right: 28 },
+      write: { top: 82.5, left: 12, right: 12, bottom: 3 },   // 창틀 아래 테두리(~80%) 밑에서 시작 — 첫 판에서 첫 줄이 테두리에 걸렸다(규칙 21)
+    },
+  },
+  {
+    key: 'wstamp', label: '우표 편지', src: dpWStamp, note: '우표 사진 ＋ 엽서 글 ＋ 메모', key열쇠: '크리스마스', 열쇠까지: '2026-12-01',
+    // 실측 우표 창 x9.8~51.3 · y8.3~45.6(조금 기울어짐) · 엽서 칸 x10.9~40.5 · y57.4~91.3 · 오른쪽 빈 자리 x55~95
+    fields: {
+      rule: 'write',
+      photo: { top: 10, bottom: 56, left: 12, right: 51, rot: -5, key: 'ph_wst' },
+      title: { top: 66.5, left: 13, right: 61 },   // 엽서 위쪽 소인(동그란 도장)을 피해 그 아래부터 — 첫 판에서 제목이 소인에 겹쳤다
+      write: [
+        { top: 71, left: 13, right: 61, bottom: 9.5 },
+        { top: 47, left: 58, right: 6, bottom: 10, key: 'note2', label: '메모' },   // 우표 오른쪽 끝(~52%)·아래 끝(~46%)을 비켜서
+      ],
+    },
+  },
+  {
+    key: 'wknit', label: '겨울 뜨개', src: dpWKnit, note: '뜨개 테두리 큰 칸', key열쇠: '크리스마스', 열쇠까지: '2026-12-01',
+    // 실측 속 x15.5~84.6 · y13.1~87.3
+    fields: {
+      rule: 'write',
+      title: { top: 15, left: 18, right: 18 },
+      photo: { top: 20.5, bottom: 44, left: 19, right: 19, key: 'ph_wk' },
+      write: { top: 58, left: 18, right: 18, bottom: 15 },
+    },
+  },
+  {
+    key: 'wglobe', label: '스노우볼', src: dpWGlobe, note: '스노우볼 사진 ＋ 아래 글칸', key열쇠: '크리스마스', 열쇠까지: '2026-12-01',
+    // 실측 유리 x20.6~79 · y14.2~57.5(둥근 창 → 안에 드는 네모) · 아래 흰 글칸 x12.8~87.1 · y76.3~92.8
+    fields: {
+      rule: 'write',
+      photo: { top: 20.5, bottom: 48.8, left: 29, right: 29.5, key: 'ph_wg' },
+      title: { top: 4, left: 10, right: 30 },
+      write: { top: 77.5, left: 15, right: 15, bottom: 8 },
+    },
+  },
+  {
+    key: 'wornament', label: '오너먼트', src: dpWOrnament, note: '오너먼트 사진 ＋ 아래 글칸', key열쇠: '크리스마스', 열쇠까지: '2026-12-01',
+    // 실측 동그란 창 x32.8~68.3 · y30.4~56.9 → 안에 드는 네모 · 아래 빈 자리 y61~93(맨 아래 쿠키 띠 피함)
+    fields: {
+      rule: 'write',
+      photo: { top: 34.3, bottom: 47, left: 38, right: 37, key: 'ph_wo' },
+      title: { top: 64.5, left: 12, right: 12 },   // 오너먼트 아래 끝(~62%)을 피해서
+      write: { top: 69, left: 12, right: 12, bottom: 9 },
+    },
+  },
+  {
+    key: 'wgoguma', label: '군고구마 봉투', src: dpWGoguma, note: '봉투 속 사진 ＋ 글', key열쇠: '크리스마스', 열쇠까지: '2026-12-01',
+    // 실측 봉투 속 x22.8~75.3 · y21.9~84.3
+    fields: {
+      rule: 'write',
+      photo: { top: 23.5, bottom: 46, left: 25, right: 27, key: 'ph_wgo' },
+      title: { top: 56, left: 25, right: 27 },
+      write: { top: 61, left: 25, right: 27, bottom: 17 },
+    },
+  },
+  {
+    key: 'wbungeo', label: '붕어빵', src: dpWBungeo, note: '붕어빵 사진 ＋ 옆 글', key열쇠: '크리스마스', 열쇠까지: '2026-12-01',
+    // 실측 붕어빵 속 x22.2~79.5 · y21.9~72(타원 → 안에 드는 네모) · 오른쪽 아래 빈 자리(왼쪽 아래 작은 붕어빵 피함)
+    fields: {
+      rule: 'write',
+      // ✍️ 글은 붕어빵 «몸통 안 아래쪽» — 첫 판에서 오른쪽 아래에 뒀더니 꼬리·작은 붕어빵 위에 글이 얹혔다(규칙 21)
+      photo: { top: 24, bottom: 51, left: 32, right: 30, key: 'ph_wb' },
+      title: { top: 50, left: 31, right: 29 },
+      write: { top: 54.5, left: 31, right: 29, bottom: 31 },
     },
   },
 ]

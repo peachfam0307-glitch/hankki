@@ -8,7 +8,7 @@ import { registerRoute } from 'workbox-routing'
 import { CacheFirst } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
 // 🧊 [2026-09-19] 유통기한 «얹기» — 거울(hankki-shared/pantry-expiry)을 «그리는 순간» 읽어 남은 날을 다시 센다(낡지 않는다)
-import { 거울읽어문장, 거울캐시 } from './pantryExpiry.js'
+import { 거울읽어문장 } from './pantryExpiry.js'
 
 precacheAndRoute(self.__WB_MANIFEST || [])
 

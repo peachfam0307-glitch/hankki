@@ -300,18 +300,20 @@ export function 링크없는장바구니(items = cartItems()) {
 //   ⚠️ **이미 열린 것은 안 본다** — 9/03(목)에 나간 SNS 둘은 그대로 둔다. 지난 일은 못 고친다.
 const 요일이름 = ['일', '월', '화', '수', '목', '금', '토']
 const 요일of = (d) => { const [y, m, dd] = d.split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd)).getUTCDay() }
-export const 여는요일 = { recipe: 1, sns: 3, cart: 6 }   // 월 · 수 · 토
+// ⭐ [창업자 2026-11-20 개편] 「월요일에 제철하고 수요일, 금 테마 가자. sns가 결국 테마와 같은거 아닌가?」
+//    → 레시피(우리·SNS) = 월(한식 집밥)·수·금(테마) · 장바구니 = 토 · 전문 = docs/금요일-테마레시피-2026-11-20.md
+export const 여는요일 = { recipe: [1, 3, 5], sns: [1, 3, 5], cart: [6] }
 const 갈래이름 = { recipe: '🍳 우리 레시피', sns: '📺 SNS 레시피', cart: '🛒 주부의 장바구니' }
 
 /** 앞으로 열릴 것 중 «요일이 어긋난» 것. ⛔이미 열린 것은 세지 않는다. */
 export function 요일어긋남(from = todayKST()) {
   return gates()
     .filter((g) => g.date > from && 여는요일[g.kind] !== undefined)
-    .filter((g) => 요일of(g.date) !== 여는요일[g.kind])
+    .filter((g) => !여는요일[g.kind].includes(요일of(g.date)))
     .map((g) => ({
       ...g,
       실제요일: 요일이름[요일of(g.date)],
-      바른요일: 요일이름[여는요일[g.kind]],
+      바른요일: 여는요일[g.kind].map((n) => 요일이름[n]).join('·'),
       갈래: 갈래이름[g.kind],
     }))
 }
@@ -565,7 +567,7 @@ if (mode === '--brief' || mode === '--check') {
   //    ⛔ 0건이면 «아무 말도 안 한다» — 시끄러운 게이트는 죽은 게이트다.
   const 어긋 = 요일어긋남()
   if (어긋.length) {
-    console.log(`📅 **여는 요일이 어긋난 것 ${어긋.length}건** — 창업자 확정(2026-09-04) = 월·수·토`)
+    console.log(`📅 **여는 요일이 어긋난 것 ${어긋.length}건** — 창업자 확정(2026-11-20) = 레시피 월·수·금 · 장바구니 토`)
     어긋.slice(0, 4).forEach((g) => console.log(
       `   ⛔ ${g.date} ${g.실제요일}요일인데 ${g.갈래}는 «${g.바른요일}요일» — ${g.what.replace(/\s+[⛔✅]검수.*/, '').slice(0, 44)}`))
     if (어긋.length > 4) console.log(`   · … 외 ${어긋.length - 4}건`)
