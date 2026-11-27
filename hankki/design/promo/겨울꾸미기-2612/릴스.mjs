@@ -247,7 +247,7 @@ ${눈html}
 <div id="제목"></div><div id="단추"><span>🎄</span><span>크리스마스 그릇</span></div><div id="톡"></div>
 <img class="붙" id="붙0"><img class="붙" id="붙1"></div>
 ${모음.map((k, i) => `<img class="모" id="모${i}" src="${크(k)}">`).join('')}
-<div id="모음글" class="겉"><span class="pill">12월 1일부터</span><div class="h">12월 레시피 44편<br>크리스마스 그릇으로</div></div>
+<div id="모음글" class="겉"><span class="pill">12월 1일부터</span><div class="h">레시피 44편이<br>크리스마스 그릇으로</div></div>
 ${표지html('12월 1일 · 그릇 바꾸기', '레시피도<br>크리스마스 옷!', '흰 그릇 → 🎄 크리스마스 그릇, 단추 한 번')}
 ${끝html('내 레시피 카드도<br>크리스마스처럼!')}
 ${눈크기}
