@@ -41,6 +41,11 @@ for (const g of 갈래들) {
   const 글 = execFileSync('git', ['show', `${g}:hankki/src/data/basics.js`], { encoding: 'utf8', maxBuffer: 64 << 20 })
   for (const m of 글.matchAll(/title:\s*'([^']+)'/g)) 있는이름.add(정규(m[1]))
 }
+// 🎬 이미 쓴 «영상» — 이름이 달라도 같은 영상이면 뺀다 (창업자 2026-11-28 「우리레시피에 있는건 빼고」 · 11/28 판 1번 = 원팬 또띠아 토스트와 같은 영상이었다)
+const 쓴영상 = new Set()
+for (const 글 of [execFileSync('git', ['show', 'HEAD:hankki/src/data/basics.js'], { encoding: 'utf8', maxBuffer: 64 << 20 }),
+  ...갈래들.map((g) => execFileSync('git', ['show', `${g}:hankki/src/data/basics.js`], { encoding: 'utf8', maxBuffer: 64 << 20 }))])
+  for (const m of 글.matchAll(/(?:youtu\.be\/|[?&]v=|shorts\/)([\w-]{11})/g)) 쓴영상.add(m[1])
 // 영상 제목에서 요리 이름 조각을 찾는다 — 우리 편 이름(3자 이상)이 영상 제목 안에 들어 있으면 겹침
 const 겹친편 = (제목) => { const t = 정규(제목); return [...있는이름].find((n) => n.length >= 3 && t.includes(n)) }
 // 「비슷한 우리 편」 — 이름이 통째로 같지 않아도 같은 요리·같은 재료면 보여 준다(⛔빼지는 않는다 · 창업자가 보고 고른다)
@@ -78,7 +83,7 @@ const 통과 = [], 빠짐 = []
 for (const v of 전부) {
   const 겹 = 겹친편(v.제목)
   // 🚫 퍼감 금지 채널(설명란에 무단 도용·2차 편집·상업적 이용 금지) = 무조건 뺀다 (창업자 2026-11-22 · 쿡경희)
-  const 왜 = [v.금지문구 && `🚫퍼감금지(${v.금지문구})`, !v.분량있음 && '분량 없음', !v.순서있음 && '순서 없음', 겹 && `겹침(${겹})`].filter(Boolean)
+  const 왜 = [v.금지문구 && `🚫퍼감금지(${v.금지문구})`, !v.분량있음 && '분량 없음', !v.순서있음 && '순서 없음', 겹 && `겹침(${겹})`, 쓴영상.has(v.id) && '이미 쓴 영상'].filter(Boolean)
   ;(왜.length ? 빠짐 : 통과).push({ ...v, 왜 })
 }
 
